@@ -1,0 +1,18 @@
+# Composer
+/vendor/
+composer.lock
+
+# Build
+/build/
+/dist/
+*.zip
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# WP
+.phpunit.result.cache
+wp-cli.local.yml
