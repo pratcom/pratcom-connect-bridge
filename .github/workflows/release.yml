@@ -1,0 +1,39 @@
+name: Release plugin .zip
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          tools: composer:v2
+
+      - name: Composer install (prod only)
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
+      - name: Build plugin .zip
+        run: |
+          mkdir -p build
+          STAGE=build/pratcom-connect-bridge
+          mkdir -p "$STAGE"
+          rsync -a --exclude-from=.distignore ./ "$STAGE/"
+          (cd build && zip -r pratcom-connect-bridge.zip pratcom-connect-bridge)
+          ls -la build/
+
+      - name: Create release + upload asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/pratcom-connect-bridge.zip
+          generate_release_notes: true

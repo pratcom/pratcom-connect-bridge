@@ -1,0 +1,16 @@
+.git/
+.github/
+.gitignore
+.distignore
+build/
+node_modules/
+tests/
+composer.lock
+composer.json
+*.md
+.vscode/
+.idea/
+*.swp
+.DS_Store
+.phpunit.result.cache
+.editorconfig

@@ -23,32 +23,25 @@ define('PRATCOM_CONNECT_BRIDGE_URL', plugin_dir_url(__FILE__));
 define('PRATCOM_CONNECT_BRIDGE_API_BASE', 'https://api.connect.pratcom.net');
 define('PRATCOM_CONNECT_BRIDGE_LOADER_URL', 'https://connect.pratcom.net/loader.js');
 
-// Autoloader Composer
+// Autoloader Composer si dispo (release build), fallback PSR-4 sinon
 if (file_exists(PRATCOM_CONNECT_BRIDGE_DIR . 'vendor/autoload.php')) {
     require_once PRATCOM_CONNECT_BRIDGE_DIR . 'vendor/autoload.php';
 } else {
-    // Fallback PSR-4 minimal si composer install pas fait
     spl_autoload_register(function ($class) {
         $prefix = 'Pratcom\\Connect\\Bridge\\';
         $base_dir = PRATCOM_CONNECT_BRIDGE_DIR . 'src/';
         $len = strlen($prefix);
-        if (strncmp($prefix, $class, $len) !== 0) {
-            return;
-        }
-        $relative_class = substr($class, $len);
-        $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
-        if (file_exists($file)) {
-            require $file;
-        }
+        if (strncmp($prefix, $class, $len) !== 0) return;
+        $file = $base_dir . str_replace('\\', '/', substr($class, $len)) . '.php';
+        if (file_exists($file)) require $file;
     });
 }
 
-// Bootstrap
 add_action('plugins_loaded', function () {
     \Pratcom\Connect\Bridge\Plugin::boot();
+    \Pratcom\Connect\Bridge\Updater::init();
 });
 
-// Activation / uninstall hooks
 register_activation_hook(__FILE__, function () {
     \Pratcom\Connect\Bridge\Plugin::on_activate();
 });
