@@ -3,8 +3,8 @@
 namespace Pratcom\Connect\Bridge;
 
 /**
- * Injection du loader Pratcom Connect dans le <head>.
- * Charge uniquement si un workspace_id est present (handshake reussi).
+ * Injection du script Pratcom Connect dans le <head>.
+ * Charge uniquement si connecte (status=connected + workspace_id present).
  */
 class Loader
 {
@@ -15,13 +15,11 @@ class Loader
 
     public function inject_loader(): void
     {
-        $workspace_id = get_option(Plugin::OPTION_WORKSPACE_ID, '');
-        $status = get_option(Plugin::OPTION_STATUS, 'disconnected');
-
-        if (empty($workspace_id) || $status !== 'connected') {
+        if (!Plugin::is_connected()) {
             return;
         }
 
+        $workspace_id = Plugin::get_workspace_id();
         $loader_url = PRATCOM_CONNECT_BRIDGE_LOADER_URL;
         $w = esc_attr($workspace_id);
 

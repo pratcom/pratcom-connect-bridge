@@ -3,9 +3,8 @@
 namespace Pratcom\Connect\Bridge\Http;
 
 /**
- * Client HTTP vers l'API Pratcom Connect (api.connect.pratcom.net).
- * Utilise wp_remote_request pour cooperer avec les filtres WP
- * (proxy, timeout, user-agent, etc.).
+ * Client HTTP vers https://api.connect.pratcom.net.
+ * Utilise wp_remote_request pour cooperer avec les filtres WP.
  */
 class ApiClient
 {
@@ -16,12 +15,7 @@ class ApiClient
         $this->api_base = $api_base ?? PRATCOM_CONNECT_BRIDGE_API_BASE;
     }
 
-    /**
-     * POST /api/bridge/handshake
-     * Phase 2: appelle a la sauvegarde de la cle dans la page admin.
-     *
-     * @return array{ok: bool, workspace_id?: string, feature_packs?: array, error?: string}
-     */
+    /** @return array{ok: bool, workspace_id?: string, workspace_slug?: string, feature_packs?: array, loader_url?: string, error?: string, http_code?: int, details?: array} */
     public function handshake(string $api_key, string $domain): array
     {
         $body = [
@@ -29,31 +23,22 @@ class ApiClient
             'domain' => $domain,
             'wp_version' => get_bloginfo('version'),
             'php_version' => PHP_VERSION,
-            'plugins_count' => count(get_option('active_plugins', [])),
+            'plugins_count' => count((array) get_option('active_plugins', [])),
         ];
-
         return $this->request('POST', '/api/bridge/handshake', $body);
     }
 
-    /**
-     * GET /api/bridge/config?workspace_id=X
-     */
     public function get_config(string $api_key, string $workspace_id): array
     {
         return $this->request('GET', '/api/bridge/config?workspace_id=' . rawurlencode($workspace_id), null, $api_key);
     }
 
-    /**
-     * POST /api/bridge/events
-     */
+    /** @param array<int, array{module: string, event_type: string, payload?: array, occurred_at?: string}> $events */
     public function send_events(string $api_key, array $events): array
     {
         return $this->request('POST', '/api/bridge/events', ['events' => $events], $api_key);
     }
 
-    /**
-     * GET /api/bridge/version (publique, pas de Bearer)
-     */
     public function get_version(): array
     {
         return $this->request('GET', '/api/bridge/version');
