@@ -4,18 +4,21 @@ namespace Pratcom\Connect\Bridge\Admin;
 
 use Pratcom\Connect\Bridge\Plugin;
 use Pratcom\Connect\Bridge\Http\ApiClient;
+use Pratcom\Connect\Bridge\HealthCheck;
 
 class SettingsPage
 {
     private const SLUG = 'pratcom-connect';
     private const NONCE_CONNECT = 'pratcom_connect_bridge_connect';
     private const NONCE_DISCONNECT = 'pratcom_connect_bridge_disconnect';
+    private const NONCE_CHECK = 'pratcom_connect_bridge_check_now';
 
     public function __construct()
     {
         add_action('admin_menu', [$this, 'register_menu']);
         add_action('admin_post_pratcom_connect_bridge_connect', [$this, 'handle_connect']);
         add_action('admin_post_pratcom_connect_bridge_disconnect', [$this, 'handle_disconnect']);
+        add_action('admin_post_pratcom_connect_bridge_check_now', [$this, 'handle_check_now']);
     }
 
     public function register_menu(): void
@@ -41,6 +44,7 @@ class SettingsPage
         $last_handshake = get_option(Plugin::OPTION_LAST_HANDSHAKE, '');
         $last_error = get_option(Plugin::OPTION_LAST_ERROR, '');
         $connected = $status === 'connected' && !empty($workspace_id);
+        $has_key = !empty(Plugin::get_api_key());
 
         $notice = $_GET['pratcom_notice'] ?? '';
         $notice_msg = $_GET['pratcom_msg'] ?? '';
@@ -54,11 +58,15 @@ class SettingsPage
                 </p></div>
             <?php elseif ($notice === 'disconnected'): ?>
                 <div class="notice notice-info is-dismissible"><p>
-                    <?php esc_html_e('Plugin deconnecte. La cle API a ete retiree localement, le workspace reste actif cote serveur (revoque via Pratcom Media si besoin).', 'pratcom-connect-bridge'); ?>
+                    <?php esc_html_e('Plugin deconnecte. La cle API a ete retiree localement.', 'pratcom-connect-bridge'); ?>
+                </p></div>
+            <?php elseif ($notice === 'checked'): ?>
+                <div class="notice notice-success is-dismissible"><p>
+                    <?php echo esc_html(sprintf(__('Verification effectuee. Statut: %s', 'pratcom-connect-bridge'), $notice_msg)); ?>
                 </p></div>
             <?php elseif ($notice === 'error'): ?>
                 <div class="notice notice-error is-dismissible"><p>
-                    <?php echo esc_html(sprintf(__('Erreur de connexion: %s', 'pratcom-connect-bridge'), $notice_msg)); ?>
+                    <?php echo esc_html(sprintf(__('Erreur: %s', 'pratcom-connect-bridge'), $notice_msg)); ?>
                 </p></div>
             <?php endif; ?>
 
@@ -74,13 +82,39 @@ class SettingsPage
                             <td><?php echo esc_html($last_handshake); ?></td></tr>
                     </table>
 
-                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="margin-top: 16px;">
-                        <input type="hidden" name="action" value="pratcom_connect_bridge_disconnect" />
-                        <?php wp_nonce_field(self::NONCE_DISCONNECT); ?>
-                        <button type="submit" class="button" onclick="return confirm('<?php echo esc_js(__('Confirmer la deconnexion ? La cle locale sera effacee.', 'pratcom-connect-bridge')); ?>')">
-                            <?php esc_html_e('Se deconnecter', 'pratcom-connect-bridge'); ?>
-                        </button>
-                    </form>
+                    <div style="margin-top: 16px; display: flex; gap: 8px;">
+                        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline;">
+                            <input type="hidden" name="action" value="pratcom_connect_bridge_check_now" />
+                            <?php wp_nonce_field(self::NONCE_CHECK); ?>
+                            <button type="submit" class="button"><?php esc_html_e('Verifier maintenant', 'pratcom-connect-bridge'); ?></button>
+                        </form>
+
+                        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline;">
+                            <input type="hidden" name="action" value="pratcom_connect_bridge_disconnect" />
+                            <?php wp_nonce_field(self::NONCE_DISCONNECT); ?>
+                            <button type="submit" class="button" onclick="return confirm('<?php echo esc_js(__('Confirmer la deconnexion ?', 'pratcom-connect-bridge')); ?>')">
+                                <?php esc_html_e('Se deconnecter', 'pratcom-connect-bridge'); ?>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            <?php elseif ($has_key && in_array($status, ['error', 'revoked'], true)): ?>
+                <div class="card" style="max-width: 720px; border-left: 4px solid #d63638;">
+                    <h2><?php echo esc_html($status === 'revoked' ? __('Cle revoquee', 'pratcom-connect-bridge') : __('Erreur', 'pratcom-connect-bridge')); ?></h2>
+                    <p><?php echo esc_html($last_error); ?></p>
+                    <p><code><?php echo esc_html($prefix); ?>...<?php echo esc_html($last_four); ?></code></p>
+                    <div style="display: flex; gap: 8px;">
+                        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline;">
+                            <input type="hidden" name="action" value="pratcom_connect_bridge_check_now" />
+                            <?php wp_nonce_field(self::NONCE_CHECK); ?>
+                            <button type="submit" class="button"><?php esc_html_e('Re-essayer', 'pratcom-connect-bridge'); ?></button>
+                        </form>
+                        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline;">
+                            <input type="hidden" name="action" value="pratcom_connect_bridge_disconnect" />
+                            <?php wp_nonce_field(self::NONCE_DISCONNECT); ?>
+                            <button type="submit" class="button"><?php esc_html_e('Effacer la cle', 'pratcom-connect-bridge'); ?></button>
+                        </form>
+                    </div>
                 </div>
             <?php else: ?>
                 <p><?php esc_html_e('Coller la cle API fournie par Pratcom Media pour activer les modules Pratcom Connect sur ce site.', 'pratcom-connect-bridge'); ?></p>
@@ -98,7 +132,6 @@ class SettingsPage
                             </td>
                         </tr>
                     </table>
-
                     <p class="submit">
                         <button type="submit" class="button button-primary"><?php esc_html_e('Connecter', 'pratcom-connect-bridge'); ?></button>
                     </p>
@@ -134,7 +167,6 @@ class SettingsPage
             $this->redirect_with_notice('error', $msg);
         }
 
-        // Parse prefix + last four de la cle pour affichage
         preg_match('/^(pck_[a-z0-9-]+_)([A-Za-z0-9]{32})$/', $raw_key, $m);
         $prefix = $m[1] ?? '';
         $last_four = isset($m[2]) ? substr($m[2], -4) : '';
@@ -149,6 +181,7 @@ class SettingsPage
         update_option(Plugin::OPTION_STATUS, 'connected');
         delete_option(Plugin::OPTION_LAST_ERROR);
 
+        HealthCheck::schedule();
         $this->redirect_with_notice('connected', '');
     }
 
@@ -164,9 +197,21 @@ class SettingsPage
         delete_option(Plugin::OPTION_WORKSPACE_SLUG);
         delete_option(Plugin::OPTION_FEATURE_PACKS);
         delete_option(Plugin::OPTION_LAST_HANDSHAKE);
+        delete_option(Plugin::OPTION_LAST_ERROR);
         update_option(Plugin::OPTION_STATUS, 'disconnected');
 
+        HealthCheck::unschedule();
         $this->redirect_with_notice('disconnected', '');
+    }
+
+    public function handle_check_now(): void
+    {
+        if (!current_user_can('manage_options')) wp_die('forbidden', 403);
+        check_admin_referer(self::NONCE_CHECK);
+
+        $hc = new HealthCheck();
+        $res = $hc->run();
+        $this->redirect_with_notice('checked', $res['status'] ?? 'unknown');
     }
 
     private function redirect_with_notice(string $notice, string $msg): void

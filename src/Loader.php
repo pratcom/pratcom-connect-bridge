@@ -3,8 +3,9 @@
 namespace Pratcom\Connect\Bridge;
 
 /**
- * Injection du script Pratcom Connect dans le <head>.
- * Charge uniquement si connecte (status=connected + workspace_id present).
+ * Injection du loader Pratcom Connect dans le <head>.
+ * Charge uniquement si connecte (status=connected). Si status=revoked
+ * ou error, le loader n'est PAS injecte (mode degrade).
  */
 class Loader
 {

@@ -3,7 +3,7 @@
  * Plugin Name:       Pratcom Connect Bridge
  * Plugin URI:        https://github.com/pratcom/pratcom-connect-bridge
  * Description:       Connecte un site WordPress a l API Pratcom Connect. Permet d activer les modules Chat, Forms, Privacy, CRM via une seule cle API.
- * Version:           0.1.0
+ * Version:           0.1.1
  * Requires at least: 6.5
  * Requires PHP:      8.1
  * Author:            Pratcom Media
@@ -16,14 +16,13 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('PRATCOM_CONNECT_BRIDGE_VERSION', '0.1.0');
+define('PRATCOM_CONNECT_BRIDGE_VERSION', '0.1.1');
 define('PRATCOM_CONNECT_BRIDGE_FILE', __FILE__);
 define('PRATCOM_CONNECT_BRIDGE_DIR', plugin_dir_path(__FILE__));
 define('PRATCOM_CONNECT_BRIDGE_URL', plugin_dir_url(__FILE__));
 define('PRATCOM_CONNECT_BRIDGE_API_BASE', 'https://api.connect.pratcom.net');
 define('PRATCOM_CONNECT_BRIDGE_LOADER_URL', 'https://connect.pratcom.net/loader.js');
 
-// Autoloader Composer si dispo (release build), fallback PSR-4 sinon
 if (file_exists(PRATCOM_CONNECT_BRIDGE_DIR . 'vendor/autoload.php')) {
     require_once PRATCOM_CONNECT_BRIDGE_DIR . 'vendor/autoload.php';
 } else {
@@ -44,6 +43,11 @@ add_action('plugins_loaded', function () {
 
 register_activation_hook(__FILE__, function () {
     \Pratcom\Connect\Bridge\Plugin::on_activate();
+    \Pratcom\Connect\Bridge\HealthCheck::schedule();
+});
+
+register_deactivation_hook(__FILE__, function () {
+    \Pratcom\Connect\Bridge\HealthCheck::unschedule();
 });
 
 register_uninstall_hook(__FILE__, [\Pratcom\Connect\Bridge\Plugin::class, 'on_uninstall']);

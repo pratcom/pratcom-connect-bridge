@@ -2,28 +2,27 @@
 
 namespace Pratcom\Connect\Bridge;
 
-/**
- * Bootstrap principal du plugin Pratcom Connect Bridge.
- */
 class Plugin
 {
-    public const OPTION_API_KEY_PLAINTEXT = 'pratcom_connect_bridge_api_key'; // stocke en clair (option WP est en DB MySQL deja securisee)
+    public const OPTION_API_KEY_PLAINTEXT = 'pratcom_connect_bridge_api_key';
     public const OPTION_KEY_PREFIX = 'pratcom_connect_bridge_key_prefix';
     public const OPTION_KEY_LAST_FOUR = 'pratcom_connect_bridge_key_last_four';
     public const OPTION_WORKSPACE_ID = 'pratcom_connect_bridge_workspace_id';
     public const OPTION_WORKSPACE_SLUG = 'pratcom_connect_bridge_workspace_slug';
     public const OPTION_FEATURE_PACKS = 'pratcom_connect_bridge_feature_packs';
     public const OPTION_LAST_HANDSHAKE = 'pratcom_connect_bridge_last_handshake';
-    public const OPTION_STATUS = 'pratcom_connect_bridge_status'; // connected / disconnected / error
+    public const OPTION_STATUS = 'pratcom_connect_bridge_status'; // connected / disconnected / error / revoked
     public const OPTION_LAST_ERROR = 'pratcom_connect_bridge_last_error';
 
     public static function boot(): void
     {
         if (is_admin()) {
             new Admin\SettingsPage();
+            new Admin\Notices();
         }
 
         new Loader();
+        new HealthCheck();
     }
 
     public static function on_activate(): void
@@ -49,6 +48,7 @@ class Plugin
         foreach ($options as $opt) {
             delete_option($opt);
         }
+        HealthCheck::unschedule();
     }
 
     public static function is_connected(): bool
