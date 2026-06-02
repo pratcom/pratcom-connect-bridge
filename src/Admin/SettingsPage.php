@@ -9,6 +9,10 @@ use Pratcom\Connect\Bridge\HealthCheck;
 class SettingsPage
 {
     private const SLUG = 'pratcom-connect';
+    private const SLUG_MODULES = 'pratcom-connect-modules';
+    private const SLUG_CONNECTION = 'pratcom-connect-connection';
+    private const SLUG_HELP = 'pratcom-connect-help';
+
     private const NONCE_CONNECT = 'pratcom_connect_bridge_connect';
     private const NONCE_DISCONNECT = 'pratcom_connect_bridge_disconnect';
     private const NONCE_CHECK = 'pratcom_connect_bridge_check_now';
@@ -16,6 +20,7 @@ class SettingsPage
     public function __construct()
     {
         add_action('admin_menu', [$this, 'register_menu']);
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_assets']);
         add_action('admin_post_pratcom_connect_bridge_connect', [$this, 'handle_connect']);
         add_action('admin_post_pratcom_connect_bridge_disconnect', [$this, 'handle_disconnect']);
         add_action('admin_post_pratcom_connect_bridge_check_now', [$this, 'handle_check_now']);
@@ -23,124 +28,452 @@ class SettingsPage
 
     public function register_menu(): void
     {
-        add_options_page(
+        add_menu_page(
             __('Pratcom Connect', 'pratcom-connect-bridge'),
             __('Pratcom Connect', 'pratcom-connect-bridge'),
             'manage_options',
             self::SLUG,
-            [$this, 'render_page']
+            [$this, 'render_dashboard'],
+            'dashicons-randomize',
+            80
+        );
+
+        add_submenu_page(
+            self::SLUG,
+            __('Tableau de bord', 'pratcom-connect-bridge'),
+            __('Tableau de bord', 'pratcom-connect-bridge'),
+            'manage_options',
+            self::SLUG,
+            [$this, 'render_dashboard']
+        );
+
+        add_submenu_page(
+            self::SLUG,
+            __('Modules', 'pratcom-connect-bridge'),
+            __('Modules', 'pratcom-connect-bridge'),
+            'manage_options',
+            self::SLUG_MODULES,
+            [$this, 'render_modules']
+        );
+
+        add_submenu_page(
+            self::SLUG,
+            __('Connexion', 'pratcom-connect-bridge'),
+            __('Connexion', 'pratcom-connect-bridge'),
+            'manage_options',
+            self::SLUG_CONNECTION,
+            [$this, 'render_connection']
+        );
+
+        add_submenu_page(
+            self::SLUG,
+            __('Aide', 'pratcom-connect-bridge'),
+            __('Aide', 'pratcom-connect-bridge'),
+            'manage_options',
+            self::SLUG_HELP,
+            [$this, 'render_help']
         );
     }
 
-    public function render_page(): void
+    public function enqueue_assets(string $hook): void
+    {
+        if (strpos($hook, 'pratcom-connect') === false) return;
+
+        wp_enqueue_style(
+            'pratcom-connect-bridge-admin',
+            PRATCOM_CONNECT_BRIDGE_URL . 'assets/css/admin.css',
+            [],
+            PRATCOM_CONNECT_BRIDGE_VERSION
+        );
+    }
+
+    public function render_dashboard(): void
     {
         if (!current_user_can('manage_options')) return;
+        $this->render_chrome(self::SLUG, function () { $this->section_dashboard(); });
+    }
 
+    public function render_modules(): void
+    {
+        if (!current_user_can('manage_options')) return;
+        $this->render_chrome(self::SLUG_MODULES, function () { $this->section_modules(); });
+    }
+
+    public function render_connection(): void
+    {
+        if (!current_user_can('manage_options')) return;
+        $this->render_chrome(self::SLUG_CONNECTION, function () { $this->section_connection(); });
+    }
+
+    public function render_help(): void
+    {
+        if (!current_user_can('manage_options')) return;
+        $this->render_chrome(self::SLUG_HELP, function () { $this->section_help(); });
+    }
+
+    private function render_chrome(string $current_slug, callable $body): void
+    {
         $status = get_option(Plugin::OPTION_STATUS, 'disconnected');
-        $prefix = get_option(Plugin::OPTION_KEY_PREFIX, '');
-        $last_four = get_option(Plugin::OPTION_KEY_LAST_FOUR, '');
-        $workspace_slug = get_option(Plugin::OPTION_WORKSPACE_SLUG, '');
-        $workspace_id = get_option(Plugin::OPTION_WORKSPACE_ID, '');
-        $last_handshake = get_option(Plugin::OPTION_LAST_HANDSHAKE, '');
-        $last_error = get_option(Plugin::OPTION_LAST_ERROR, '');
-        $connected = $status === 'connected' && !empty($workspace_id);
-        $has_key = !empty(Plugin::get_api_key());
+        $logo_url = PRATCOM_CONNECT_BRIDGE_URL . 'assets/img/logo-pratcom-connect.svg';
 
-        $notice = $_GET['pratcom_notice'] ?? '';
-        $notice_msg = $_GET['pratcom_msg'] ?? '';
+        $nav = [
+            self::SLUG => ['label' => __('Tableau de bord', 'pratcom-connect-bridge'), 'icon' => 'dashboard'],
+            self::SLUG_MODULES => ['label' => __('Modules', 'pratcom-connect-bridge'), 'icon' => 'admin-plugins'],
+            self::SLUG_CONNECTION => ['label' => __('Connexion', 'pratcom-connect-bridge'), 'icon' => 'admin-network'],
+            self::SLUG_HELP => ['label' => __('Aide', 'pratcom-connect-bridge'), 'icon' => 'editor-help'],
+        ];
+
+        $status_labels = [
+            'connected' => __('Connecte', 'pratcom-connect-bridge'),
+            'disconnected' => __('Non connecte', 'pratcom-connect-bridge'),
+            'error' => __('Erreur', 'pratcom-connect-bridge'),
+            'revoked' => __('Cle revoquee', 'pratcom-connect-bridge'),
+        ];
         ?>
-        <div class="wrap">
-            <h1><?php esc_html_e('Pratcom Connect', 'pratcom-connect-bridge'); ?></h1>
+        <div class="wrap pc-admin-wrap">
+            <header class="pc-header">
+                <img src="<?php echo esc_url($logo_url); ?>" alt="Pratcom Connect" class="pc-header__logo" />
+                <span class="pc-header__version">v<?php echo esc_html(PRATCOM_CONNECT_BRIDGE_VERSION); ?></span>
+                <span class="pc-header__status pc-header__status--<?php echo esc_attr($status); ?>">
+                    <?php echo esc_html($status_labels[$status] ?? ucfirst($status)); ?>
+                </span>
+            </header>
 
-            <?php if ($notice === 'connected'): ?>
-                <div class="notice notice-success is-dismissible"><p>
-                    <?php esc_html_e('Connecte avec succes.', 'pratcom-connect-bridge'); ?>
-                </p></div>
-            <?php elseif ($notice === 'disconnected'): ?>
-                <div class="notice notice-info is-dismissible"><p>
-                    <?php esc_html_e('Plugin deconnecte. La cle API a ete retiree localement.', 'pratcom-connect-bridge'); ?>
-                </p></div>
-            <?php elseif ($notice === 'checked'): ?>
-                <div class="notice notice-success is-dismissible"><p>
-                    <?php echo esc_html(sprintf(__('Verification effectuee. Statut: %s', 'pratcom-connect-bridge'), $notice_msg)); ?>
-                </p></div>
-            <?php elseif ($notice === 'error'): ?>
-                <div class="notice notice-error is-dismissible"><p>
-                    <?php echo esc_html(sprintf(__('Erreur: %s', 'pratcom-connect-bridge'), $notice_msg)); ?>
-                </p></div>
-            <?php endif; ?>
+            <div class="pc-body">
+                <nav class="pc-sidebar">
+                    <ul class="pc-sidebar__nav">
+                        <?php foreach ($nav as $slug => $item): ?>
+                            <li class="pc-sidebar__item">
+                                <a href="<?php echo esc_url(admin_url('admin.php?page=' . $slug)); ?>"
+                                   class="pc-sidebar__link <?php echo $slug === $current_slug ? 'is-active' : ''; ?>">
+                                    <span class="dashicons dashicons-<?php echo esc_attr($item['icon']); ?>"></span>
+                                    <span><?php echo esc_html($item['label']); ?></span>
+                                </a>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </nav>
 
-            <?php if ($connected): ?>
-                <div class="card" style="max-width: 720px;">
-                    <h2><?php esc_html_e('Connecte', 'pratcom-connect-bridge'); ?></h2>
-                    <table class="form-table" role="presentation">
-                        <tr><th><?php esc_html_e('Workspace', 'pratcom-connect-bridge'); ?></th>
-                            <td><strong><?php echo esc_html($workspace_slug); ?></strong> <code><?php echo esc_html($workspace_id); ?></code></td></tr>
-                        <tr><th><?php esc_html_e('Cle API', 'pratcom-connect-bridge'); ?></th>
-                            <td><code><?php echo esc_html($prefix); ?>...<?php echo esc_html($last_four); ?></code></td></tr>
-                        <tr><th><?php esc_html_e('Dernier handshake', 'pratcom-connect-bridge'); ?></th>
-                            <td><?php echo esc_html($last_handshake); ?></td></tr>
-                    </table>
+                <main class="pc-content">
+                    <?php $this->render_notices(); ?>
+                    <?php $body(); ?>
+                </main>
+            </div>
+        </div>
+        <?php
+    }
 
-                    <div style="margin-top: 16px; display: flex; gap: 8px;">
-                        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline;">
-                            <input type="hidden" name="action" value="pratcom_connect_bridge_check_now" />
-                            <?php wp_nonce_field(self::NONCE_CHECK); ?>
-                            <button type="submit" class="button"><?php esc_html_e('Verifier maintenant', 'pratcom-connect-bridge'); ?></button>
-                        </form>
+    private function render_notices(): void
+    {
+        $notice = isset($_GET['pratcom_notice']) ? sanitize_key($_GET['pratcom_notice']) : '';
+        $msg = isset($_GET['pratcom_msg']) ? sanitize_text_field(wp_unslash($_GET['pratcom_msg'])) : '';
+        if (!$notice) return;
 
-                        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline;">
-                            <input type="hidden" name="action" value="pratcom_connect_bridge_disconnect" />
-                            <?php wp_nonce_field(self::NONCE_DISCONNECT); ?>
-                            <button type="submit" class="button" onclick="return confirm('<?php echo esc_js(__('Confirmer la deconnexion ?', 'pratcom-connect-bridge')); ?>')">
-                                <?php esc_html_e('Se deconnecter', 'pratcom-connect-bridge'); ?>
-                            </button>
-                        </form>
-                    </div>
+        $map = [
+            'connected'    => ['success', __('Connecte avec succes.', 'pratcom-connect-bridge')],
+            'disconnected' => ['info', __('Plugin deconnecte. La cle API a ete retiree localement.', 'pratcom-connect-bridge')],
+            'checked'      => ['success', sprintf(__('Verification effectuee. Statut : %s', 'pratcom-connect-bridge'), $msg)],
+            'error'        => ['error', sprintf(__('Erreur : %s', 'pratcom-connect-bridge'), $msg)],
+        ];
+        if (!isset($map[$notice])) return;
+        [$type, $text] = $map[$notice];
+        ?>
+        <div class="pc-notice pc-notice--<?php echo esc_attr($type); ?>"><?php echo esc_html($text); ?></div>
+        <?php
+    }
+
+    private function section_dashboard(): void
+    {
+        $workspace_slug = (string) get_option(Plugin::OPTION_WORKSPACE_SLUG, '');
+        $last_handshake = (string) get_option(Plugin::OPTION_LAST_HANDSHAKE, '');
+        $feature_packs = get_option(Plugin::OPTION_FEATURE_PACKS, []);
+        if (!is_array($feature_packs)) $feature_packs = [];
+
+        $connected = Plugin::is_connected();
+        $active_modules = 0;
+        foreach ($feature_packs as $pack) {
+            if (is_array($pack) && !empty($pack['enabled'])) $active_modules++;
+        }
+        ?>
+        <h1 class="pc-content__title"><?php esc_html_e('Tableau de bord', 'pratcom-connect-bridge'); ?></h1>
+        <p class="pc-content__subtitle">
+            <?php esc_html_e('Vue d\'ensemble de votre connexion a Pratcom Connect.', 'pratcom-connect-bridge'); ?>
+        </p>
+
+        <?php if ($connected): ?>
+            <div class="pc-card">
+                <h2 class="pc-card__title"><?php esc_html_e('Connexion active', 'pratcom-connect-bridge'); ?></h2>
+                <div class="pc-card__row">
+                    <span class="pc-card__label"><?php esc_html_e('Workspace', 'pratcom-connect-bridge'); ?></span>
+                    <span class="pc-card__value"><?php echo esc_html($workspace_slug); ?></span>
                 </div>
-            <?php elseif ($has_key && in_array($status, ['error', 'revoked'], true)): ?>
-                <div class="card" style="max-width: 720px; border-left: 4px solid #d63638;">
-                    <h2><?php echo esc_html($status === 'revoked' ? __('Cle revoquee', 'pratcom-connect-bridge') : __('Erreur', 'pratcom-connect-bridge')); ?></h2>
-                    <p><?php echo esc_html($last_error); ?></p>
-                    <p><code><?php echo esc_html($prefix); ?>...<?php echo esc_html($last_four); ?></code></p>
-                    <div style="display: flex; gap: 8px;">
-                        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline;">
-                            <input type="hidden" name="action" value="pratcom_connect_bridge_check_now" />
-                            <?php wp_nonce_field(self::NONCE_CHECK); ?>
-                            <button type="submit" class="button"><?php esc_html_e('Re-essayer', 'pratcom-connect-bridge'); ?></button>
-                        </form>
-                        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline;">
-                            <input type="hidden" name="action" value="pratcom_connect_bridge_disconnect" />
-                            <?php wp_nonce_field(self::NONCE_DISCONNECT); ?>
-                            <button type="submit" class="button"><?php esc_html_e('Effacer la cle', 'pratcom-connect-bridge'); ?></button>
-                        </form>
-                    </div>
+                <div class="pc-card__row">
+                    <span class="pc-card__label"><?php esc_html_e('Modules actifs', 'pratcom-connect-bridge'); ?></span>
+                    <span class="pc-card__value"><?php echo esc_html((string) $active_modules); ?></span>
                 </div>
-            <?php else: ?>
-                <p><?php esc_html_e('Coller la cle API fournie par Pratcom Media pour activer les modules Pratcom Connect sur ce site.', 'pratcom-connect-bridge'); ?></p>
+                <div class="pc-card__row">
+                    <span class="pc-card__label"><?php esc_html_e('Dernier handshake', 'pratcom-connect-bridge'); ?></span>
+                    <span class="pc-card__value"><?php echo esc_html($last_handshake ?: '—'); ?></span>
+                </div>
+                <div class="pc-actions">
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=' . self::SLUG_MODULES)); ?>" class="pc-btn pc-btn--primary">
+                        <?php esc_html_e('Gerer les modules', 'pratcom-connect-bridge'); ?>
+                    </a>
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=' . self::SLUG_CONNECTION)); ?>" class="pc-btn pc-btn--secondary">
+                        <?php esc_html_e('Voir la connexion', 'pratcom-connect-bridge'); ?>
+                    </a>
+                </div>
+            </div>
+        <?php else: ?>
+            <div class="pc-card">
+                <h2 class="pc-card__title"><?php esc_html_e('Bienvenue dans Pratcom Connect', 'pratcom-connect-bridge'); ?></h2>
+                <p style="color: var(--pc-text-muted); margin: 0 0 16px 0;">
+                    <?php esc_html_e('Connectez ce site a Pratcom Connect pour activer les modules (Chat IA, Forms, Privacy) via une seule cle API fournie par Pratcom Media.', 'pratcom-connect-bridge'); ?>
+                </p>
+                <div class="pc-actions">
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=' . self::SLUG_CONNECTION)); ?>" class="pc-btn pc-btn--primary">
+                        <?php esc_html_e('Se connecter', 'pratcom-connect-bridge'); ?>
+                    </a>
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=' . self::SLUG_MODULES)); ?>" class="pc-btn pc-btn--secondary">
+                        <?php esc_html_e('Voir les modules', 'pratcom-connect-bridge'); ?>
+                    </a>
+                </div>
+            </div>
+        <?php endif; ?>
+        <?php
+    }
+
+    private function section_modules(): void
+    {
+        $feature_packs = get_option(Plugin::OPTION_FEATURE_PACKS, []);
+        if (!is_array($feature_packs)) $feature_packs = [];
+
+        $modules = [
+            'chat' => [
+                'label' => __('Connect Chat', 'pratcom-connect-bridge'),
+                'short' => 'C',
+                'desc'  => __('Chatbot IA multilingue 24/7 avec base de connaissances RAG par client.', 'pratcom-connect-bridge'),
+                'soon'  => false,
+            ],
+            'forms' => [
+                'label' => __('Connect Forms', 'pratcom-connect-bridge'),
+                'short' => 'F',
+                'desc'  => __('Formulaires intelligents avec scoring de leads et routage automatique.', 'pratcom-connect-bridge'),
+                'soon'  => true,
+            ],
+            'privacy' => [
+                'label' => __('Connect Privacy', 'pratcom-connect-bridge'),
+                'short' => 'P',
+                'desc'  => __('Banniere de consentement Loi 25 et catalogue de cookies automatique.', 'pratcom-connect-bridge'),
+                'soon'  => true,
+            ],
+        ];
+        ?>
+        <h1 class="pc-content__title"><?php esc_html_e('Modules', 'pratcom-connect-bridge'); ?></h1>
+        <p class="pc-content__subtitle">
+            <?php esc_html_e('Modules Pratcom Connect disponibles sur ce site WordPress.', 'pratcom-connect-bridge'); ?>
+        </p>
+
+        <div class="pc-modules-grid">
+            <?php foreach ($modules as $key => $mod):
+                $is_active = isset($feature_packs[$key]['enabled']) && (bool) $feature_packs[$key]['enabled'];
+                $is_soon = (bool) $mod['soon'];
+
+                if ($is_active) {
+                    $badge_class = 'active';
+                    $badge_label = __('Actif', 'pratcom-connect-bridge');
+                    $note = __('Gere par Pratcom Media via la cle API.', 'pratcom-connect-bridge');
+                } elseif ($is_soon) {
+                    $badge_class = 'soon';
+                    $badge_label = __('Bientot', 'pratcom-connect-bridge');
+                    $note = __('Disponible dans une future mise a jour.', 'pratcom-connect-bridge');
+                } else {
+                    $badge_class = 'inactive';
+                    $badge_label = __('Inactif', 'pratcom-connect-bridge');
+                    $note = __('Contactez Pratcom Media pour activer.', 'pratcom-connect-bridge');
+                }
+                $card_class = $is_soon ? 'pc-module-card pc-module-card--soon' : 'pc-module-card';
+                ?>
+                <article class="<?php echo esc_attr($card_class); ?>">
+                    <div class="pc-module-card__header">
+                        <div class="pc-module-card__icon"><?php echo esc_html($mod['short']); ?></div>
+                        <h3 class="pc-module-card__title"><?php echo esc_html($mod['label']); ?></h3>
+                        <span class="pc-module-card__badge pc-module-card__badge--<?php echo esc_attr($badge_class); ?>">
+                            <?php echo esc_html($badge_label); ?>
+                        </span>
+                    </div>
+                    <p class="pc-module-card__desc"><?php echo esc_html($mod['desc']); ?></p>
+                    <p class="pc-module-card__note"><?php echo esc_html($note); ?></p>
+                </article>
+            <?php endforeach; ?>
+        </div>
+        <?php
+    }
+
+    private function section_connection(): void
+    {
+        $status = (string) get_option(Plugin::OPTION_STATUS, 'disconnected');
+        $prefix = (string) get_option(Plugin::OPTION_KEY_PREFIX, '');
+        $last_four = (string) get_option(Plugin::OPTION_KEY_LAST_FOUR, '');
+        $workspace_slug = (string) get_option(Plugin::OPTION_WORKSPACE_SLUG, '');
+        $workspace_id = (string) get_option(Plugin::OPTION_WORKSPACE_ID, '');
+        $last_handshake = (string) get_option(Plugin::OPTION_LAST_HANDSHAKE, '');
+        $last_error = (string) get_option(Plugin::OPTION_LAST_ERROR, '');
+        $connected = Plugin::is_connected();
+        $has_key = !empty(Plugin::get_api_key());
+        ?>
+        <h1 class="pc-content__title"><?php esc_html_e('Connexion', 'pratcom-connect-bridge'); ?></h1>
+        <p class="pc-content__subtitle">
+            <?php esc_html_e('Gerez la liaison entre ce site et Pratcom Connect.', 'pratcom-connect-bridge'); ?>
+        </p>
+
+        <?php if ($connected): ?>
+            <div class="pc-card">
+                <h2 class="pc-card__title"><?php esc_html_e('Connexion active', 'pratcom-connect-bridge'); ?></h2>
+                <div class="pc-card__row">
+                    <span class="pc-card__label"><?php esc_html_e('Workspace', 'pratcom-connect-bridge'); ?></span>
+                    <span class="pc-card__value"><?php echo esc_html($workspace_slug); ?></span>
+                </div>
+                <div class="pc-card__row">
+                    <span class="pc-card__label"><?php esc_html_e('Workspace ID', 'pratcom-connect-bridge'); ?></span>
+                    <span class="pc-card__value"><?php echo esc_html($workspace_id); ?></span>
+                </div>
+                <div class="pc-card__row">
+                    <span class="pc-card__label"><?php esc_html_e('Cle API', 'pratcom-connect-bridge'); ?></span>
+                    <span class="pc-card__value"><?php echo esc_html($prefix); ?>&hellip;<?php echo esc_html($last_four); ?></span>
+                </div>
+                <div class="pc-card__row">
+                    <span class="pc-card__label"><?php esc_html_e('Dernier handshake', 'pratcom-connect-bridge'); ?></span>
+                    <span class="pc-card__value"><?php echo esc_html($last_handshake ?: '—'); ?></span>
+                </div>
+
+                <div class="pc-actions">
+                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline;">
+                        <input type="hidden" name="action" value="pratcom_connect_bridge_check_now" />
+                        <?php wp_nonce_field(self::NONCE_CHECK); ?>
+                        <button type="submit" class="pc-btn pc-btn--secondary">
+                            <?php esc_html_e('Verifier maintenant', 'pratcom-connect-bridge'); ?>
+                        </button>
+                    </form>
+                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline;">
+                        <input type="hidden" name="action" value="pratcom_connect_bridge_disconnect" />
+                        <?php wp_nonce_field(self::NONCE_DISCONNECT); ?>
+                        <button type="submit" class="pc-btn pc-btn--danger"
+                            onclick="return confirm('<?php echo esc_js(__('Confirmer la deconnexion ?', 'pratcom-connect-bridge')); ?>')">
+                            <?php esc_html_e('Se deconnecter', 'pratcom-connect-bridge'); ?>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        <?php elseif ($has_key && in_array($status, ['error', 'revoked'], true)): ?>
+            <div class="pc-card" style="border-left: 4px solid var(--pc-danger);">
+                <h2 class="pc-card__title">
+                    <?php echo esc_html($status === 'revoked'
+                        ? __('Cle revoquee', 'pratcom-connect-bridge')
+                        : __('Erreur de connexion', 'pratcom-connect-bridge')); ?>
+                </h2>
+                <p style="color: var(--pc-text-muted);"><?php echo esc_html($last_error); ?></p>
+                <p><span class="pc-card__value"><?php echo esc_html($prefix); ?>&hellip;<?php echo esc_html($last_four); ?></span></p>
+                <div class="pc-actions">
+                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline;">
+                        <input type="hidden" name="action" value="pratcom_connect_bridge_check_now" />
+                        <?php wp_nonce_field(self::NONCE_CHECK); ?>
+                        <button type="submit" class="pc-btn pc-btn--primary">
+                            <?php esc_html_e('Re-essayer', 'pratcom-connect-bridge'); ?>
+                        </button>
+                    </form>
+                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline;">
+                        <input type="hidden" name="action" value="pratcom_connect_bridge_disconnect" />
+                        <?php wp_nonce_field(self::NONCE_DISCONNECT); ?>
+                        <button type="submit" class="pc-btn pc-btn--danger">
+                            <?php esc_html_e('Effacer la cle', 'pratcom-connect-bridge'); ?>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        <?php else: ?>
+            <div class="pc-card">
+                <h2 class="pc-card__title"><?php esc_html_e('Connecter ce site', 'pratcom-connect-bridge'); ?></h2>
+                <p style="color: var(--pc-text-muted); margin: 0 0 16px 0;">
+                    <?php esc_html_e('Collez la cle API fournie par Pratcom Media. Format : pck_workspace_xxxx (48 caracteres).', 'pratcom-connect-bridge'); ?>
+                </p>
 
                 <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                     <input type="hidden" name="action" value="pratcom_connect_bridge_connect" />
                     <?php wp_nonce_field(self::NONCE_CONNECT); ?>
-                    <table class="form-table" role="presentation">
-                        <tr>
-                            <th scope="row"><label for="pratcom_api_key"><?php esc_html_e('Cle API', 'pratcom-connect-bridge'); ?></label></th>
-                            <td>
-                                <input type="password" id="pratcom_api_key" name="pratcom_api_key" class="regular-text"
-                                    placeholder="pck_workspace-slug_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off" required />
-                                <p class="description"><?php esc_html_e('Format: pck_workspace_xxxx (48 caracteres).', 'pratcom-connect-bridge'); ?></p>
-                            </td>
-                        </tr>
-                    </table>
-                    <p class="submit">
-                        <button type="submit" class="button button-primary"><?php esc_html_e('Connecter', 'pratcom-connect-bridge'); ?></button>
-                    </p>
-                </form>
-            <?php endif; ?>
 
-            <p class="description" style="margin-top: 32px;">
-                <?php echo wp_kses_post(__('Documentation : <a href="https://docs.pratcom.net/connect/bridge" target="_blank">docs.pratcom.net/connect/bridge</a>', 'pratcom-connect-bridge')); ?>
+                    <div class="pc-form-field">
+                        <label for="pratcom_api_key" class="pc-form-label">
+                            <?php esc_html_e('Cle API', 'pratcom-connect-bridge'); ?>
+                        </label>
+                        <input type="password" id="pratcom_api_key" name="pratcom_api_key" class="pc-form-input"
+                            placeholder="pck_workspace-slug_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                            autocomplete="off" required />
+                        <p class="pc-form-help">
+                            <?php esc_html_e('Cette cle est stockee localement et utilisee uniquement pour authentifier ce site aupres de l\'API Pratcom Connect.', 'pratcom-connect-bridge'); ?>
+                        </p>
+                    </div>
+
+                    <div class="pc-actions">
+                        <button type="submit" class="pc-btn pc-btn--primary">
+                            <?php esc_html_e('Connecter', 'pratcom-connect-bridge'); ?>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        <?php endif; ?>
+        <?php
+    }
+
+    private function section_help(): void
+    {
+        ?>
+        <h1 class="pc-content__title"><?php esc_html_e('Aide', 'pratcom-connect-bridge'); ?></h1>
+        <p class="pc-content__subtitle">
+            <?php esc_html_e('Documentation, support et informations systeme.', 'pratcom-connect-bridge'); ?>
+        </p>
+
+        <div class="pc-card">
+            <h2 class="pc-card__title"><?php esc_html_e('Documentation', 'pratcom-connect-bridge'); ?></h2>
+            <p style="color: var(--pc-text-muted); margin: 0 0 12px 0;">
+                <?php esc_html_e('Guide complet d\'installation, de connexion et de gestion des modules.', 'pratcom-connect-bridge'); ?>
             </p>
+            <div class="pc-actions">
+                <a href="https://docs.pratcom.net/connect/bridge" target="_blank" rel="noopener" class="pc-btn pc-btn--secondary">
+                    <?php esc_html_e('Ouvrir la documentation', 'pratcom-connect-bridge'); ?>
+                </a>
+            </div>
+        </div>
+
+        <div class="pc-card">
+            <h2 class="pc-card__title"><?php esc_html_e('Support', 'pratcom-connect-bridge'); ?></h2>
+            <p style="color: var(--pc-text-muted); margin: 0 0 12px 0;">
+                <?php esc_html_e('Pour toute question ou demande de support, contactez Pratcom Media :', 'pratcom-connect-bridge'); ?>
+            </p>
+            <div class="pc-actions">
+                <a href="mailto:support@pratcom.net" class="pc-btn pc-btn--secondary">support@pratcom.net</a>
+            </div>
+        </div>
+
+        <div class="pc-card">
+            <h2 class="pc-card__title"><?php esc_html_e('Systeme', 'pratcom-connect-bridge'); ?></h2>
+            <div class="pc-card__row">
+                <span class="pc-card__label"><?php esc_html_e('Version du plugin', 'pratcom-connect-bridge'); ?></span>
+                <span class="pc-card__value">v<?php echo esc_html(PRATCOM_CONNECT_BRIDGE_VERSION); ?></span>
+            </div>
+            <div class="pc-card__row">
+                <span class="pc-card__label"><?php esc_html_e('API endpoint', 'pratcom-connect-bridge'); ?></span>
+                <span class="pc-card__value"><?php echo esc_html(PRATCOM_CONNECT_BRIDGE_API_BASE); ?></span>
+            </div>
+            <div class="pc-card__row">
+                <span class="pc-card__label"><?php esc_html_e('Loader URL', 'pratcom-connect-bridge'); ?></span>
+                <span class="pc-card__value"><?php echo esc_html(PRATCOM_CONNECT_BRIDGE_LOADER_URL); ?></span>
+            </div>
+            <div class="pc-actions">
+                <a href="<?php echo esc_url(admin_url('plugins.php')); ?>" class="pc-btn pc-btn--secondary">
+                    <?php esc_html_e('Verifier les mises a jour', 'pratcom-connect-bridge'); ?>
+                </a>
+            </div>
         </div>
         <?php
     }
@@ -152,7 +485,7 @@ class SettingsPage
 
         $raw_key = isset($_POST['pratcom_api_key']) ? trim(wp_unslash($_POST['pratcom_api_key'])) : '';
         if (!preg_match('/^pck_[a-z0-9-]+_[A-Za-z0-9]{32}$/', $raw_key)) {
-            $this->redirect_with_notice('error', __('Format de cle invalide.', 'pratcom-connect-bridge'));
+            $this->redirect_with_notice(self::SLUG_CONNECTION, 'error', __('Format de cle invalide.', 'pratcom-connect-bridge'));
         }
 
         $domain = wp_parse_url(home_url(), PHP_URL_HOST);
@@ -164,7 +497,7 @@ class SettingsPage
             $msg = sprintf('%s (HTTP %s)', $err, $res['http_code'] ?? '?');
             update_option(Plugin::OPTION_STATUS, 'error');
             update_option(Plugin::OPTION_LAST_ERROR, $msg);
-            $this->redirect_with_notice('error', $msg);
+            $this->redirect_with_notice(self::SLUG_CONNECTION, 'error', $msg);
         }
 
         preg_match('/^(pck_[a-z0-9-]+_)([A-Za-z0-9]{32})$/', $raw_key, $m);
@@ -182,7 +515,7 @@ class SettingsPage
         delete_option(Plugin::OPTION_LAST_ERROR);
 
         HealthCheck::schedule();
-        $this->redirect_with_notice('connected', '');
+        $this->redirect_with_notice(self::SLUG, 'connected', '');
     }
 
     public function handle_disconnect(): void
@@ -201,7 +534,7 @@ class SettingsPage
         update_option(Plugin::OPTION_STATUS, 'disconnected');
 
         HealthCheck::unschedule();
-        $this->redirect_with_notice('disconnected', '');
+        $this->redirect_with_notice(self::SLUG_CONNECTION, 'disconnected', '');
     }
 
     public function handle_check_now(): void
@@ -211,16 +544,16 @@ class SettingsPage
 
         $hc = new HealthCheck();
         $res = $hc->run();
-        $this->redirect_with_notice('checked', $res['status'] ?? 'unknown');
+        $this->redirect_with_notice(self::SLUG_CONNECTION, 'checked', $res['status'] ?? 'unknown');
     }
 
-    private function redirect_with_notice(string $notice, string $msg): void
+    private function redirect_with_notice(string $page_slug, string $notice, string $msg): void
     {
         $url = add_query_arg([
-            'page' => self::SLUG,
+            'page'           => $page_slug,
             'pratcom_notice' => $notice,
-            'pratcom_msg' => $msg,
-        ], admin_url('options-general.php'));
+            'pratcom_msg'    => $msg,
+        ], admin_url('admin.php'));
         wp_safe_redirect($url);
         exit;
     }
