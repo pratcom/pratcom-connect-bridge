@@ -19,10 +19,24 @@ class Plugin
         if (is_admin()) {
             new Admin\SettingsPage();
             new Admin\Notices();
+
+            // Lien "Reglages" a cote de "Desactiver" dans la liste des plugins
+            $basename = plugin_basename(PRATCOM_CONNECT_BRIDGE_FILE);
+            add_filter("plugin_action_links_{$basename}", [self::class, 'add_settings_link']);
         }
 
         new Loader();
         new HealthCheck();
+    }
+
+    public static function add_settings_link(array $links): array
+    {
+        $url = admin_url('admin.php?page=pratcom-connect');
+        $settings_link = '<a href="' . esc_url($url) . '">'
+            . esc_html__('Reglages', 'pratcom-connect-bridge')
+            . '</a>';
+        array_unshift($links, $settings_link);
+        return $links;
     }
 
     public static function on_activate(): void
