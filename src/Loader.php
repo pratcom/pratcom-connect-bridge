@@ -6,11 +6,13 @@ namespace Pratcom\Connect\Bridge;
  * Injection du loader Pratcom Connect dans le <head>.
  *
  * Pattern V2 :
- *   1. Inline script window.__pratcomConnect = { workspaceId, workspaceSlug, featurePacks }
+ *   1. Inline script window.__pratcomConnect = { workspaceId, workspaceSlug, featurePacks, theme }
  *   2. <script src="connect.pratcom.net/loader.js" defer>
  *
  * Le loader.js cote serveur lit window.__pratcomConnect au boot et charge
  * dynamiquement les bundles selon les feature_packs actifs (chat, privacy, etc.).
+ * `theme` (palette de marque) est lu par privacy.js (+ futurs modules) pour
+ * harmoniser les couleurs avec celles du client — presentation uniquement.
  */
 class Loader
 {
@@ -31,12 +33,16 @@ class Loader
         if (!is_array($feature_packs)) {
             $feature_packs = [];
         }
+        $theme = Plugin::get_theme();
 
         $config = [
             'workspaceId' => $workspace_id,
             'workspaceSlug' => $workspace_slug,
             'featurePacks' => $feature_packs,
         ];
+        if (!empty($theme['primary'])) {
+            $config['theme'] = $theme;
+        }
         $config_json = wp_json_encode($config, JSON_UNESCAPED_SLASHES);
 
         $loader_url = PRATCOM_CONNECT_BRIDGE_LOADER_URL;

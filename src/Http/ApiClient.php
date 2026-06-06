@@ -2,6 +2,8 @@
 
 namespace Pratcom\Connect\Bridge\Http;
 
+use Pratcom\Connect\Bridge\Plugin;
+
 /**
  * Client HTTP vers https://api.connect.pratcom.net.
  * Utilise wp_remote_request pour cooperer avec les filtres WP.
@@ -25,6 +27,17 @@ class ApiClient
             'php_version' => PHP_VERSION,
             'plugins_count' => count((array) get_option('active_plugins', [])),
         ];
+
+        // Pousse la palette de marque au serveur (persistee workspace.settings.theme).
+        $theme = Plugin::get_theme();
+        if (!empty($theme['primary'])) {
+            $payload = ['primary' => $theme['primary']];
+            if (!empty($theme['onPrimary'])) {
+                $payload['onPrimary'] = $theme['onPrimary'];
+            }
+            $body['theme'] = $payload;
+        }
+
         return $this->request('POST', '/api/bridge/handshake', $body);
     }
 
