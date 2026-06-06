@@ -13,6 +13,9 @@ class Plugin
     public const OPTION_LAST_HANDSHAKE = 'pratcom_connect_bridge_last_handshake';
     public const OPTION_STATUS = 'pratcom_connect_bridge_status'; // connected / disconnected / error / revoked
     public const OPTION_LAST_ERROR = 'pratcom_connect_bridge_last_error';
+    // Palette de marque (presentation) : { primary: '#hex', onPrimary?: '#hex' }
+    // Injectee dans window.__pratcomConnect.theme et poussee au serveur au handshake.
+    public const OPTION_THEME = 'pratcom_connect_bridge_theme';
 
     public static function boot(): void
     {
@@ -58,6 +61,7 @@ class Plugin
             self::OPTION_LAST_HANDSHAKE,
             self::OPTION_STATUS,
             self::OPTION_LAST_ERROR,
+            self::OPTION_THEME,
         ];
         foreach ($options as $opt) {
             delete_option($opt);
@@ -81,5 +85,12 @@ class Plugin
     {
         $v = get_option(self::OPTION_API_KEY_PLAINTEXT);
         return $v ? (string) $v : null;
+    }
+
+    /** @return array{primary?: string, onPrimary?: string} */
+    public static function get_theme(): array
+    {
+        $v = get_option(self::OPTION_THEME, []);
+        return is_array($v) ? $v : [];
     }
 }
