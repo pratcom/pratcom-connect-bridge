@@ -30,6 +30,7 @@ class Plugin
 
         new Loader();
         new HealthCheck();
+        new Forms\Shortcode();
     }
 
     public static function add_settings_link(array $links): array
