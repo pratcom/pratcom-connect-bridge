@@ -1,39 +1,51 @@
-name: Release plugin .zip
+name: Build & attach plugin zip
+
+# A chaque release publiee sur GitHub, construit un .zip complet du plugin
+# (avec le dossier vendor/ resolu par Composer) et le joint a la release.
+# C'est ce .zip que le Plugin Update Checker telecharge (enableReleaseAssets).
+# Sans cet asset, WordPress installe un paquet incomplet -> erreur fatale.
 
 on:
-  push:
-    tags:
-      - 'v*.*.*'
+  release:
+    types: [published]
+
+permissions:
+  contents: write
 
 jobs:
-  build-and-release:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup PHP
+      - name: Setup PHP 8.1 + Composer
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.1'
-          tools: composer:v2
+          tools: composer
 
-      - name: Composer install (prod only)
-        run: composer install --no-dev --optimize-autoloader --no-interaction
+      - name: Install production dependencies (with vendor/)
+        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
-      - name: Build plugin .zip
+      - name: Assemble plugin folder
         run: |
-          mkdir -p build
-          STAGE=build/pratcom-connect-bridge
-          mkdir -p "$STAGE"
-          rsync -a --exclude-from=.distignore ./ "$STAGE/"
-          (cd build && zip -r pratcom-connect-bridge.zip pratcom-connect-bridge)
-          ls -la build/
+          mkdir -p build/pratcom-connect-bridge
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='build' \
+            --exclude='tests' \
+            --exclude='.gitignore' \
+            --exclude='composer.lock' \
+            ./ build/pratcom-connect-bridge/
 
-      - name: Create release + upload asset
+      - name: Create zip
+        run: |
+          cd build
+          zip -r pratcom-connect-bridge.zip pratcom-connect-bridge
+
+      - name: Attach zip to the release
         uses: softprops/action-gh-release@v2
         with:
           files: build/pratcom-connect-bridge.zip
-          generate_release_notes: true
