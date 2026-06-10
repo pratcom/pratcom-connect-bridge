@@ -52,6 +52,19 @@ class ApiClient
         return $this->request('POST', '/api/bridge/events', ['events' => $events], $api_key);
     }
 
+    /**
+     * Liste les formulaires du workspace (onglet Formulaires, O2).
+     * Endpoint attendu : GET /api/bridge/forms (Bearer pck_, lecture seule)
+     * -> { ok: true, forms: [{ slug, name, type, status, updated_at }] }
+     * Demande inter-chantier ouverte (Plugin .org -> Forms) : tant que la
+     * route n'existe pas, l'appel retourne http_code 404 et l'onglet
+     * affiche un repli gracieux.
+     */
+    public function get_forms(string $api_key): array
+    {
+        return $this->request('GET', '/api/bridge/forms', null, $api_key);
+    }
+
     public function get_version(): array
     {
         return $this->request('GET', '/api/bridge/version');
