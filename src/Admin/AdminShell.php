@@ -53,8 +53,8 @@ class AdminShell
     public function register_menu(): void
     {
         add_menu_page(
-            __('Pratcom Connect', 'pratcom-connect-bridge'),
-            __('Pratcom Connect', 'pratcom-connect-bridge'),
+            __('Pratcom Connect', 'pratcom-connect'),
+            __('Pratcom Connect', 'pratcom-connect'),
             'manage_options',
             self::SLUG,
             [$this, 'render_current'],
@@ -112,10 +112,10 @@ class AdminShell
         $logo_url = PRATCOM_CONNECT_BRIDGE_URL . 'assets/img/logo-pratcom-connect.svg';
 
         $status_labels = [
-            'connected' => __('Connecte', 'pratcom-connect-bridge'),
-            'disconnected' => __('Non connecte', 'pratcom-connect-bridge'),
-            'error' => __('Erreur', 'pratcom-connect-bridge'),
-            'revoked' => __('Cle revoquee', 'pratcom-connect-bridge'),
+            'connected' => __('Connecte', 'pratcom-connect'),
+            'disconnected' => __('Non connecte', 'pratcom-connect'),
+            'error' => __('Erreur', 'pratcom-connect'),
+            'revoked' => __('Cle revoquee', 'pratcom-connect'),
         ];
         ?>
         <div class="wrap pc-admin-wrap">
@@ -158,12 +158,12 @@ class AdminShell
         if (!$notice) return;
 
         $map = [
-            'connected'    => ['success', __('Connecte avec succes.', 'pratcom-connect-bridge')],
-            'disconnected' => ['info', __('Plugin deconnecte. La cle API a ete retiree localement.', 'pratcom-connect-bridge')],
-            'checked'      => ['success', sprintf(__('Verification effectuee. Statut : %s', 'pratcom-connect-bridge'), $msg)],
-            'theme_saved'  => ['success', __('Couleurs enregistrees et synchronisees.', 'pratcom-connect-bridge')],
-            'forms_refreshed' => ['success', __('Liste des formulaires actualisee.', 'pratcom-connect-bridge')],
-            'error'        => ['error', sprintf(__('Erreur : %s', 'pratcom-connect-bridge'), $msg)],
+            'connected'    => ['success', __('Connecte avec succes.', 'pratcom-connect')],
+            'disconnected' => ['info', __('Plugin deconnecte. La cle API a ete retiree localement.', 'pratcom-connect')],
+            'checked'      => ['success', sprintf(__('Verification effectuee. Statut : %s', 'pratcom-connect'), $msg)],
+            'theme_saved'  => ['success', __('Couleurs enregistrees et synchronisees.', 'pratcom-connect')],
+            'forms_refreshed' => ['success', __('Liste des formulaires actualisee.', 'pratcom-connect')],
+            'error'        => ['error', sprintf(__('Erreur : %s', 'pratcom-connect'), $msg)],
         ];
         if (!isset($map[$notice])) return;
         [$type, $text] = $map[$notice];

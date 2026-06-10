@@ -152,7 +152,7 @@ class LocalRegistry
     public function handle_export(): void
     {
         if (!current_user_can('manage_options')) {
-            wp_die(esc_html__('Permission refusée.', 'pratcom-connect-bridge'));
+            wp_die(esc_html__('Permission refusée.', 'pratcom-connect'));
         }
         check_admin_referer(self::EXPORT_ACTION);
 

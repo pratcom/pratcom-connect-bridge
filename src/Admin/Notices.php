@@ -25,9 +25,9 @@ class Notices
             ?>
             <div class="notice notice-error">
                 <p>
-                    <strong><?php esc_html_e('Pratcom Connect : cle revoquee.', 'pratcom-connect-bridge'); ?></strong><br>
-                    <?php echo esc_html($last_error ?: __('La cle API n\'est plus valide. Le loader Pratcom Connect ne se charge plus sur le site.', 'pratcom-connect-bridge')); ?><br>
-                    <a href="<?php echo esc_url($settings_url); ?>"><?php esc_html_e('Reglages > Pratcom Connect', 'pratcom-connect-bridge'); ?></a>
+                    <strong><?php esc_html_e('Pratcom Connect : cle revoquee.', 'pratcom-connect'); ?></strong><br>
+                    <?php echo esc_html($last_error ?: __('La cle API n\'est plus valide. Le loader Pratcom Connect ne se charge plus sur le site.', 'pratcom-connect')); ?><br>
+                    <a href="<?php echo esc_url($settings_url); ?>"><?php esc_html_e('Reglages > Pratcom Connect', 'pratcom-connect'); ?></a>
                 </p>
             </div>
             <?php
@@ -35,9 +35,9 @@ class Notices
             ?>
             <div class="notice notice-warning">
                 <p>
-                    <strong><?php esc_html_e('Pratcom Connect : erreur de connexion.', 'pratcom-connect-bridge'); ?></strong>
+                    <strong><?php esc_html_e('Pratcom Connect : erreur de connexion.', 'pratcom-connect'); ?></strong>
                     <?php echo esc_html($last_error); ?>
-                    <a href="<?php echo esc_url($settings_url); ?>"><?php esc_html_e('Reverifier la connexion', 'pratcom-connect-bridge'); ?></a>
+                    <a href="<?php echo esc_url($settings_url); ?>"><?php esc_html_e('Reverifier la connexion', 'pratcom-connect'); ?></a>
                 </p>
             </div>
             <?php

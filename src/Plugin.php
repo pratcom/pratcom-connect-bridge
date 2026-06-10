@@ -43,7 +43,7 @@ class Plugin
     {
         $url = admin_url('admin.php?page=pratcom-connect');
         $settings_link = '<a href="' . esc_url($url) . '">'
-            . esc_html__('Reglages', 'pratcom-connect-bridge')
+            . esc_html__('Reglages', 'pratcom-connect')
             . '</a>';
         array_unshift($links, $settings_link);
         return $links;

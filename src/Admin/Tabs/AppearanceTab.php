@@ -31,7 +31,7 @@ class AppearanceTab extends AbstractTab
 
     public function label(): string
     {
-        return __('Apparence', 'pratcom-connect-bridge');
+        return __('Apparence', 'pratcom-connect');
     }
 
     public function icon(): string
@@ -50,9 +50,9 @@ class AppearanceTab extends AbstractTab
         $primary = !empty($theme['primary']) ? $theme['primary'] : '#377ba6';
         $on_primary = !empty($theme['onPrimary']) ? $theme['onPrimary'] : '';
         ?>
-        <h1 class="pc-content__title"><?php esc_html_e('Apparence', 'pratcom-connect-bridge'); ?></h1>
+        <h1 class="pc-content__title"><?php esc_html_e('Apparence', 'pratcom-connect'); ?></h1>
         <p class="pc-content__subtitle">
-            <?php esc_html_e('Couleurs de marque utilisees par les modules Pratcom Connect (banniere Privacy, et a venir le chat et les formulaires).', 'pratcom-connect-bridge'); ?>
+            <?php esc_html_e('Couleurs de marque utilisees par les modules Pratcom Connect (banniere Privacy, et a venir le chat et les formulaires).', 'pratcom-connect'); ?>
         </p>
 
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
@@ -60,14 +60,14 @@ class AppearanceTab extends AbstractTab
             <?php wp_nonce_field(self::NONCE_THEME); ?>
 
             <div class="pc-card">
-                <h2 class="pc-card__title"><?php esc_html_e('Palette de marque', 'pratcom-connect-bridge'); ?></h2>
+                <h2 class="pc-card__title"><?php esc_html_e('Palette de marque', 'pratcom-connect'); ?></h2>
                 <p style="color: var(--pc-text-muted); margin: 0 0 18px 0;">
-                    <?php esc_html_e('Choisissez la couleur principale de votre marque. Le texte des boutons est calcule automatiquement pour respecter le contraste (accessibilite WCAG).', 'pratcom-connect-bridge'); ?>
+                    <?php esc_html_e('Choisissez la couleur principale de votre marque. Le texte des boutons est calcule automatiquement pour respecter le contraste (accessibilite WCAG).', 'pratcom-connect'); ?>
                 </p>
 
                 <div class="pc-form-field">
                     <label for="pratcom_primary" class="pc-form-label">
-                        <?php esc_html_e('Couleur principale', 'pratcom-connect-bridge'); ?>
+                        <?php esc_html_e('Couleur principale', 'pratcom-connect'); ?>
                     </label>
                     <div style="display:flex;gap:10px;align-items:center;">
                         <input type="color" id="pratcom_primary" name="primary"
@@ -78,11 +78,11 @@ class AppearanceTab extends AbstractTab
                             pattern="^#[0-9a-fA-F]{6}$" autocomplete="off" />
                         <span id="pratcom_preview"
                             style="display:inline-flex;align-items:center;justify-content:center;min-width:130px;height:40px;padding:0 16px;border-radius:10px;font-weight:600;font-size:13px;">
-                            <?php esc_html_e('Tout accepter', 'pratcom-connect-bridge'); ?>
+                            <?php esc_html_e('Tout accepter', 'pratcom-connect'); ?>
                         </span>
                     </div>
                     <p class="pc-form-help">
-                        <?php esc_html_e('Format hexadecimal, ex : #99BF38.', 'pratcom-connect-bridge'); ?>
+                        <?php esc_html_e('Format hexadecimal, ex : #99BF38.', 'pratcom-connect'); ?>
                     </p>
                 </div>
             </div>
@@ -95,7 +95,7 @@ class AppearanceTab extends AbstractTab
 
             <div class="pc-actions">
                 <button type="submit" class="pc-btn pc-btn--primary">
-                    <?php esc_html_e('Enregistrer les couleurs', 'pratcom-connect-bridge'); ?>
+                    <?php esc_html_e('Enregistrer les couleurs', 'pratcom-connect'); ?>
                 </button>
             </div>
         </form>
@@ -133,7 +133,7 @@ class AppearanceTab extends AbstractTab
 
         $primary = isset($_POST['primary']) ? sanitize_hex_color(wp_unslash($_POST['primary'])) : '';
         if (!$primary) {
-            $this->redirect_with_notice(self::PAGE_SLUG, 'error', __('Couleur invalide.', 'pratcom-connect-bridge'));
+            $this->redirect_with_notice(self::PAGE_SLUG, 'error', __('Couleur invalide.', 'pratcom-connect'));
         }
 
         $theme = ['primary' => $primary];

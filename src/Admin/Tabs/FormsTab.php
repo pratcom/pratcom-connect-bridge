@@ -29,7 +29,7 @@ class FormsTab extends AbstractTab
 
     public function label(): string
     {
-        return __('Formulaires', 'pratcom-connect-bridge');
+        return __('Formulaires', 'pratcom-connect');
     }
 
     public function icon(): string
@@ -45,9 +45,9 @@ class FormsTab extends AbstractTab
     public function render(): void
     {
         ?>
-        <h1 class="pc-content__title"><?php esc_html_e('Formulaires', 'pratcom-connect-bridge'); ?></h1>
+        <h1 class="pc-content__title"><?php esc_html_e('Formulaires', 'pratcom-connect'); ?></h1>
         <p class="pc-content__subtitle">
-            <?php esc_html_e('Formulaires intelligents Connect Forms : inserez-les n\'importe ou avec un shortcode.', 'pratcom-connect-bridge'); ?>
+            <?php esc_html_e('Formulaires intelligents Connect Forms : inserez-les n\'importe ou avec un shortcode.', 'pratcom-connect'); ?>
         </p>
         <?php
 
@@ -72,28 +72,28 @@ class FormsTab extends AbstractTab
         ?>
         <div class="pc-card pc-module-card--locked">
             <h2 class="pc-card__title">
-                <?php esc_html_e('Connect Forms', 'pratcom-connect-bridge'); ?>
+                <?php esc_html_e('Connect Forms', 'pratcom-connect'); ?>
                 <span class="pc-module-card__badge pc-module-card__badge--locked">
-                    <?php esc_html_e('Verrouille', 'pratcom-connect-bridge'); ?>
+                    <?php esc_html_e('Verrouille', 'pratcom-connect'); ?>
                 </span>
             </h2>
             <p style="color: var(--pc-text-muted); margin: 0 0 8px 0;">
-                <?php esc_html_e('Formulaires multi-etapes avec scoring de leads, double opt-in conforme, notifications bilingues et insertion par shortcode — sans aucune extension supplementaire.', 'pratcom-connect-bridge'); ?>
+                <?php esc_html_e('Formulaires multi-etapes avec scoring de leads, double opt-in conforme, notifications bilingues et insertion par shortcode — sans aucune extension supplementaire.', 'pratcom-connect'); ?>
             </p>
             <p class="pc-module-card__note">
-                <?php esc_html_e('Module fourni par le service Pratcom Connect (abonnement requis).', 'pratcom-connect-bridge'); ?>
+                <?php esc_html_e('Module fourni par le service Pratcom Connect (abonnement requis).', 'pratcom-connect'); ?>
             </p>
             <div class="pc-actions pc-module-card__cta">
                 <?php if ($connected): ?>
                     <a href="https://connect.pratcom.net/?utm_source=wp-plugin&utm_medium=forms-tab" target="_blank" rel="noopener" class="pc-btn pc-btn--primary">
-                        <?php esc_html_e('Activer ce module', 'pratcom-connect-bridge'); ?>
+                        <?php esc_html_e('Activer ce module', 'pratcom-connect'); ?>
                     </a>
                 <?php else: ?>
                     <a href="<?php echo esc_url(admin_url('admin.php?page=' . ConnectionTab::PAGE_SLUG)); ?>" class="pc-btn pc-btn--primary">
-                        <?php esc_html_e('Connecter mon compte', 'pratcom-connect-bridge'); ?>
+                        <?php esc_html_e('Connecter mon compte', 'pratcom-connect'); ?>
                     </a>
                     <a href="https://connect.pratcom.net/?utm_source=wp-plugin&utm_medium=forms-tab" target="_blank" rel="noopener" class="pc-btn pc-btn--secondary">
-                        <?php esc_html_e('Decouvrir Connect Forms', 'pratcom-connect-bridge'); ?>
+                        <?php esc_html_e('Decouvrir Connect Forms', 'pratcom-connect'); ?>
                     </a>
                 <?php endif; ?>
             </div>
@@ -107,11 +107,9 @@ class FormsTab extends AbstractTab
         $result = $this->get_forms_cached();
 
         if (!($result['ok'] ?? false)) {
-            // Repli gracieux : la route /api/bridge/forms n'est pas encore
-            // deployee (demande inter-chantiers) ou erreur temporaire.
             ?>
             <div class="pc-notice pc-notice--warning">
-                <?php esc_html_e('La liste des formulaires est momentanement indisponible. Vous pouvez tout de meme inserer un formulaire avec son shortcode :', 'pratcom-connect-bridge'); ?>
+                <?php esc_html_e('La liste des formulaires est momentanement indisponible. Vous pouvez tout de meme inserer un formulaire avec son shortcode :', 'pratcom-connect'); ?>
                 <code>[pratcom_form slug="contact"]</code>
             </div>
             <?php
@@ -123,13 +121,13 @@ class FormsTab extends AbstractTab
         if (!is_array($forms) || $forms === []) {
             ?>
             <div class="pc-card">
-                <h2 class="pc-card__title"><?php esc_html_e('Aucun formulaire', 'pratcom-connect-bridge'); ?></h2>
+                <h2 class="pc-card__title"><?php esc_html_e('Aucun formulaire', 'pratcom-connect'); ?></h2>
                 <p style="color: var(--pc-text-muted); margin: 0 0 12px 0;">
-                    <?php esc_html_e('Aucun formulaire n\'est defini pour ce workspace. Creez-en un depuis votre tableau de bord Pratcom Connect.', 'pratcom-connect-bridge'); ?>
+                    <?php esc_html_e('Aucun formulaire n\'est defini pour ce workspace. Creez-en un depuis votre tableau de bord Pratcom Connect.', 'pratcom-connect'); ?>
                 </p>
                 <div class="pc-actions">
                     <a href="https://connect.pratcom.net/?utm_source=wp-plugin&utm_medium=forms-tab" target="_blank" rel="noopener" class="pc-btn pc-btn--primary">
-                        <?php esc_html_e('Ouvrir Pratcom Connect', 'pratcom-connect-bridge'); ?>
+                        <?php esc_html_e('Ouvrir Pratcom Connect', 'pratcom-connect'); ?>
                     </a>
                 </div>
             </div>
@@ -139,14 +137,14 @@ class FormsTab extends AbstractTab
         }
         ?>
         <div class="pc-card">
-            <h2 class="pc-card__title"><?php esc_html_e('Formulaires du workspace', 'pratcom-connect-bridge'); ?></h2>
+            <h2 class="pc-card__title"><?php esc_html_e('Formulaires du workspace', 'pratcom-connect'); ?></h2>
             <table class="pc-table">
                 <thead>
                     <tr>
-                        <th><?php esc_html_e('Nom', 'pratcom-connect-bridge'); ?></th>
-                        <th><?php esc_html_e('Type', 'pratcom-connect-bridge'); ?></th>
-                        <th><?php esc_html_e('Statut', 'pratcom-connect-bridge'); ?></th>
-                        <th><?php esc_html_e('Shortcode', 'pratcom-connect-bridge'); ?></th>
+                        <th><?php esc_html_e('Nom', 'pratcom-connect'); ?></th>
+                        <th><?php esc_html_e('Type', 'pratcom-connect'); ?></th>
+                        <th><?php esc_html_e('Statut', 'pratcom-connect'); ?></th>
+                        <th><?php esc_html_e('Shortcode', 'pratcom-connect'); ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -172,10 +170,10 @@ class FormsTab extends AbstractTab
                             <td>
                                 <div class="pc-shortcode">
                                     <input type="text" readonly value="<?php echo esc_attr($shortcode); ?>"
-                                        onfocus="this.select();" aria-label="<?php esc_attr_e('Shortcode du formulaire', 'pratcom-connect-bridge'); ?>" />
+                                        onfocus="this.select();" aria-label="<?php esc_attr_e('Shortcode du formulaire', 'pratcom-connect'); ?>" />
                                     <button type="button" class="pc-btn pc-btn--secondary pc-copy-shortcode"
                                         data-shortcode="<?php echo esc_attr($shortcode); ?>">
-                                        <?php esc_html_e('Copier', 'pratcom-connect-bridge'); ?>
+                                        <?php esc_html_e('Copier', 'pratcom-connect'); ?>
                                     </button>
                                 </div>
                             </td>
@@ -184,7 +182,7 @@ class FormsTab extends AbstractTab
                 </tbody>
             </table>
             <p class="pc-form-help" style="margin-top: 10px;">
-                <?php esc_html_e('Astuce : ajoutez lang="en" au shortcode pour forcer la version anglaise, ex. [pratcom_form slug="contact" lang="en"].', 'pratcom-connect-bridge'); ?>
+                <?php esc_html_e('Astuce : ajoutez lang="en" au shortcode pour forcer la version anglaise, ex. [pratcom_form slug="contact" lang="en"].', 'pratcom-connect'); ?>
             </p>
         </div>
         <?php
@@ -197,7 +195,7 @@ class FormsTab extends AbstractTab
                     var sc = btn.getAttribute('data-shortcode');
                     var done = function () {
                         var prev = btn.textContent;
-                        btn.textContent = '<?php echo esc_js(__('Copie !', 'pratcom-connect-bridge')); ?>';
+                        btn.textContent = '<?php echo esc_js(__('Copie !', 'pratcom-connect')); ?>';
                         setTimeout(function () { btn.textContent = prev; }, 1500);
                     };
                     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -222,7 +220,7 @@ class FormsTab extends AbstractTab
             <input type="hidden" name="action" value="pratcom_connect_bridge_forms_refresh" />
             <?php wp_nonce_field(self::NONCE_REFRESH); ?>
             <button type="submit" class="pc-btn pc-btn--secondary">
-                <?php esc_html_e('Actualiser la liste', 'pratcom-connect-bridge'); ?>
+                <?php esc_html_e('Actualiser la liste', 'pratcom-connect'); ?>
             </button>
         </form>
         <?php

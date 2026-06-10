@@ -89,7 +89,7 @@ class ThemePalette
      */
     public static function render_fields(array $theme): void
     {
-        $td = 'pratcom-connect-bridge';
+        $td = 'pratcom-connect';
 
         $primary_dark = !empty($theme['primaryDark']) ? (string) $theme['primaryDark'] : '';
         $secondary    = !empty($theme['secondary']) ? (string) $theme['secondary'] : '';
@@ -101,25 +101,25 @@ class ThemePalette
         $colors = [
             'primaryDark' => [
                 'value' => $primary_dark,
-                'label' => __('Couleur principale (foncee)', 'pratcom-connect-bridge'),
-                'help'  => __('Survol des boutons et bordures actives. Calculee automatiquement si laissee vide.', 'pratcom-connect-bridge'),
+                'label' => __('Couleur principale (foncee)', 'pratcom-connect'),
+                'help'  => __('Survol des boutons et bordures actives. Calculee automatiquement si laissee vide.', 'pratcom-connect'),
             ],
             'secondary' => [
                 'value' => $secondary,
-                'label' => __('Couleur secondaire', 'pratcom-connect-bridge'),
-                'help'  => __('Accent secondaire. Retombe sur la couleur principale si vide.', 'pratcom-connect-bridge'),
+                'label' => __('Couleur secondaire', 'pratcom-connect'),
+                'help'  => __('Accent secondaire. Retombe sur la couleur principale si vide.', 'pratcom-connect'),
             ],
             'text' => [
                 'value' => $text,
-                'label' => __('Couleur du texte', 'pratcom-connect-bridge'),
-                'help'  => __('Texte de base des modules. Calculee pour le contraste si vide.', 'pratcom-connect-bridge'),
+                'label' => __('Couleur du texte', 'pratcom-connect'),
+                'help'  => __('Texte de base des modules. Calculee pour le contraste si vide.', 'pratcom-connect'),
             ],
         ];
         ?>
         <div class="pc-card">
-            <h2 class="pc-card__title"><?php esc_html_e('Palette avancee (optionnel)', 'pratcom-connect-bridge'); ?></h2>
+            <h2 class="pc-card__title"><?php esc_html_e('Palette avancee (optionnel)', 'pratcom-connect'); ?></h2>
             <p style="color: var(--pc-text-muted); margin: 0 0 18px 0;">
-                <?php esc_html_e('Affinez la palette de marque. Tous ces champs sont optionnels : laisses vides, ils sont derives automatiquement de la couleur principale en respectant le contraste WCAG.', 'pratcom-connect-bridge'); ?>
+                <?php esc_html_e('Affinez la palette de marque. Tous ces champs sont optionnels : laisses vides, ils sont derives automatiquement de la couleur principale en respectant le contraste WCAG.', 'pratcom-connect'); ?>
             </p>
 
             <?php foreach ($colors as $key => $field): ?>
@@ -133,7 +133,7 @@ class ThemePalette
                                style="width:48px;height:40px;padding:0;border:1px solid #d0d7dc;border-radius:8px;cursor:pointer;" />
                         <input type="text" class="pc-form-input" name="<?php echo esc_attr($key); ?>_hex"
                                value="<?php echo esc_attr($field['value']); ?>" style="max-width:140px;"
-                               pattern="^#[0-9a-fA-F]{6}$" placeholder="<?php esc_attr_e('(auto)', 'pratcom-connect-bridge'); ?>"
+                               pattern="^#[0-9a-fA-F]{6}$" placeholder="<?php esc_attr_e('(auto)', 'pratcom-connect'); ?>"
                                autocomplete="off"
                                oninput="var p=this.previousElementSibling; if(/^#[0-9a-fA-F]{6}$/.test(this.value)){p.value=this.value;}" />
                     </div>
@@ -143,32 +143,32 @@ class ThemePalette
 
             <div class="pc-form-field">
                 <label for="pratcom_font" class="pc-form-label">
-                    <?php esc_html_e('Police (pile CSS)', 'pratcom-connect-bridge'); ?>
+                    <?php esc_html_e('Police (pile CSS)', 'pratcom-connect'); ?>
                 </label>
                 <input type="text" id="pratcom_font" name="font" class="pc-form-input"
                        value="<?php echo esc_attr($font); ?>"
                        placeholder="Inter, -apple-system, sans-serif" autocomplete="off" />
-                <p class="pc-form-help"><?php esc_html_e('Laissez vide pour la police systeme par defaut.', 'pratcom-connect-bridge'); ?></p>
+                <p class="pc-form-help"><?php esc_html_e('Laissez vide pour la police systeme par defaut.', 'pratcom-connect'); ?></p>
             </div>
 
             <div class="pc-form-field">
                 <label for="pratcom_radius" class="pc-form-label">
-                    <?php esc_html_e('Rayon des coins', 'pratcom-connect-bridge'); ?>
+                    <?php esc_html_e('Rayon des coins', 'pratcom-connect'); ?>
                 </label>
                 <input type="text" id="pratcom_radius" name="radius" class="pc-form-input"
                        value="<?php echo esc_attr($radius); ?>" style="max-width:140px;"
                        pattern="^\d{1,3}(px|rem|em|%)?$" placeholder="10px" autocomplete="off" />
-                <p class="pc-form-help"><?php esc_html_e('Ex : 10px. Par defaut 10px si vide.', 'pratcom-connect-bridge'); ?></p>
+                <p class="pc-form-help"><?php esc_html_e('Ex : 10px. Par defaut 10px si vide.', 'pratcom-connect'); ?></p>
             </div>
 
             <div class="pc-form-field">
                 <label for="pratcom_logoUrl" class="pc-form-label">
-                    <?php esc_html_e('Logo de marque (URL)', 'pratcom-connect-bridge'); ?>
+                    <?php esc_html_e('Logo de marque (URL)', 'pratcom-connect'); ?>
                 </label>
                 <input type="url" id="pratcom_logoUrl" name="logoUrl" class="pc-form-input"
                        value="<?php echo esc_attr($logo_url); ?>"
                        placeholder="https://exemple.com/logo.svg" autocomplete="off" />
-                <p class="pc-form-help"><?php esc_html_e('Affiche par certains modules (optionnel).', 'pratcom-connect-bridge'); ?></p>
+                <p class="pc-form-help"><?php esc_html_e('Affiche par certains modules (optionnel).', 'pratcom-connect'); ?></p>
             </div>
         </div>
         <?php

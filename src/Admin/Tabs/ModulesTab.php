@@ -20,7 +20,7 @@ class ModulesTab extends AbstractTab
 
     public function label(): string
     {
-        return __('Modules', 'pratcom-connect-bridge');
+        return __('Modules', 'pratcom-connect');
     }
 
     public function icon(): string
@@ -36,25 +36,25 @@ class ModulesTab extends AbstractTab
 
         $modules = [
             'chat' => [
-                'label' => __('Connect Chat', 'pratcom-connect-bridge'),
+                'label' => __('Connect Chat', 'pratcom-connect'),
                 'short' => 'C',
-                'desc'  => __('Chatbot IA multilingue 24/7 avec base de connaissances RAG par client.', 'pratcom-connect-bridge'),
+                'desc'  => __('Chatbot IA multilingue 24/7 avec base de connaissances RAG par client.', 'pratcom-connect'),
             ],
             'forms' => [
-                'label' => __('Connect Forms', 'pratcom-connect-bridge'),
+                'label' => __('Connect Forms', 'pratcom-connect'),
                 'short' => 'F',
-                'desc'  => __('Formulaires intelligents avec scoring de leads et routage automatique.', 'pratcom-connect-bridge'),
+                'desc'  => __('Formulaires intelligents avec scoring de leads et routage automatique.', 'pratcom-connect'),
             ],
             'privacy' => [
-                'label' => __('Connect Privacy', 'pratcom-connect-bridge'),
+                'label' => __('Connect Privacy', 'pratcom-connect'),
                 'short' => 'P',
-                'desc'  => __('Banniere de consentement Loi 25 et catalogue de cookies automatique.', 'pratcom-connect-bridge'),
+                'desc'  => __('Banniere de consentement Loi 25 et catalogue de cookies automatique.', 'pratcom-connect'),
             ],
         ];
         ?>
-        <h1 class="pc-content__title"><?php esc_html_e('Modules', 'pratcom-connect-bridge'); ?></h1>
+        <h1 class="pc-content__title"><?php esc_html_e('Modules', 'pratcom-connect'); ?></h1>
         <p class="pc-content__subtitle">
-            <?php esc_html_e('Modules Pratcom Connect disponibles sur ce site WordPress.', 'pratcom-connect-bridge'); ?>
+            <?php esc_html_e('Modules Pratcom Connect disponibles sur ce site WordPress.', 'pratcom-connect'); ?>
         </p>
 
         <div class="pc-modules-grid">
@@ -63,16 +63,16 @@ class ModulesTab extends AbstractTab
 
                 if ($is_active) {
                     $badge_class = 'active';
-                    $badge_label = __('Actif', 'pratcom-connect-bridge');
-                    $note = __('Gere via votre compte Pratcom Connect.', 'pratcom-connect-bridge');
+                    $badge_label = __('Actif', 'pratcom-connect');
+                    $note = __('Gere via votre compte Pratcom Connect.', 'pratcom-connect');
                 } else {
                     // Vitrine O2 : module verrouille, upsell conforme .org
                     // (dans NOS pages uniquement, jamais de notice globale).
                     $badge_class = 'locked';
-                    $badge_label = __('Verrouille', 'pratcom-connect-bridge');
+                    $badge_label = __('Verrouille', 'pratcom-connect');
                     $note = $connected
-                        ? __('Disponible avec un abonnement Pratcom Connect.', 'pratcom-connect-bridge')
-                        : __('Connectez votre compte pour activer ce module.', 'pratcom-connect-bridge');
+                        ? __('Disponible avec un abonnement Pratcom Connect.', 'pratcom-connect')
+                        : __('Connectez votre compte pour activer ce module.', 'pratcom-connect');
                 }
                 ?>
                 <article class="pc-module-card <?php echo $is_active ? '' : 'pc-module-card--locked'; ?>">
@@ -90,11 +90,11 @@ class ModulesTab extends AbstractTab
                             <?php if ($connected): ?>
                                 <a href="<?php echo esc_url('https://connect.pratcom.net/?utm_source=wp-plugin&utm_medium=modules&module=' . $key); ?>"
                                    target="_blank" rel="noopener" class="pc-btn pc-btn--primary">
-                                    <?php esc_html_e('Activer ce module', 'pratcom-connect-bridge'); ?>
+                                    <?php esc_html_e('Activer ce module', 'pratcom-connect'); ?>
                                 </a>
                             <?php else: ?>
                                 <a href="<?php echo esc_url(admin_url('admin.php?page=' . ConnectionTab::PAGE_SLUG)); ?>" class="pc-btn pc-btn--primary">
-                                    <?php esc_html_e('Connecter mon compte', 'pratcom-connect-bridge'); ?>
+                                    <?php esc_html_e('Connecter mon compte', 'pratcom-connect'); ?>
                                 </a>
                             <?php endif; ?>
                         </div>
