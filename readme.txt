@@ -4,61 +4,63 @@ Tags: consent, privacy, cookies, forms, chatbot
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 2.0.0
+Stable tag: 2.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Consentement aux cookies conforme a la Loi 25 (Quebec), gratuit et 100 % local. Modules optionnels : formulaires intelligents et chat IA.
+Free, 100% local cookie consent banner compliant with Quebec's Law 25. Optional paid modules: smart forms and AI chat.
 
 == Description ==
 
-**Pratcom Connect** ajoute a votre site WordPress une banniere de consentement aux cookies conforme a la Loi 25 (Quebec) — gratuitement, sans compte et sans aucun appel a un serveur externe.
+**Pratcom Connect** adds a cookie consent banner to your WordPress site, designed for compliance with Quebec's Law 25 — free, with no account required and no calls to any external server.
 
-= Gratuit (aucun compte requis) =
+The plugin interface and the consent banner are fully bilingual (French and English).
 
-* **Banniere de consentement Loi 25** : categories de cookies (necessaires, analytiques, marketing), textes FR/EN modifiables, design adaptable a votre marque (couleur principale + palette riche, contraste WCAG calcule automatiquement).
-* **Presets des extensions populaires** : cochez les outils que vous utilisez (Google Analytics 4, Meta Pixel, Hotjar, etc.) — la declaration de cookies et les regles de blocage se configurent toutes seules. Suggestion automatique selon les extensions actives sur votre site (detection locale, aucune donnee transmise).
-* **Registre local des consentements** : preuve de consentement stockee dans votre base WordPress, export CSV.
+= Free (no account required) =
 
-= Modules payants (necessitent un compte Pratcom Connect) =
+* **Law 25 consent banner**: cookie categories (necessary, analytics, marketing), editable FR/EN texts, design adaptable to your brand (primary color + rich palette, WCAG contrast computed automatically).
+* **Presets for popular plugins**: check the tools you use (Google Analytics 4, Meta Pixel, Hotjar, and more) — the cookie declaration and blocking rules configure themselves. Automatic suggestions based on the plugins active on your site (local detection, no data transmitted).
+* **Local consent registry**: proof of consent stored in your WordPress database, with CSV export.
 
-* **Privacy Connect** : scan automatique des cookies et traceurs de votre site.
-* **Connect Forms** : formulaires intelligents avec scoring de leads et routage.
-* **Connect Chat** : chatbot IA multilingue 24/7 entraine sur votre contenu.
+= Paid modules (require a Pratcom Connect account) =
 
-Les modules payants sont fournis par le service Pratcom Connect et s'activent en connectant votre compte (cle API). Sans compte, le plugin reste pleinement fonctionnel pour le consentement Loi 25.
+* **Privacy Connect**: automatic scan of your site's cookies and trackers.
+* **Connect Forms**: smart forms with lead scoring and routing.
+* **Connect Chat**: multilingual AI chatbot, available 24/7, trained on your content.
 
-= Service externe (divulgation) =
+Paid modules are provided by the Pratcom Connect service and are enabled by connecting your account (API key). Without an account, the plugin remains fully functional for Law 25 consent.
 
-En version gratuite, **aucune donnee n'est envoyee a un serveur externe** : la banniere, les presets et le registre fonctionnent entierement sur votre site.
+= External service (disclosure) =
 
-Si vous connectez un compte Pratcom Connect (action volontaire), le plugin communique avec le service **api.connect.pratcom.net** (opere par Pratcom Media, Canada) :
+In the free version, **no data is sent to any external server**: the banner, presets and registry run entirely on your site.
 
-* **Quand** : a la connexion du compte (handshake), lors des verifications de statut planifiees, et a l'enregistrement des couleurs de marque.
-* **Quoi** : votre cle API, le domaine du site, l'etat des modules et la palette de marque. Les modules actifs (formulaires, chat) transmettent les donnees soumises par vos visiteurs au service pour traitement.
-* **Conditions** : [Politique de confidentialite](https://connect.pratcom.net/confidentialite) · [Conditions d'utilisation](https://connect.pratcom.net/conditions)
+If you connect a Pratcom Connect account (a voluntary action), the plugin communicates with the **api.connect.pratcom.net** service (operated by Pratcom Media, Canada):
+
+* **When**: when connecting your account (handshake), during scheduled status checks, and when saving your brand colors.
+* **What**: your API key, the site domain, module status and brand palette. Active modules (forms, chat) transmit data submitted by your visitors to the service for processing.
+* **Terms**: [Privacy Policy](https://connect.pratcom.net/confidentialite) - [Terms of Use](https://connect.pratcom.net/conditions)
 
 == Frequently Asked Questions ==
 
-= Le plugin est-il vraiment gratuit ? =
+= Is the plugin really free? =
 
-Oui. La banniere de consentement Loi 25, les presets et le registre local sont gratuits, sans compte ni limite de temps. Les modules payants sont optionnels.
+Yes. The Law 25 consent banner, presets and local registry are free, with no account and no time limit. Paid modules are optional.
 
-= Mes donnees quittent-elles mon site en version gratuite ? =
+= Does my data leave my site in the free version? =
 
-Non. Aucun appel externe n'est effectue tant que vous ne connectez pas de compte Pratcom Connect.
+No. No external call is made as long as you do not connect a Pratcom Connect account.
 
-= La banniere est-elle conforme a la Loi 25 du Quebec ? =
+= Is the banner compliant with Quebec's Law 25? =
 
-Le plugin fournit les mecanismes requis (consentement prealable par categorie, retrait facile, registre de preuve). La conformite globale depend aussi de vos pratiques (politique de confidentialite, RPRP designe).
+The plugin provides the required mechanisms (prior consent per category, easy withdrawal, proof registry). Overall compliance also depends on your own practices (privacy policy, designated privacy officer).
 
-= Le plugin est-il bilingue ? =
+= Is the plugin bilingual? =
 
-Oui, francais et anglais (textes de la banniere modifiables dans les deux langues).
+Yes, French and English (banner texts are editable in both languages).
 
-= Comment activer les modules Forms et Chat ? =
+= How do I enable the Forms and Chat modules? =
 
-Creez un compte sur connect.pratcom.net, choisissez vos modules puis collez votre cle API dans l'onglet Compte du plugin.
+Create an account at connect.pratcom.net, choose your modules, then paste your API key in the plugin's Account tab.
 
 == Screenshots ==
 
@@ -71,13 +73,17 @@ Creez un compte sur connect.pratcom.net, choisissez vos modules puis collez votr
 
 == Changelog ==
 
+= 2.0.1 =
+* Plugin Check compliance pass: escaped front-end script output, WP script tag helpers, input sanitization hardening, translators comments, prepared SQL identifier in CSV export.
+* readme.txt rewritten in English (WordPress.org guidelines).
+
 = 2.0.0 =
-* Premiere version publiee sur WordPress.org.
-* Banniere de consentement Loi 25 gratuite et 100 % locale.
-* Presets des extensions populaires + registre local + export CSV.
-* Connexion optionnelle au service Pratcom Connect (modules payants).
+* First public release.
+* Free, 100% local Law 25 consent banner.
+* Popular plugin presets + local registry + CSV export.
+* Optional connection to the Pratcom Connect service (paid modules).
 
 == Upgrade Notice ==
 
-= 2.0.0 =
-Premiere version WordPress.org.
+= 2.0.1 =
+Plugin Check compliance fixes and English readme. No functional changes.

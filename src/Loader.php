@@ -48,11 +48,11 @@ class Loader
         $loader_url = PRATCOM_CONNECT_BRIDGE_LOADER_URL;
         $w = esc_attr($workspace_id);
 
-        echo '<script>window.__pratcomConnect=' . $config_json . ';</script>' . "\n";
-        printf(
-            '<script src="%s" data-client="%s" defer></script>' . "\n",
-            esc_url($loader_url),
-            $w
-        );
+        wp_print_inline_script_tag('window.__pratcomConnect=' . $config_json . ';');
+        wp_print_script_tag([
+            'src'         => esc_url($loader_url),
+            'data-client' => $w,
+            'defer'       => true,
+        ]);
     }
 }
