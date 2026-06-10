@@ -32,6 +32,7 @@ class ModulesTab extends AbstractTab
     {
         $feature_packs = get_option(Plugin::OPTION_FEATURE_PACKS, []);
         if (!is_array($feature_packs)) $feature_packs = [];
+        $connected = Plugin::is_connected();
 
         $modules = [
             'chat' => [
@@ -63,14 +64,18 @@ class ModulesTab extends AbstractTab
                 if ($is_active) {
                     $badge_class = 'active';
                     $badge_label = __('Actif', 'pratcom-connect-bridge');
-                    $note = __('Gere par Pratcom Media via la cle API.', 'pratcom-connect-bridge');
+                    $note = __('Gere via votre compte Pratcom Connect.', 'pratcom-connect-bridge');
                 } else {
-                    $badge_class = 'inactive';
-                    $badge_label = __('Inactif', 'pratcom-connect-bridge');
-                    $note = __('Contactez Pratcom Media pour activer.', 'pratcom-connect-bridge');
+                    // Vitrine O2 : module verrouille, upsell conforme .org
+                    // (dans NOS pages uniquement, jamais de notice globale).
+                    $badge_class = 'locked';
+                    $badge_label = __('Verrouille', 'pratcom-connect-bridge');
+                    $note = $connected
+                        ? __('Disponible avec un abonnement Pratcom Connect.', 'pratcom-connect-bridge')
+                        : __('Connectez votre compte pour activer ce module.', 'pratcom-connect-bridge');
                 }
                 ?>
-                <article class="pc-module-card">
+                <article class="pc-module-card <?php echo $is_active ? '' : 'pc-module-card--locked'; ?>">
                     <div class="pc-module-card__header">
                         <div class="pc-module-card__icon"><?php echo esc_html($mod['short']); ?></div>
                         <h3 class="pc-module-card__title"><?php echo esc_html($mod['label']); ?></h3>
@@ -80,6 +85,20 @@ class ModulesTab extends AbstractTab
                     </div>
                     <p class="pc-module-card__desc"><?php echo esc_html($mod['desc']); ?></p>
                     <p class="pc-module-card__note"><?php echo esc_html($note); ?></p>
+                    <?php if (!$is_active): ?>
+                        <div class="pc-actions pc-module-card__cta">
+                            <?php if ($connected): ?>
+                                <a href="<?php echo esc_url('https://connect.pratcom.net/?utm_source=wp-plugin&utm_medium=modules&module=' . $key); ?>"
+                                   target="_blank" rel="noopener" class="pc-btn pc-btn--primary">
+                                    <?php esc_html_e('Activer ce module', 'pratcom-connect-bridge'); ?>
+                                </a>
+                            <?php else: ?>
+                                <a href="<?php echo esc_url(admin_url('admin.php?page=' . ConnectionTab::PAGE_SLUG)); ?>" class="pc-btn pc-btn--primary">
+                                    <?php esc_html_e('Connecter mon compte', 'pratcom-connect-bridge'); ?>
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
                 </article>
             <?php endforeach; ?>
         </div>
