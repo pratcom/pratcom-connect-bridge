@@ -19,6 +19,8 @@ class Plugin
 
     public static function boot(): void
     {
+        Privacy\LocalRegistry::maybe_install();
+
         if (is_admin()) {
             new Admin\AdminShell();
             new Admin\Notices();
@@ -33,6 +35,8 @@ class Plugin
         new HealthCheck();
         new Forms\Shortcode();
         new Privacy\PolicyShortcode();
+        new Privacy\LocalRegistry();
+        new Privacy\FreeBanner();
     }
 
     public static function add_settings_link(array $links): array
@@ -50,6 +54,7 @@ class Plugin
         if (false === get_option(self::OPTION_STATUS)) {
             update_option(self::OPTION_STATUS, 'disconnected');
         }
+        Privacy\LocalRegistry::maybe_install();
     }
 
     public static function on_uninstall(): void
@@ -68,10 +73,16 @@ class Plugin
             Privacy\PolicyPage::OPTION_PAGE_ID,
             Privacy\LocalPolicy::OPTION_VARS,
             Privacy\LocalPolicy::OPTION_COOKIES,
+            Privacy\Presets::OPTION_SELECTED,
+            Privacy\LocalRegistry::OPTION_DB_VERSION,
+            Privacy\LocalRegistry::OPTION_BANNER_VERSION,
+            Privacy\FreeBanner::OPTION_ENABLED,
         ];
         foreach ($options as $opt) {
             delete_option($opt);
         }
+        // NB : la table {prefix}pratcom_consents est volontairement CONSERVÉE
+        // (preuve légale Loi 25 du client — même modèle que Complianz).
         HealthCheck::unschedule();
     }
 
