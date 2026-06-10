@@ -8,7 +8,8 @@
  * Requires PHP:      8.1
  * Author:            Pratcom Media
  * Author URI:        https://pratcom.net
- * License:           Proprietaire
+ * License:           GPLv2 or later
+ * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       pratcom-connect-bridge
  */
 
@@ -22,6 +23,11 @@ define('PRATCOM_CONNECT_BRIDGE_DIR', plugin_dir_path(__FILE__));
 define('PRATCOM_CONNECT_BRIDGE_URL', plugin_dir_url(__FILE__));
 define('PRATCOM_CONNECT_BRIDGE_API_BASE', 'https://api.connect.pratcom.net');
 define('PRATCOM_CONNECT_BRIDGE_LOADER_URL', 'https://connect.pratcom.net/loader.js');
+
+// Canal de distribution : 'premium' (releases GitHub + Plugin Update Checker)
+// ou 'org' (catalogue WordPress.org, MAJ via SVN — PUC interdit).
+// Le job CI build-org reecrit la ligne ci-dessous ('premium' -> 'org').
+define('PRATCOM_CONNECT_BRIDGE_CHANNEL', 'premium');
 
 // Charge l'autoloader Composer (vendor) si present : sert au Plugin Update
 // Checker (mises a jour automatiques).
@@ -48,7 +54,9 @@ spl_autoload_register(function ($class) {
 
 add_action('plugins_loaded', function () {
     \Pratcom\Connect\Bridge\Plugin::boot();
-    \Pratcom\Connect\Bridge\Updater::init();
+    if (PRATCOM_CONNECT_BRIDGE_CHANNEL === 'premium') {
+        \Pratcom\Connect\Bridge\Updater::init();
+    }
 });
 
 register_activation_hook(__FILE__, function () {
