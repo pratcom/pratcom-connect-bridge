@@ -164,7 +164,7 @@ class ConnectionTab extends AbstractTab
         if (!current_user_can('manage_options')) wp_die('forbidden', 403);
         check_admin_referer(self::NONCE_CONNECT);
 
-        $raw_key = isset($_POST['pratcom_api_key']) ? trim(wp_unslash($_POST['pratcom_api_key'])) : '';
+        $raw_key = isset($_POST['pratcom_api_key']) ? trim(sanitize_text_field(wp_unslash($_POST['pratcom_api_key']))) : '';
         if (!preg_match('/^pck_[a-z0-9-]+_[A-Za-z0-9]{32}$/', $raw_key)) {
             $this->redirect_with_notice(self::PAGE_SLUG, 'error', __('Format de cle invalide.', 'pratcom-connect'));
         }
