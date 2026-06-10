@@ -7,6 +7,7 @@ use Pratcom\Connect\Bridge\Admin\Tabs\AbstractTab;
 use Pratcom\Connect\Bridge\Admin\Tabs\AppearanceTab;
 use Pratcom\Connect\Bridge\Admin\Tabs\ConnectionTab;
 use Pratcom\Connect\Bridge\Admin\Tabs\DashboardTab;
+use Pratcom\Connect\Bridge\Admin\Tabs\FormsTab;
 use Pratcom\Connect\Bridge\Admin\Tabs\HelpTab;
 use Pratcom\Connect\Bridge\Admin\Tabs\ModulesTab;
 
@@ -43,6 +44,7 @@ class AdminShell
             new DashboardTab(),
             new ModulesTab(),
             new AppearanceTab(),
+            new FormsTab(),
             new ConnectionTab(),
             new HelpTab(),
         ];
@@ -80,6 +82,15 @@ class AdminShell
             'pratcom-connect-bridge-admin',
             PRATCOM_CONNECT_BRIDGE_URL . 'assets/css/admin.css',
             [],
+            PRATCOM_CONNECT_BRIDGE_VERSION
+        );
+
+        // Styles additifs O2 (vitrine + onglet Formulaires) — fichier separe
+        // pour ne jamais reecrire admin.css au complet (lecon #4).
+        wp_enqueue_style(
+            'pratcom-connect-bridge-admin-o2',
+            PRATCOM_CONNECT_BRIDGE_URL . 'assets/css/admin-o2.css',
+            ['pratcom-connect-bridge-admin'],
             PRATCOM_CONNECT_BRIDGE_VERSION
         );
     }
@@ -151,6 +162,7 @@ class AdminShell
             'disconnected' => ['info', __('Plugin deconnecte. La cle API a ete retiree localement.', 'pratcom-connect-bridge')],
             'checked'      => ['success', sprintf(__('Verification effectuee. Statut : %s', 'pratcom-connect-bridge'), $msg)],
             'theme_saved'  => ['success', __('Couleurs enregistrees et synchronisees.', 'pratcom-connect-bridge')],
+            'forms_refreshed' => ['success', __('Liste des formulaires actualisee.', 'pratcom-connect-bridge')],
             'error'        => ['error', sprintf(__('Erreur : %s', 'pratcom-connect-bridge'), $msg)],
         ];
         if (!isset($map[$notice])) return;
