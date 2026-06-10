@@ -104,10 +104,11 @@ class PrivacyTab extends AbstractTab
 
         // Notice de sauvegarde : AdminShell::render_notices() ne connaît pas
         // 'privacy_saved' → on la gère ici (il passe silencieusement).
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- lecture seule d'un parametre de notice (affichage).
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- lecture seule d'un parametre de notice (affichage).
         $notice = isset($_GET['pratcom_notice'])
             ? sanitize_key(wp_unslash($_GET['pratcom_notice']))
             : '';
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
         ?>
         <h1 class="pc-content__title"><?php esc_html_e('Confidentialité', 'pratcom-connect'); ?></h1>
         <p class="pc-content__subtitle">
