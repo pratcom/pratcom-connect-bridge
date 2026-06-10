@@ -102,6 +102,7 @@ class AdminShell
     {
         if (!current_user_can('manage_options')) return;
 
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- lecture seule du slug d'onglet pour l'affichage.
         $slug = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : self::SLUG;
         $tab = $this->tabs[$slug] ?? $this->tabs[self::SLUG];
 
@@ -155,17 +156,33 @@ class AdminShell
 
     private function render_notices(): void
     {
-        $notice = isset($_GET['pratcom_notice']) ? sanitize_key($_GET['pratcom_notice']) : '';
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- lecture seule de parametres de notice (affichage).
+        $notice = isset($_GET['pratcom_notice']) ? sanitize_key(wp_unslash($_GET['pratcom_notice'])) : '';
         $msg = isset($_GET['pratcom_msg']) ? sanitize_text_field(wp_unslash($_GET['pratcom_msg'])) : '';
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
         if (!$notice) return;
 
         $map = [
             'connected'    => ['success', __('Connecte avec succes.', 'pratcom-connect')],
             'disconnected' => ['info', __('Plugin deconnecte. La cle API a ete retiree localement.', 'pratcom-connect')],
-            'checked'      => ['success', sprintf(__('Verification effectuee. Statut : %s', 'pratcom-connect'), $msg)],
+            'checked'      => [
+                'success',
+                sprintf(
+                    /* translators: %s: connection status returned by the API. */
+                    __('Verification effectuee. Statut : %s', 'pratcom-connect'),
+                    $msg
+                ),
+            ],
             'theme_saved'  => ['success', __('Couleurs enregistrees et synchronisees.', 'pratcom-connect')],
             'forms_refreshed' => ['success', __('Liste des formulaires actualisee.', 'pratcom-connect')],
-            'error'        => ['error', sprintf(__('Erreur : %s', 'pratcom-connect'), $msg)],
+            'error'        => [
+                'error',
+                sprintf(
+                    /* translators: %s: error message. */
+                    __('Erreur : %s', 'pratcom-connect'),
+                    $msg
+                ),
+            ],
         ];
         if (!isset($map[$notice])) return;
         [$type, $text] = $map[$notice];
