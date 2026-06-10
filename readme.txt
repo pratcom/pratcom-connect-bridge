@@ -62,11 +62,12 @@ Creez un compte sur connect.pratcom.net, choisissez vos modules puis collez votr
 
 == Screenshots ==
 
-1. Tableau de bord du plugin (placeholder — capture a fournir avant soumission)
-2. Banniere de consentement Loi 25 sur le site public (placeholder)
-3. Onglet Confidentialite : categories et presets (placeholder)
-4. Onglet Apparence : palette de marque WCAG (placeholder)
-5. Vitrine des modules (placeholder)
+1. Dashboard — connection overview: workspace, active modules and last handshake.
+2. Privacy tab — free Law 25 consent banner with popular plugin presets (GA4, Meta Pixel, WooCommerce and more), local consent registry and CSV export.
+3. Forms tab — your Connect Forms with copyable shortcodes.
+4. Appearance — brand palette with automatic WCAG-compliant contrast, shared by all modules.
+5. Modules — Connect Chat, Forms and Privacy at a glance (activate them with your Pratcom Connect account).
+6. Front-end — the consent banner live on a website, in the visitor's language.
 
 == Changelog ==
 
