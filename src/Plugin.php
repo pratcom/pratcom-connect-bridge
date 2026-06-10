@@ -22,6 +22,7 @@ class Plugin
         if (is_admin()) {
             new Admin\AdminShell();
             new Admin\Notices();
+            new Privacy\PolicyPage();
 
             // Lien "Reglages" a cote de "Desactiver" dans la liste des plugins
             $basename = plugin_basename(PRATCOM_CONNECT_BRIDGE_FILE);
@@ -31,6 +32,7 @@ class Plugin
         new Loader();
         new HealthCheck();
         new Forms\Shortcode();
+        new Privacy\PolicyShortcode();
     }
 
     public static function add_settings_link(array $links): array
@@ -63,6 +65,9 @@ class Plugin
             self::OPTION_STATUS,
             self::OPTION_LAST_ERROR,
             self::OPTION_THEME,
+            Privacy\PolicyPage::OPTION_PAGE_ID,
+            Privacy\LocalPolicy::OPTION_VARS,
+            Privacy\LocalPolicy::OPTION_COOKIES,
         ];
         foreach ($options as $opt) {
             delete_option($opt);
