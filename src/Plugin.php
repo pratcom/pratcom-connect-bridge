@@ -20,7 +20,7 @@ class Plugin
     public static function boot(): void
     {
         if (is_admin()) {
-            new Admin\SettingsPage();
+            new Admin\AdminShell();
             new Admin\Notices();
 
             // Lien "Reglages" a cote de "Desactiver" dans la liste des plugins
