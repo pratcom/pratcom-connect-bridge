@@ -81,7 +81,7 @@ class LocalRegistry
 
     private static function ip_hash(): string
     {
-        $ip = isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '';
+        $ip = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash((string) $_SERVER['REMOTE_ADDR'])) : '';
         return hash('sha256', wp_salt('auth') . '|' . $ip);
     }
 
@@ -128,10 +128,11 @@ class LocalRegistry
         $source = esc_url_raw((string) $request->get_param('sourceUrl'));
         $banner_version = substr(sanitize_text_field((string) $request->get_param('configVersion')), 0, 32);
         $ua = isset($_SERVER['HTTP_USER_AGENT'])
-            ? substr(sanitize_text_field((string) $_SERVER['HTTP_USER_AGENT']), 0, 255)
+            ? substr(sanitize_text_field(wp_unslash((string) $_SERVER['HTTP_USER_AGENT'])), 0, 255)
             : '';
 
         global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- ecriture dans la table de registre dediee du plugin.
         $wpdb->insert(self::table(), [
             'created_at'       => current_time('mysql', true),
             'anonymous_id'     => $anonymous,
@@ -158,14 +159,15 @@ class LocalRegistry
 
         global $wpdb;
         $table = self::table();
-        // Table interne fixe — pas d'entrée utilisateur dans le nom.
-        $rows = $wpdb->get_results("SELECT * FROM {$table} ORDER BY created_at ASC", ARRAY_A); // phpcs:ignore WordPress.DB.PreparedSQL
+        // Export d'audit complet sur la table dediee du plugin (nom interne, placeholder %i).
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $rows = $wpdb->get_results($wpdb->prepare('SELECT * FROM %i ORDER BY created_at ASC', $table), ARRAY_A);
 
         nocache_headers();
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename="consentements-' . gmdate('Ymd-His') . '.csv"');
-        $out = fopen('php://output', 'w');
-        fwrite($out, "\xEF\xBB\xBF"); // BOM UTF-8
+        echo "\xEF\xBB\xBF"; // BOM UTF-8 pour Excel.
+        $out = fopen('php://output', 'w'); // phpcs:ignore WordPress.WP.AlternativeFunctions -- flux de sortie CSV, pas le systeme de fichiers.
         fputcsv($out, [
             'id', 'created_at_utc', 'anonymous_id', 'action', 'choices',
             'banner_version', 'template_version', 'language', 'source_url',
