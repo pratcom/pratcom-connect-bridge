@@ -26,7 +26,7 @@ class ConnectionTab extends AbstractTab
 
     public function label(): string
     {
-        return __('Connexion', 'pratcom-connect-bridge');
+        return __('Compte', 'pratcom-connect-bridge');
     }
 
     public function icon(): string
@@ -53,9 +53,9 @@ class ConnectionTab extends AbstractTab
         $connected = Plugin::is_connected();
         $has_key = !empty(Plugin::get_api_key());
         ?>
-        <h1 class="pc-content__title"><?php esc_html_e('Connexion', 'pratcom-connect-bridge'); ?></h1>
+        <h1 class="pc-content__title"><?php esc_html_e('Compte', 'pratcom-connect-bridge'); ?></h1>
         <p class="pc-content__subtitle">
-            <?php esc_html_e('Gerez la liaison entre ce site et Pratcom Connect.', 'pratcom-connect-bridge'); ?>
+            <?php esc_html_e('Gerez la liaison entre ce site et votre compte Pratcom Connect.', 'pratcom-connect-bridge'); ?>
         </p>
 
         <?php if ($connected): ?>
@@ -79,6 +79,9 @@ class ConnectionTab extends AbstractTab
                 </div>
 
                 <div class="pc-actions">
+                    <a href="https://connect.pratcom.net/?utm_source=wp-plugin&utm_medium=account-tab" target="_blank" rel="noopener" class="pc-btn pc-btn--primary">
+                        <?php esc_html_e('Ouvrir mon portail Pratcom Connect', 'pratcom-connect-bridge'); ?>
+                    </a>
                     <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline;">
                         <input type="hidden" name="action" value="pratcom_connect_bridge_check_now" />
                         <?php wp_nonce_field(self::NONCE_CHECK); ?>
