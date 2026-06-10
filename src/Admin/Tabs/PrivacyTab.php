@@ -70,10 +70,10 @@ class PrivacyTab extends AbstractTab
             Presets::all()
         );
         $raw = (isset($_POST['privacy_presets']) && is_array($_POST['privacy_presets']))
-            ? (array) $_POST['privacy_presets']
+            ? array_map('sanitize_key', array_map('sanitize_text_field', wp_unslash((array) $_POST['privacy_presets'])))
             : [];
         $selected = array_values(array_filter(
-            array_map('sanitize_key', $raw),
+            $raw,
             static fn(string $id): bool => $id !== '' && in_array($id, $valid_ids, true)
         ));
         update_option(Presets::OPTION_SELECTED, $selected);
@@ -104,6 +104,7 @@ class PrivacyTab extends AbstractTab
 
         // Notice de sauvegarde : AdminShell::render_notices() ne connaît pas
         // 'privacy_saved' → on la gère ici (il passe silencieusement).
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- lecture seule d'un parametre de notice (affichage).
         $notice = isset($_GET['pratcom_notice'])
             ? sanitize_key(wp_unslash($_GET['pratcom_notice']))
             : '';
