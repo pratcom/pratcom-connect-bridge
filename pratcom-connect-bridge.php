@@ -1,7 +1,7 @@
 <?php
 /**
- * Plugin Name:       Pratcom Connect Bridge
- * Plugin URI:        https://github.com/pratcom/pratcom-connect-bridge
+ * Plugin Name:       Pratcom Connect
+ * Plugin URI:        https://connect.pratcom.net
  * Description:       Connecte un site WordPress a l API Pratcom Connect. Permet d activer les modules Chat, Forms, Privacy via une seule cle API.
  * Version:           2.0.0-dev
  * Requires at least: 6.5
