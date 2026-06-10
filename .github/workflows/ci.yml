@@ -1,0 +1,41 @@
+name: CI (lint + coherence versions)
+
+# Sur chaque PR : php -l sur tous les fichiers PHP + verification que le
+# header "Version:" et la constante PRATCOM_CONNECT_BRIDGE_VERSION sont
+# identiques (lecon #5 du registre : header/tag incoherents = MAJ cassee).
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP 8.1
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+
+      - name: php -l (tous les fichiers)
+        run: |
+          set -e
+          find . -path ./vendor -prune -o -name '*.php' -print0 \
+            | xargs -0 -n1 php -l
+
+      - name: Header == constante de version (lecon 5)
+        run: |
+          HEADER=$(grep -oP '^\s\*\s*Version:\s*\K\S+' pratcom-connect-bridge.php)
+          CONST=$(grep -oP "define\('PRATCOM_CONNECT_BRIDGE_VERSION',\s*'\K[^']+" pratcom-connect-bridge.php)
+          echo "header=$HEADER constante=$CONST"
+          if [ -z "$HEADER" ] || [ "$HEADER" != "$CONST" ]; then
+            echo "::error::Version header ($HEADER) != constante ($CONST)"; exit 1
+          fi
+
+      - name: Canal par defaut = premium (le depot ne doit jamais etre en mode org)
+        run: |
+          grep -q "define('PRATCOM_CONNECT_BRIDGE_CHANNEL', 'premium');" pratcom-connect-bridge.php \
+            || { echo "::error::Canal par defaut != premium"; exit 1; }

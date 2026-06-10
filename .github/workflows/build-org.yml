@@ -1,0 +1,82 @@
+name: Build variante WordPress.org
+
+# Produit le zip de la variante .org : slug pratcom-connect, canal 'org',
+# SANS Plugin Update Checker (interdit sur WP.org — lecon #10) et sans
+# vendor/ (l'autoloader PSR-4 maison du fichier principal suffit).
+# Declenchement manuel (preparation de soumission / mise a jour SVN) ou
+# sur release publiee (artifact joint pour archive).
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build-org:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP 8.1
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+
+      - name: Verifier header == constante (lecon 5)
+        run: |
+          HEADER=$(grep -oP '^\s\*\s*Version:\s*\K\S+' pratcom-connect-bridge.php)
+          CONST=$(grep -oP "define\('PRATCOM_CONNECT_BRIDGE_VERSION',\s*'\K[^']+" pratcom-connect-bridge.php)
+          [ -n "$HEADER" ] && [ "$HEADER" = "$CONST" ] || { echo "::error::header=$HEADER constante=$CONST"; exit 1; }
+
+      - name: Basculer le canal sur 'org' (1 ligne, verifiee)
+        run: |
+          sed -i "s/define('PRATCOM_CONNECT_BRIDGE_CHANNEL', 'premium');/define('PRATCOM_CONNECT_BRIDGE_CHANNEL', 'org');/" pratcom-connect-bridge.php
+          grep -q "define('PRATCOM_CONNECT_BRIDGE_CHANNEL', 'org');" pratcom-connect-bridge.php || { echo "::error::bascule canal echouee"; exit 1; }
+
+      - name: Retirer le Plugin Update Checker (interdit .org)
+        run: rm -f src/Updater.php
+
+      - name: Assembler le dossier du plugin (slug pratcom-connect)
+        run: |
+          mkdir -p build/pratcom-connect
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='build' \
+            --exclude='tests' \
+            --exclude='.gitignore' \
+            --exclude='.distignore' \
+            --exclude='composer.json' \
+            --exclude='composer.lock' \
+            --exclude='vendor' \
+            --exclude='*.md' \
+            ./ build/pratcom-connect/
+
+      - name: Garde-fous .org (zero PUC, zero Updater, canal org)
+        run: |
+          set -e
+          ! grep -ri "plugin-update-checker" build/pratcom-connect
+          ! grep -ri "PucFactory" build/pratcom-connect
+          test ! -f build/pratcom-connect/src/Updater.php
+          grep -q "define('PRATCOM_CONNECT_BRIDGE_CHANNEL', 'org');" build/pratcom-connect/pratcom-connect-bridge.php
+          php -l build/pratcom-connect/pratcom-connect-bridge.php
+
+      - name: Zip
+        run: |
+          cd build
+          zip -rq pratcom-connect-org.zip pratcom-connect
+
+      - name: Publier l'artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pratcom-connect-org
+          path: build/pratcom-connect-org.zip
+
+      - name: Joindre a la release (si declenche par une release)
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/pratcom-connect-org.zip
