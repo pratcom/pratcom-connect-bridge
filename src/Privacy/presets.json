@@ -1,0 +1,276 @@
+{
+  "schemaVersion": 1,
+  "presetsVersion": "2026-06-09.1",
+  "presets": [
+    {
+      "id": "ga4",
+      "name": "Google Analytics 4",
+      "provider": "Google",
+      "category": "statistics",
+      "blockedByDefault": true,
+      "description": {
+        "fr": "Mesure d'audience du site (pages visitées, provenance, durée des visites).",
+        "en": "Site audience measurement (pages visited, traffic source, visit duration)."
+      },
+      "detect": { "plugins": ["google-site-kit/google-site-kit.php"] },
+      "blocking": { "scriptPatterns": ["googletagmanager.com/gtag/js", "google-analytics.com"] },
+      "cookies": [
+        { "name": "_ga", "expiry": { "fr": "2 ans", "en": "2 years" }, "thirdParty": false, "description": { "fr": "Distingue les visiteurs de façon anonyme.", "en": "Distinguishes visitors anonymously." } },
+        { "name": "_ga_*", "expiry": { "fr": "2 ans", "en": "2 years" }, "thirdParty": false, "description": { "fr": "Conserve l'état de la session de mesure.", "en": "Persists measurement session state." } },
+        { "name": "_gid", "expiry": { "fr": "24 heures", "en": "24 hours" }, "thirdParty": false, "description": { "fr": "Distingue les visiteurs (courte durée).", "en": "Distinguishes visitors (short-lived)." } }
+      ]
+    },
+    {
+      "id": "gtm",
+      "name": "Google Tag Manager",
+      "provider": "Google",
+      "category": "marketing",
+      "blockedByDefault": true,
+      "description": {
+        "fr": "Conteneur de balises : peut charger n'importe quel outil de mesure ou de publicité. Classé marketing par prudence.",
+        "en": "Tag container: can load any measurement or advertising tool. Classified as marketing as a precaution."
+      },
+      "detect": { "plugins": ["google-site-kit/google-site-kit.php"] },
+      "blocking": { "scriptPatterns": ["googletagmanager.com/gtm.js"] },
+      "cookies": []
+    },
+    {
+      "id": "google-ads",
+      "name": "Google Ads / DoubleClick",
+      "provider": "Google",
+      "category": "marketing",
+      "blockedByDefault": true,
+      "description": {
+        "fr": "Suivi des conversions publicitaires et remarketing Google.",
+        "en": "Google ad conversion tracking and remarketing."
+      },
+      "detect": { "plugins": [] },
+      "blocking": { "scriptPatterns": ["googleadservices.com", "doubleclick.net", "googlesyndication.com"] },
+      "cookies": [
+        { "name": "_gcl_au", "expiry": { "fr": "3 mois", "en": "3 months" }, "thirdParty": false, "description": { "fr": "Attribution des conversions publicitaires.", "en": "Ad conversion attribution." } },
+        { "name": "IDE", "expiry": { "fr": "13 mois", "en": "13 months" }, "thirdParty": true, "description": { "fr": "Publicité ciblée DoubleClick.", "en": "DoubleClick targeted advertising." } },
+        { "name": "test_cookie", "expiry": { "fr": "15 minutes", "en": "15 minutes" }, "thirdParty": true, "description": { "fr": "Vérifie si le navigateur accepte les témoins.", "en": "Checks whether the browser accepts cookies." } }
+      ]
+    },
+    {
+      "id": "meta-pixel",
+      "name": "Meta Pixel (Facebook)",
+      "provider": "Meta",
+      "category": "marketing",
+      "blockedByDefault": true,
+      "description": {
+        "fr": "Suivi des conversions et remarketing Facebook/Instagram.",
+        "en": "Facebook/Instagram conversion tracking and remarketing."
+      },
+      "detect": { "plugins": ["official-facebook-pixel/facebook-for-wordpress.php", "facebook-for-woocommerce/facebook-for-woocommerce.php"] },
+      "blocking": { "scriptPatterns": ["connect.facebook.net"] },
+      "cookies": [
+        { "name": "_fbp", "expiry": { "fr": "3 mois", "en": "3 months" }, "thirdParty": false, "description": { "fr": "Identifie les navigateurs pour la publicité.", "en": "Identifies browsers for advertising." } },
+        { "name": "_fbc", "expiry": { "fr": "3 mois", "en": "3 months" }, "thirdParty": false, "description": { "fr": "Mémorise le clic publicitaire d'origine.", "en": "Stores the originating ad click." } }
+      ]
+    },
+    {
+      "id": "monsterinsights",
+      "name": "MonsterInsights (Google Analytics)",
+      "provider": "MonsterInsights / Google",
+      "category": "statistics",
+      "blockedByDefault": true,
+      "description": {
+        "fr": "Extension WordPress qui installe Google Analytics : mêmes témoins que GA4.",
+        "en": "WordPress plugin that installs Google Analytics: same cookies as GA4."
+      },
+      "detect": { "plugins": ["google-analytics-for-wordpress/googleanalytics.php", "google-analytics-premium/googleanalytics-premium.php"] },
+      "blocking": { "scriptPatterns": ["googletagmanager.com/gtag/js", "google-analytics.com"] },
+      "cookies": [
+        { "name": "_ga", "expiry": { "fr": "2 ans", "en": "2 years" }, "thirdParty": false, "description": { "fr": "Distingue les visiteurs de façon anonyme.", "en": "Distinguishes visitors anonymously." } },
+        { "name": "_ga_*", "expiry": { "fr": "2 ans", "en": "2 years" }, "thirdParty": false, "description": { "fr": "Conserve l'état de la session de mesure.", "en": "Persists measurement session state." } }
+      ]
+    },
+    {
+      "id": "jetpack-stats",
+      "name": "Jetpack Stats",
+      "provider": "Automattic",
+      "category": "statistics",
+      "blockedByDefault": true,
+      "description": {
+        "fr": "Statistiques de visite fournies par Jetpack (WordPress.com).",
+        "en": "Visit statistics provided by Jetpack (WordPress.com)."
+      },
+      "detect": { "plugins": ["jetpack/jetpack.php"] },
+      "blocking": { "scriptPatterns": ["stats.wp.com", "pixel.wp.com"] },
+      "cookies": [
+        { "name": "tk_ai", "expiry": { "fr": "Session", "en": "Session" }, "thirdParty": false, "description": { "fr": "Identifiant anonyme de mesure.", "en": "Anonymous measurement identifier." } },
+        { "name": "tk_qs", "expiry": { "fr": "30 minutes", "en": "30 minutes" }, "thirdParty": false, "description": { "fr": "Mesure de session.", "en": "Session measurement." } }
+      ]
+    },
+    {
+      "id": "hotjar",
+      "name": "Hotjar",
+      "provider": "Hotjar",
+      "category": "statistics",
+      "blockedByDefault": true,
+      "description": {
+        "fr": "Cartes de chaleur et enregistrements de sessions pour améliorer l'ergonomie.",
+        "en": "Heatmaps and session recordings to improve usability."
+      },
+      "detect": { "plugins": ["hotjar/hotjar.php"] },
+      "blocking": { "scriptPatterns": ["static.hotjar.com", "script.hotjar.com"] },
+      "cookies": [
+        { "name": "_hjSessionUser_*", "expiry": { "fr": "1 an", "en": "1 year" }, "thirdParty": false, "description": { "fr": "Identifiant de visiteur Hotjar.", "en": "Hotjar visitor identifier." } },
+        { "name": "_hjSession_*", "expiry": { "fr": "30 minutes", "en": "30 minutes" }, "thirdParty": false, "description": { "fr": "Données de la session en cours.", "en": "Current session data." } }
+      ]
+    },
+    {
+      "id": "clarity",
+      "name": "Microsoft Clarity",
+      "provider": "Microsoft",
+      "category": "statistics",
+      "blockedByDefault": true,
+      "description": {
+        "fr": "Cartes de chaleur et enregistrements de sessions (Microsoft).",
+        "en": "Heatmaps and session recordings (Microsoft)."
+      },
+      "detect": { "plugins": ["microsoft-clarity/clarity.php"] },
+      "blocking": { "scriptPatterns": ["clarity.ms"] },
+      "cookies": [
+        { "name": "_clck", "expiry": { "fr": "1 an", "en": "1 year" }, "thirdParty": false, "description": { "fr": "Identifiant utilisateur Clarity.", "en": "Clarity user identifier." } },
+        { "name": "_clsk", "expiry": { "fr": "24 heures", "en": "24 hours" }, "thirdParty": false, "description": { "fr": "Regroupe les pages vues d'une session.", "en": "Groups page views of a session." } },
+        { "name": "MUID", "expiry": { "fr": "13 mois", "en": "13 months" }, "thirdParty": true, "description": { "fr": "Identifiant Microsoft inter-sites.", "en": "Cross-site Microsoft identifier." } }
+      ]
+    },
+    {
+      "id": "linkedin-insight",
+      "name": "LinkedIn Insight Tag",
+      "provider": "LinkedIn",
+      "category": "marketing",
+      "blockedByDefault": true,
+      "description": {
+        "fr": "Suivi des conversions et remarketing LinkedIn.",
+        "en": "LinkedIn conversion tracking and remarketing."
+      },
+      "detect": { "plugins": [] },
+      "blocking": { "scriptPatterns": ["snap.licdn.com"] },
+      "cookies": [
+        { "name": "bcookie", "expiry": { "fr": "1 an", "en": "1 year" }, "thirdParty": true, "description": { "fr": "Identifiant de navigateur LinkedIn.", "en": "LinkedIn browser identifier." } },
+        { "name": "li_gc", "expiry": { "fr": "6 mois", "en": "6 months" }, "thirdParty": true, "description": { "fr": "Mémorise le consentement LinkedIn.", "en": "Stores LinkedIn consent." } },
+        { "name": "lidc", "expiry": { "fr": "24 heures", "en": "24 hours" }, "thirdParty": true, "description": { "fr": "Routage réseau LinkedIn.", "en": "LinkedIn network routing." } },
+        { "name": "UserMatchHistory", "expiry": { "fr": "30 jours", "en": "30 days" }, "thirdParty": true, "description": { "fr": "Synchronisation publicitaire LinkedIn.", "en": "LinkedIn ads ID syncing." } }
+      ]
+    },
+    {
+      "id": "tiktok-pixel",
+      "name": "TikTok Pixel",
+      "provider": "TikTok",
+      "category": "marketing",
+      "blockedByDefault": true,
+      "description": {
+        "fr": "Suivi des conversions et remarketing TikTok.",
+        "en": "TikTok conversion tracking and remarketing."
+      },
+      "detect": { "plugins": [] },
+      "blocking": { "scriptPatterns": ["analytics.tiktok.com"] },
+      "cookies": [
+        { "name": "_ttp", "expiry": { "fr": "13 mois", "en": "13 months" }, "thirdParty": false, "description": { "fr": "Identifiant publicitaire TikTok.", "en": "TikTok advertising identifier." } }
+      ]
+    },
+    {
+      "id": "youtube-embed",
+      "name": "YouTube (vidéos intégrées)",
+      "provider": "Google",
+      "category": "marketing",
+      "blockedByDefault": true,
+      "description": {
+        "fr": "Les vidéos YouTube intégrées déposent des témoins publicitaires Google. Astuce : utiliser youtube-nocookie.com réduit le suivi.",
+        "en": "Embedded YouTube videos set Google advertising cookies. Tip: using youtube-nocookie.com reduces tracking."
+      },
+      "detect": { "plugins": [] },
+      "blocking": { "scriptPatterns": ["youtube.com/iframe_api", "ytimg.com"], "iframePatterns": ["youtube.com/embed"] },
+      "cookies": [
+        { "name": "VISITOR_INFO1_LIVE", "expiry": { "fr": "6 mois", "en": "6 months" }, "thirdParty": true, "description": { "fr": "Estime la bande passante et trace les visionnements.", "en": "Estimates bandwidth and tracks views." } },
+        { "name": "YSC", "expiry": { "fr": "Session", "en": "Session" }, "thirdParty": true, "description": { "fr": "Compteur de vues de la session.", "en": "Session view counter." } }
+      ]
+    },
+    {
+      "id": "vimeo-embed",
+      "name": "Vimeo (vidéos intégrées)",
+      "provider": "Vimeo",
+      "category": "statistics",
+      "blockedByDefault": true,
+      "description": {
+        "fr": "Les vidéos Vimeo intégrées déposent un témoin d'analyse.",
+        "en": "Embedded Vimeo videos set an analytics cookie."
+      },
+      "detect": { "plugins": [] },
+      "blocking": { "scriptPatterns": ["player.vimeo.com/api"], "iframePatterns": ["player.vimeo.com/video"] },
+      "cookies": [
+        { "name": "vuid", "expiry": { "fr": "2 ans", "en": "2 years" }, "thirdParty": true, "description": { "fr": "Statistiques d'utilisation du lecteur Vimeo.", "en": "Vimeo player usage statistics." } }
+      ]
+    },
+    {
+      "id": "google-maps",
+      "name": "Google Maps (cartes intégrées)",
+      "provider": "Google",
+      "category": "marketing",
+      "blockedByDefault": true,
+      "description": {
+        "fr": "Les cartes Google intégrées déposent des témoins publicitaires Google.",
+        "en": "Embedded Google Maps set Google advertising cookies."
+      },
+      "detect": { "plugins": [] },
+      "blocking": { "scriptPatterns": ["maps.googleapis.com/maps/api"], "iframePatterns": ["google.com/maps/embed"] },
+      "cookies": [
+        { "name": "NID", "expiry": { "fr": "6 mois", "en": "6 months" }, "thirdParty": true, "description": { "fr": "Préférences et publicité Google.", "en": "Google preferences and advertising." } }
+      ]
+    },
+    {
+      "id": "recaptcha",
+      "name": "Google reCAPTCHA",
+      "provider": "Google",
+      "category": "necessary",
+      "blockedByDefault": false,
+      "description": {
+        "fr": "Protection anti-robots des formulaires. Classé nécessaire (sécurité) — non bloqué par défaut.",
+        "en": "Anti-bot protection for forms. Classified as necessary (security) — not blocked by default."
+      },
+      "detect": { "plugins": ["google-captcha/google-captcha.php", "advanced-google-recaptcha/advanced-google-recaptcha.php"] },
+      "blocking": { "scriptPatterns": ["google.com/recaptcha", "gstatic.com/recaptcha"] },
+      "cookies": [
+        { "name": "_GRECAPTCHA", "expiry": { "fr": "6 mois", "en": "6 months" }, "thirdParty": true, "description": { "fr": "Analyse de risque anti-robots.", "en": "Anti-bot risk analysis." } }
+      ]
+    },
+    {
+      "id": "woocommerce",
+      "name": "WooCommerce",
+      "provider": "Automattic",
+      "category": "necessary",
+      "blockedByDefault": false,
+      "description": {
+        "fr": "Témoins fonctionnels de la boutique (panier, session). Nécessaires — non bloqués.",
+        "en": "Functional store cookies (cart, session). Necessary — not blocked."
+      },
+      "detect": { "plugins": ["woocommerce/woocommerce.php"] },
+      "blocking": { "scriptPatterns": [] },
+      "cookies": [
+        { "name": "woocommerce_cart_hash", "expiry": { "fr": "Session", "en": "Session" }, "thirdParty": false, "description": { "fr": "Détecte les changements du panier.", "en": "Detects cart changes." } },
+        { "name": "woocommerce_items_in_cart", "expiry": { "fr": "Session", "en": "Session" }, "thirdParty": false, "description": { "fr": "Nombre d'articles au panier.", "en": "Number of items in cart." } },
+        { "name": "wp_woocommerce_session_*", "expiry": { "fr": "2 jours", "en": "2 days" }, "thirdParty": false, "description": { "fr": "Session de magasinage du visiteur.", "en": "Visitor shopping session." } }
+      ]
+    },
+    {
+      "id": "mailchimp",
+      "name": "Mailchimp",
+      "provider": "Intuit Mailchimp",
+      "category": "marketing",
+      "blockedByDefault": true,
+      "description": {
+        "fr": "Formulaires d'infolettre et suivi marketing Mailchimp.",
+        "en": "Mailchimp newsletter forms and marketing tracking."
+      },
+      "detect": { "plugins": ["mailchimp-for-wp/mailchimp-for-wp.php", "mailchimp-for-woocommerce/mailchimp-woocommerce.php"] },
+      "blocking": { "scriptPatterns": ["chimpstatic.com", "list-manage.com"] },
+      "cookies": [
+        { "name": "_mcid", "expiry": { "fr": "1 an", "en": "1 year" }, "thirdParty": false, "description": { "fr": "Identifiant marketing Mailchimp.", "en": "Mailchimp marketing identifier." } }
+      ]
+    }
+  ]
+}
