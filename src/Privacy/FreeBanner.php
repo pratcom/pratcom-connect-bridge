@@ -58,7 +58,7 @@ class FreeBanner
             return;
         }
 
-        wp_enqueue_script(self::HANDLE, self::script_url(), [], null, false);
+        wp_enqueue_script(self::HANDLE, self::script_url(), [], PRATCOM_CONNECT_BRIDGE_VERSION, false);
         wp_script_add_data(self::HANDLE, 'strategy', 'defer');
 
         $policy = PolicyPage::status();
