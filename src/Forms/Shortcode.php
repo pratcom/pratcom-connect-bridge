@@ -91,7 +91,7 @@ class Shortcode
             self::HANDLE,
             self::loader_url(),
             [],
-            null,
+            PRATCOM_CONNECT_BRIDGE_VERSION,
             ['strategy' => 'defer', 'in_footer' => true]
         );
 
