@@ -22,7 +22,7 @@ class Plugin
         Privacy\LocalRegistry::maybe_install();
 
         if (is_admin()) {
-            new Admin\SettingsPage();
+            new Admin\AdminShell();
             new Admin\Notices();
             new Privacy\PolicyPage();
 
