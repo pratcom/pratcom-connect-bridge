@@ -75,7 +75,7 @@ class PolicyPage
     public function handle_create(): void
     {
         if (!current_user_can('manage_options')) {
-            wp_die(esc_html__('Permission refusée.', 'pratcom-connect-bridge'));
+            wp_die(esc_html__('Permission refusée.', 'pratcom-connect'));
         }
         check_admin_referer(self::ACTION);
 
@@ -84,7 +84,7 @@ class PolicyPage
             $page_id = wp_insert_post([
                 'post_type'    => 'page',
                 'post_status'  => 'publish',
-                'post_title'   => __('Politique de confidentialité', 'pratcom-connect-bridge'),
+                'post_title'   => __('Politique de confidentialité', 'pratcom-connect'),
                 'post_content' => "<!-- wp:shortcode -->[pratcom_privacy_policy]<!-- /wp:shortcode -->",
             ]);
             if (!is_wp_error($page_id) && $page_id) {
@@ -116,24 +116,24 @@ class PolicyPage
     public static function render_admin_section(): void
     {
         $status = self::status();
-        echo '<h2>' . esc_html__('Page de politique de confidentialité', 'pratcom-connect-bridge') . '</h2>';
+        echo '<h2>' . esc_html__('Page de politique de confidentialité', 'pratcom-connect') . '</h2>';
 
         if ($status['linked']) {
             echo '<p style="color:#1a7f37;font-weight:600;">✓ '
-                . esc_html__('Page publiée et liée — la bannière y pointe automatiquement.', 'pratcom-connect-bridge')
+                . esc_html__('Page publiée et liée — la bannière y pointe automatiquement.', 'pratcom-connect')
                 . ' <a href="' . esc_url($status['url']) . '" target="_blank" rel="noopener">'
-                . esc_html__('Voir la page', 'pratcom-connect-bridge') . '</a></p>';
+                . esc_html__('Voir la page', 'pratcom-connect') . '</a></p>';
             return;
         }
 
         if ($status['page_id'] && !$status['published']) {
             echo '<p style="color:#9a6700;">⚠ '
-                . esc_html__('Une page contenant le shortcode existe mais n\'est pas publiée.', 'pratcom-connect-bridge') . '</p>';
+                . esc_html__('Une page contenant le shortcode existe mais n\'est pas publiée.', 'pratcom-connect') . '</p>';
         } elseif ($status['page_id'] && !$status['linked']) {
             echo '<p style="color:#9a6700;">⚠ '
-                . esc_html__('La page existe mais n\'est pas enregistrée comme page de politique de confidentialité de WordPress.', 'pratcom-connect-bridge') . '</p>';
+                . esc_html__('La page existe mais n\'est pas enregistrée comme page de politique de confidentialité de WordPress.', 'pratcom-connect') . '</p>';
         } else {
-            echo '<p>' . esc_html__('Aucune page de politique de confidentialité détectée.', 'pratcom-connect-bridge') . '</p>';
+            echo '<p>' . esc_html__('Aucune page de politique de confidentialité détectée.', 'pratcom-connect') . '</p>';
         }
 
         echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
@@ -141,15 +141,15 @@ class PolicyPage
         wp_nonce_field(self::ACTION);
         submit_button(
             $status['page_id']
-                ? __('Publier et lier la page', 'pratcom-connect-bridge')
-                : __('Créer la page', 'pratcom-connect-bridge'),
+                ? __('Publier et lier la page', 'pratcom-connect')
+                : __('Créer la page', 'pratcom-connect'),
             'secondary',
             'submit',
             false
         );
         echo '</form>';
         echo '<p class="description">'
-            . esc_html__('La page contient le shortcode [pratcom_privacy_policy] : contenu généré automatiquement, tableau des témoins inclus, mis à jour sans intervention.', 'pratcom-connect-bridge')
+            . esc_html__('La page contient le shortcode [pratcom_privacy_policy] : contenu généré automatiquement, tableau des témoins inclus, mis à jour sans intervention.', 'pratcom-connect')
             . '</p>';
     }
 }

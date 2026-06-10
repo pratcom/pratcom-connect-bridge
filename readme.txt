@@ -2,7 +2,7 @@
 Contributors: pratcommedia
 Tags: consent, privacy, cookies, forms, chatbot
 Requires at least: 6.5
-Tested up to: 6.8
+Tested up to: 7.0
 Requires PHP: 8.1
 Stable tag: 2.0.0
 License: GPLv2 or later
