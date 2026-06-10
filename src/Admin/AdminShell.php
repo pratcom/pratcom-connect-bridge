@@ -10,6 +10,7 @@ use Pratcom\Connect\Bridge\Admin\Tabs\DashboardTab;
 use Pratcom\Connect\Bridge\Admin\Tabs\FormsTab;
 use Pratcom\Connect\Bridge\Admin\Tabs\HelpTab;
 use Pratcom\Connect\Bridge\Admin\Tabs\ModulesTab;
+use Pratcom\Connect\Bridge\Admin\Tabs\PrivacyTab;
 
 /**
  * Shell admin mince : menu, chrome (header / sidebar / notices) et dispatch
@@ -42,6 +43,7 @@ class AdminShell
     {
         return [
             new DashboardTab(),
+            new PrivacyTab(),
             new ModulesTab(),
             new AppearanceTab(),
             new FormsTab(),
