@@ -1,9 +1,11 @@
 {
   "schemaVersion": 1,
-  "presetsVersion": "2026-06-11.1",
+  "presetsVersion": "2026-06-11.2",
+  "_elementorNote": "Elementor Pro enregistre l'état d'affichage des popups dans localStorage (clé : elementor-popup-{id}), pas en cookie HTTP. Non inclus comme preset — candidat pour une future extension du schéma si un type 'storage' est ajouté.",
   "presets": [
     {
       "id": "ga4",
+      "kind": "service",
       "name": "Google Analytics 4",
       "provider": "Google",
       "category": "statistics",
@@ -22,6 +24,7 @@
     },
     {
       "id": "gtm",
+      "kind": "service",
       "name": "Google Tag Manager",
       "provider": "Google",
       "category": "marketing",
@@ -36,6 +39,7 @@
     },
     {
       "id": "google-ads",
+      "kind": "service",
       "name": "Google Ads / DoubleClick",
       "provider": "Google",
       "category": "marketing",
@@ -54,6 +58,7 @@
     },
     {
       "id": "meta-pixel",
+      "kind": "service",
       "name": "Meta Pixel (Facebook)",
       "provider": "Meta",
       "category": "marketing",
@@ -71,6 +76,7 @@
     },
     {
       "id": "monsterinsights",
+      "kind": "plugin",
       "name": "MonsterInsights (Google Analytics)",
       "provider": "MonsterInsights / Google",
       "category": "statistics",
@@ -88,6 +94,7 @@
     },
     {
       "id": "jetpack-stats",
+      "kind": "plugin",
       "name": "Jetpack Stats",
       "provider": "Automattic",
       "category": "statistics",
@@ -105,6 +112,7 @@
     },
     {
       "id": "hotjar",
+      "kind": "service",
       "name": "Hotjar",
       "provider": "Hotjar",
       "category": "statistics",
@@ -122,6 +130,7 @@
     },
     {
       "id": "clarity",
+      "kind": "service",
       "name": "Microsoft Clarity",
       "provider": "Microsoft",
       "category": "statistics",
@@ -140,6 +149,7 @@
     },
     {
       "id": "linkedin-insight",
+      "kind": "service",
       "name": "LinkedIn Insight Tag",
       "provider": "LinkedIn",
       "category": "marketing",
@@ -159,6 +169,7 @@
     },
     {
       "id": "tiktok-pixel",
+      "kind": "service",
       "name": "TikTok Pixel",
       "provider": "TikTok",
       "category": "marketing",
@@ -175,6 +186,7 @@
     },
     {
       "id": "youtube-embed",
+      "kind": "service",
       "name": "YouTube (vidéos intégrées)",
       "provider": "Google",
       "category": "marketing",
@@ -192,6 +204,7 @@
     },
     {
       "id": "vimeo-embed",
+      "kind": "service",
       "name": "Vimeo (vidéos intégrées)",
       "provider": "Vimeo",
       "category": "statistics",
@@ -208,6 +221,7 @@
     },
     {
       "id": "google-maps",
+      "kind": "service",
       "name": "Google Maps (cartes intégrées)",
       "provider": "Google",
       "category": "marketing",
@@ -224,6 +238,7 @@
     },
     {
       "id": "recaptcha",
+      "kind": "service",
       "name": "Google reCAPTCHA",
       "provider": "Google",
       "category": "necessary",
@@ -240,6 +255,7 @@
     },
     {
       "id": "woocommerce",
+      "kind": "plugin",
       "name": "WooCommerce",
       "provider": "Automattic",
       "category": "necessary",
@@ -258,6 +274,7 @@
     },
     {
       "id": "mailchimp",
+      "kind": "plugin",
       "name": "Mailchimp",
       "provider": "Intuit Mailchimp",
       "category": "marketing",
@@ -274,6 +291,7 @@
     },
     {
       "id": "wpml",
+      "kind": "plugin",
       "name": "WPML",
       "provider": "OnTheGoSystems",
       "category": "necessary",
@@ -292,6 +310,7 @@
     },
     {
       "id": "hubspot",
+      "kind": "service",
       "name": "HubSpot – CRM & Marketing",
       "provider": "HubSpot",
       "category": "marketing",
@@ -311,6 +330,7 @@
     },
     {
       "id": "cloudflare-turnstile",
+      "kind": "service",
       "name": "Cloudflare Turnstile",
       "provider": "Cloudflare",
       "category": "necessary",
@@ -327,6 +347,7 @@
     },
     {
       "id": "calendly",
+      "kind": "service",
       "name": "Calendly (prise de rendez-vous)",
       "provider": "Calendly",
       "category": "marketing",
@@ -344,6 +365,293 @@
         { "name": "_calendly_session", "expiry": { "fr": "Session", "en": "Session" }, "thirdParty": true, "description": { "fr": "Gère la session de réservation du visiteur sur calendly.com.", "en": "Manages the visitor's booking session on calendly.com." } },
         { "name": "ajs_anonymous_id", "expiry": { "fr": "1 an", "en": "1 year" }, "thirdParty": true, "description": { "fr": "Identifiant anonyme Segment Analytics utilisé par Calendly pour mesurer l'utilisation.", "en": "Segment Analytics anonymous identifier used by Calendly to measure usage." } },
         { "name": "__cf_bm (calendly.com)", "expiry": { "fr": "30 minutes", "en": "30 minutes" }, "thirdParty": true, "description": { "fr": "Témoin de protection contre les bots Cloudflare déposé par calendly.com.", "en": "Cloudflare bot protection cookie set by calendly.com." } }
+      ]
+    },
+    {
+      "id": "wordfence",
+      "kind": "plugin",
+      "name": "Wordfence Security",
+      "provider": "Defiant Inc.",
+      "category": "necessary",
+      "blockedByDefault": false,
+      "_source": "https://www.wordfence.com/help/general-data-protection-regulation/ — https://cookiedatabase.org/cookie/wordfence/wfwaf-authcookie/",
+      "description": {
+        "fr": "Extension de sécurité WordPress. Dépose un témoin d'authentification WAF pour les utilisateurs connectés afin d'ajuster les règles du pare-feu. Classé nécessaire (sécurité) — non bloqué par défaut. Note : le témoin wordfence_verifiedHuman est obsolète depuis les versions récentes de Wordfence.",
+        "en": "WordPress security plugin. Sets a WAF authentication cookie for logged-in users to adjust firewall rules. Classified as necessary (security) — not blocked by default. Note: the wordfence_verifiedHuman cookie is obsolete in recent Wordfence versions."
+      },
+      "detect": { "plugins": ["wordfence/wordfence.php"] },
+      "blocking": { "scriptPatterns": [] },
+      "cookies": [
+        { "name": "wfwaf-authcookie-*", "expiry": { "fr": "Session / durée session WP", "en": "Session / WP session duration" }, "thirdParty": false, "description": { "fr": "Permet au pare-feu Wordfence d'identifier les utilisateurs connectés et d'ajuster les règles de filtrage en conséquence.", "en": "Allows the Wordfence firewall to identify logged-in users and adjust filtering rules accordingly." } }
+      ]
+    },
+    {
+      "id": "polylang",
+      "kind": "plugin",
+      "name": "Polylang",
+      "provider": "WP SYNTEX",
+      "category": "necessary",
+      "blockedByDefault": false,
+      "_source": "https://cookiedatabase.org/cookie/polylang/pll_language/ — https://polylang.pro/documentation/support/faq/",
+      "description": {
+        "fr": "Extension multilingue WordPress. Mémorise la langue choisie par le visiteur. Fonctionnel — non bloqué par défaut.",
+        "en": "WordPress multilingual plugin. Stores the visitor's chosen language. Functional — not blocked by default."
+      },
+      "detect": { "plugins": ["polylang/polylang.php", "polylang-pro/polylang.php"] },
+      "blocking": { "scriptPatterns": [] },
+      "cookies": [
+        { "name": "pll_language", "expiry": { "fr": "1 an", "en": "1 year" }, "thirdParty": false, "description": { "fr": "Mémorise la préférence de langue du visiteur pour maintenir une navigation cohérente.", "en": "Stores the visitor's language preference to maintain consistent navigation." } }
+      ]
+    },
+    {
+      "id": "wp-comments",
+      "kind": "plugin",
+      "name": "Commentaires WordPress (core)",
+      "provider": "WordPress",
+      "category": "necessary",
+      "blockedByDefault": false,
+      "_source": "https://developer.wordpress.org/reference/functions/wp_set_comment_cookies/ — https://developer.wordpress.org/advanced-administration/wordpress/cookies/",
+      "description": {
+        "fr": "WordPress core mémorise le nom, l'e-mail et l'URL d'un visiteur dans des témoins après la soumission d'un commentaire (si la case « Enregistrer mes informations » est cochée). Déposés sur action explicite de l'utilisateur — non bloqués par défaut.",
+        "en": "WordPress core stores a visitor's name, email and URL in cookies after comment submission (if 'Save my info' is checked). Set on explicit user action — not blocked by default."
+      },
+      "detect": { "plugins": [] },
+      "blocking": { "scriptPatterns": [] },
+      "cookies": [
+        { "name": "comment_author_*", "expiry": { "fr": "1 an", "en": "1 year" }, "thirdParty": false, "description": { "fr": "Nom du commentateur (prérempli au prochain commentaire).", "en": "Commenter's name (pre-filled on next comment)." } },
+        { "name": "comment_author_email_*", "expiry": { "fr": "1 an", "en": "1 year" }, "thirdParty": false, "description": { "fr": "Adresse e-mail du commentateur (préremplie).", "en": "Commenter's email address (pre-filled)." } },
+        { "name": "comment_author_url_*", "expiry": { "fr": "1 an", "en": "1 year" }, "thirdParty": false, "description": { "fr": "URL du site web du commentateur (préremplie).", "en": "Commenter's website URL (pre-filled)." } }
+      ]
+    },
+    {
+      "id": "smash-balloon",
+      "kind": "plugin",
+      "name": "Smash Balloon (flux sociaux)",
+      "provider": "Smash Balloon",
+      "category": "marketing",
+      "blockedByDefault": true,
+      "_source": "https://smashballoon.com/gdpr-and-our-plugins/ — https://smashballoon.com/doc/custom-facebook-feed-gdpr-compliance/",
+      "description": {
+        "fr": "Smash Balloon affiche des flux Facebook, Instagram ou Twitter/X. Lorsque les widgets sociaux natifs (bouton J'aime, Partager) sont activés, ils chargent des scripts Meta ou X qui déposent des témoins de suivi tiers. Le mode GDPR du plugin bloque ces requêtes tierces.",
+        "en": "Smash Balloon displays Facebook, Instagram, or Twitter/X feeds. When native social widgets (Like, Share) are enabled, they load Meta or X scripts that set third-party tracking cookies. The plugin's GDPR mode blocks these third-party requests."
+      },
+      "detect": {
+        "plugins": [
+          "custom-facebook-feed/custom-facebook-feed.php",
+          "instagram-feed/instagram-feed.php",
+          "custom-twitter-feeds/custom-twitter-feeds.php",
+          "social-wall/social-wall.php"
+        ]
+      },
+      "blocking": {
+        "scriptPatterns": ["facebook.com/plugins", "platform.twitter.com/widgets.js"],
+        "iframePatterns": ["facebook.com/plugins"]
+      },
+      "cookies": [
+        { "name": "_fbp", "expiry": { "fr": "3 mois (widgets Facebook actifs)", "en": "3 months (active Facebook widgets)" }, "thirdParty": true, "description": { "fr": "Identifiant navigateur Facebook déposé par les widgets sociaux Meta — pas par Smash Balloon lui-même.", "en": "Facebook browser identifier set by Meta social widgets — not by Smash Balloon itself." } }
+      ]
+    },
+    {
+      "id": "wpdiscuz",
+      "kind": "plugin",
+      "name": "wpDiscuz",
+      "provider": "gVectors Team",
+      "category": "necessary",
+      "blockedByDefault": false,
+      "_source": "https://wpdiscuz.com/docs/wpdiscuz-7/privacy-and-gdpr/cookies/",
+      "description": {
+        "fr": "Système de commentaires avancé pour WordPress. Mémorise l'identité du commentateur (nom, e-mail, URL) et un nonce de formulaire. Fonctionnel — non bloqué par défaut. Durée configurable par l'administrateur.",
+        "en": "Advanced comment system for WordPress. Stores commenter identity (name, email, URL) and a form nonce. Functional — not blocked by default. Lifetime configurable by administrator."
+      },
+      "detect": { "plugins": ["wpdiscuz/class.WpdiscuzCore.php"] },
+      "blocking": { "scriptPatterns": [] },
+      "cookies": [
+        { "name": "comment_author_*", "expiry": { "fr": "Configurable (défaut : illimité)", "en": "Configurable (default: unlimited)" }, "thirdParty": false, "description": { "fr": "Nom du commentateur (prérempli).", "en": "Commenter's name (pre-filled)." } },
+        { "name": "comment_author_email_*", "expiry": { "fr": "Configurable (défaut : illimité)", "en": "Configurable (default: unlimited)" }, "thirdParty": false, "description": { "fr": "Adresse e-mail du commentateur (préremplie).", "en": "Commenter's email address (pre-filled)." } },
+        { "name": "wpdiscuz_nonce_*", "expiry": { "fr": "Session", "en": "Session" }, "thirdParty": false, "description": { "fr": "Nonce de sécurité pour la soumission du formulaire de commentaires wpDiscuz.", "en": "Security nonce for wpDiscuz comment form submission." } }
+      ]
+    },
+    {
+      "id": "translatepress",
+      "kind": "plugin",
+      "name": "TranslatePress",
+      "provider": "Cozmoslabs",
+      "category": "necessary",
+      "blockedByDefault": false,
+      "_source": "https://translatepress.com/docs/frequently-asked-questions/ — https://cookiedatabase.org/service/translatepress/",
+      "description": {
+        "fr": "Extension de traduction WordPress. Mémorise la langue choisie par le visiteur pour maintenir la navigation cohérente. Fonctionnel — non bloqué par défaut.",
+        "en": "WordPress translation plugin. Stores the visitor's chosen language to maintain consistent navigation. Functional — not blocked by default."
+      },
+      "detect": { "plugins": ["translatepress-multilingual/index.php"] },
+      "blocking": { "scriptPatterns": [] },
+      "cookies": [
+        { "name": "trp_language", "expiry": { "fr": "1 an", "en": "1 year" }, "thirdParty": false, "description": { "fr": "Mémorise la préférence de langue du visiteur pour la session suivante.", "en": "Stores the visitor's language preference for the next session." } }
+      ]
+    },
+    {
+      "id": "spotify-embed",
+      "kind": "service",
+      "name": "Spotify (lecteur intégré)",
+      "provider": "Spotify",
+      "category": "statistics",
+      "blockedByDefault": true,
+      "_source": "https://cookiedatabase.org/cookie/spotify/sp_t/ — https://cookiedatabase.org/cookie/spotify/sp_landing/ — https://www.spotify.com/us/legal/cookies-policy/",
+      "description": {
+        "fr": "Le lecteur audio Spotify intégré dépose des témoins d'analyse dès son chargement, avant toute interaction du visiteur. Bloqué par défaut jusqu'au consentement.",
+        "en": "The embedded Spotify audio player sets analytics cookies as soon as it loads, before any visitor interaction. Blocked by default until consent."
+      },
+      "detect": { "plugins": [] },
+      "blocking": {
+        "scriptPatterns": [],
+        "iframePatterns": ["open.spotify.com/embed"]
+      },
+      "cookies": [
+        { "name": "sp_t", "expiry": { "fr": "1 an", "en": "1 year" }, "thirdParty": true, "description": { "fr": "Mesure l'interaction de l'utilisateur avec le contenu audio Spotify intégré.", "en": "Measures user interaction with the embedded Spotify audio content." } },
+        { "name": "sp_landing", "expiry": { "fr": "1 an", "en": "1 year" }, "thirdParty": true, "description": { "fr": "Mesure la page de destination pour l'attribution Spotify.", "en": "Tracks the landing page for Spotify attribution." } }
+      ]
+    },
+    {
+      "id": "pinterest-pixel",
+      "kind": "service",
+      "name": "Pinterest Tag (pixel)",
+      "provider": "Pinterest",
+      "category": "marketing",
+      "blockedByDefault": true,
+      "_source": "https://help.pinterest.com/en/business/article/pinterest-tag-parameters-and-cookies — https://policy.pinterest.com/en/cookies",
+      "description": {
+        "fr": "Pixel de suivi Pinterest pour le remarketing et les conversions publicitaires.",
+        "en": "Pinterest tracking pixel for remarketing and advertising conversion tracking."
+      },
+      "detect": { "plugins": [] },
+      "blocking": {
+        "scriptPatterns": ["ct.pinterest.com", "assets.pinterest.com/js/pinit.js", "s.pinimg.com/ct"]
+      },
+      "cookies": [
+        { "name": "_pinterest_ct_ua", "expiry": { "fr": "1 an", "en": "1 year" }, "thirdParty": true, "description": { "fr": "Identifiant navigateur Pinterest (équivalent tiers de _pin_unauth).", "en": "Pinterest browser identifier (third-party equivalent of _pin_unauth)." } },
+        { "name": "_epik", "expiry": { "fr": "1 an", "en": "1 year" }, "thirdParty": false, "description": { "fr": "Paramètre de clic publicitaire Pinterest mis en cache pour l'attribution des conversions.", "en": "Pinterest ad click parameter cached for conversion attribution." } },
+        { "name": "_derived_epik", "expiry": { "fr": "1 an", "en": "1 year" }, "thirdParty": false, "description": { "fr": "Résultat de correspondance améliorée Pinterest mis en cache pour les pages suivantes.", "en": "Pinterest enhanced match result cached for future pages." } }
+      ]
+    },
+    {
+      "id": "stripe-checkout",
+      "kind": "service",
+      "name": "Stripe (paiement intégré)",
+      "provider": "Stripe",
+      "category": "necessary",
+      "blockedByDefault": false,
+      "_source": "https://docs.stripe.com/js/appendix/cookies — https://cookiedatabase.org/cookie/stripe/__stripe_mid/ — https://cookiedatabase.org/cookie/stripe/__stripe_sid/",
+      "description": {
+        "fr": "Stripe.js dépose des témoins pour sécuriser le traitement du paiement et détecter les activités frauduleuses. Classé nécessaire (paiement) — non bloqué par défaut.",
+        "en": "Stripe.js sets cookies to secure payment processing and detect fraudulent activity. Classified as necessary (payment) — not blocked by default."
+      },
+      "detect": { "plugins": ["woocommerce-gateway-stripe/woocommerce-gateway-stripe.php"] },
+      "blocking": { "scriptPatterns": ["js.stripe.com"] },
+      "cookies": [
+        { "name": "__stripe_mid", "expiry": { "fr": "1 an", "en": "1 year" }, "thirdParty": true, "description": { "fr": "Identifiant machine Stripe pour la prévention des fraudes.", "en": "Stripe machine identifier for fraud prevention." } },
+        { "name": "__stripe_sid", "expiry": { "fr": "30 minutes", "en": "30 minutes" }, "thirdParty": true, "description": { "fr": "Identifiant de session Stripe — déposé au démarrage du processus de paiement.", "en": "Stripe session identifier — set at the start of the payment process." } }
+      ]
+    },
+    {
+      "id": "paypal",
+      "kind": "service",
+      "name": "PayPal (boutons de paiement)",
+      "provider": "PayPal",
+      "category": "necessary",
+      "blockedByDefault": false,
+      "_source": "https://www.paypal.com/us/legalhub/paypal/cookie-full — https://developer.paypal.com/sdk/js/",
+      "description": {
+        "fr": "Le SDK PayPal dépose des témoins dès le chargement des boutons de paiement, avant toute interaction. Classé nécessaire (paiement) — non bloqué par défaut.",
+        "en": "The PayPal SDK sets cookies as soon as payment buttons load, before any interaction. Classified as necessary (payment) — not blocked by default."
+      },
+      "detect": { "plugins": ["woocommerce-paypal-payments/woocommerce-paypal-payments.php"] },
+      "blocking": { "scriptPatterns": ["paypal.com/sdk/js", "paypalobjects.com"] },
+      "cookies": [
+        { "name": "ts", "expiry": { "fr": "Session", "en": "Session" }, "thirdParty": true, "description": { "fr": "Témoin de session PayPal pour la détection de fraude.", "en": "PayPal session cookie for fraud detection." } },
+        { "name": "ts_c", "expiry": { "fr": "3 ans", "en": "3 years" }, "thirdParty": true, "description": { "fr": "Identifiant persistant PayPal pour la prévention des fraudes.", "en": "Persistent PayPal identifier for fraud prevention." } },
+        { "name": "AKDC", "expiry": { "fr": "Session", "en": "Session" }, "thirdParty": true, "description": { "fr": "Routage de requêtes réseau PayPal (Akamai).", "en": "PayPal network request routing (Akamai)." } }
+      ]
+    },
+    {
+      "id": "livechat",
+      "kind": "service",
+      "name": "LiveChat",
+      "provider": "LiveChat Inc.",
+      "category": "marketing",
+      "blockedByDefault": true,
+      "_source": "https://cookiedatabase.org/service/livechat/ — https://www.livechat.com/help/prepare-chat-gdpr/",
+      "description": {
+        "fr": "Widget de chat en direct LiveChat. Dépose des identifiants de visiteur persistants dès le chargement. Des données sont transmises à des pays sans niveau de protection adéquat (RGPD). Requiert le consentement.",
+        "en": "LiveChat live chat widget. Sets persistent visitor identifiers on load. Data is transferred to countries without adequate protection (GDPR). Requires consent."
+      },
+      "detect": { "plugins": ["wp-live-chat-software-for-wordpress/index.php"] },
+      "blocking": { "scriptPatterns": ["cdn.livechatinc.com"] },
+      "cookies": [
+        { "name": "__lc_cid", "expiry": { "fr": "2 ans", "en": "2 years" }, "thirdParty": true, "description": { "fr": "Identifiant de session client LiveChat.", "en": "LiveChat client session identifier." } },
+        { "name": "__lc_cst", "expiry": { "fr": "2 ans", "en": "2 years" }, "thirdParty": true, "description": { "fr": "Jeton de session client LiveChat.", "en": "LiveChat client session token." } },
+        { "name": "__lc_visitor_id.*", "expiry": { "fr": "2 ans", "en": "2 years" }, "thirdParty": true, "description": { "fr": "Identifiant unique du visiteur LiveChat, persistant entre les sessions.", "en": "Unique LiveChat visitor identifier, persistent across sessions." } }
+      ]
+    },
+    {
+      "id": "tawkto",
+      "kind": "service",
+      "name": "Tawk.to",
+      "provider": "Tawk.to",
+      "category": "functional",
+      "blockedByDefault": true,
+      "_source": "https://help.tawk.to/article/what-are-tawkto-cookies-and-what-do-they-do — https://www.tawk.to/data-protection/gdpr-2/",
+      "description": {
+        "fr": "Widget de chat en direct Tawk.to. Identifie les visiteurs récurrents par un UUID unique. Le RGPD exige le consentement avant activation du widget.",
+        "en": "Tawk.to live chat widget. Identifies returning visitors by a unique UUID. GDPR requires consent before widget activation."
+      },
+      "detect": { "plugins": ["tawkto-live-chat/tawkto.php"] },
+      "blocking": {
+        "scriptPatterns": ["embed.tawk.to"],
+        "iframePatterns": ["tawk.to"]
+      },
+      "cookies": [
+        { "name": "tawk_uuid_*", "expiry": { "fr": "6 mois", "en": "6 months" }, "thirdParty": true, "description": { "fr": "Identifiant UUID unique du visiteur, lié à la propriété Tawk.to du site.", "en": "Unique UUID visitor identifier, tied to the site's Tawk.to property." } },
+        { "name": "TawkConnectionTime", "expiry": { "fr": "Session", "en": "Session" }, "thirdParty": true, "description": { "fr": "Horodatage de connexion au serveur Tawk.to.", "en": "Connection timestamp to the Tawk.to server." } }
+      ]
+    },
+    {
+      "id": "crisp",
+      "kind": "service",
+      "name": "Crisp Chat",
+      "provider": "Crisp IM",
+      "category": "functional",
+      "blockedByDefault": true,
+      "_source": "https://docs.crisp.chat/guides/chatbox-sdks/web-sdk/cookie-policies/ — https://help.crisp.chat/en/article/crisp-chatbox-cookie-ip-policy-1147xor/",
+      "description": {
+        "fr": "Widget de chat en direct Crisp. Dépose des témoins de session préfixés crisp-client/ pour maintenir l'historique de conversation. Aucun témoin de suivi publicitaire. Infrastructure hébergée en UE.",
+        "en": "Crisp live chat widget. Sets session cookies with the crisp-client/ prefix to maintain conversation history. No advertising tracking cookies. Infrastructure hosted in the EU."
+      },
+      "detect": { "plugins": ["crisp-for-woocommerce/crisp.php", "crisp-live-chat/rtm.php"] },
+      "blocking": { "scriptPatterns": ["client.crisp.chat"] },
+      "cookies": [
+        { "name": "crisp-client/*", "expiry": { "fr": "6 mois", "en": "6 months" }, "thirdParty": true, "description": { "fr": "Session de chat du visiteur (historique, identité temporaire). Préfixe crisp-client/ — uniquement fonctionnel, pas de suivi publicitaire.", "en": "Visitor chat session (history, temporary identity). crisp-client/ prefix — functional only, no advertising tracking." } }
+      ]
+    },
+    {
+      "id": "optinmonster",
+      "kind": "plugin",
+      "name": "OptinMonster",
+      "provider": "Retyp LLC",
+      "category": "marketing",
+      "blockedByDefault": true,
+      "_source": "https://optinmonster.com/gdpr/cookies/ — https://cookiedatabase.org/cookie/optinmonster/omseen/",
+      "description": {
+        "fr": "Popups et formulaires d'inscription. Dépose des témoins pour le suivi des campagnes, l'A/B testing et le reciblage sur site. Requiert le consentement.",
+        "en": "Opt-in popups and signup forms. Sets cookies for campaign tracking, A/B testing, and on-site retargeting. Requires consent."
+      },
+      "detect": { "plugins": ["optinmonster/optin-monster-wp-api.php"] },
+      "blocking": { "scriptPatterns": ["a.omappapi.com", "api.omappapi.com"] },
+      "cookies": [
+        { "name": "_omappvp", "expiry": { "fr": "11 ans", "en": "11 years" }, "thirdParty": false, "description": { "fr": "Distingue les visiteurs nouveaux des visiteurs récurrents.", "en": "Distinguishes new visitors from returning visitors." } },
+        { "name": "_omappvs", "expiry": { "fr": "20 minutes", "en": "20 minutes" }, "thirdParty": false, "description": { "fr": "Détecte quand un nouveau visiteur devient récurrent.", "en": "Detects when a new visitor becomes a returning one." } },
+        { "name": "omSeen-*", "expiry": { "fr": "30 jours (configurable)", "en": "30 days (configurable)" }, "thirdParty": false, "description": { "fr": "Mémorise si une campagne a été affichée au visiteur.", "en": "Stores whether a campaign has been shown to the visitor." } },
+        { "name": "om-*", "expiry": { "fr": "30 jours (configurable)", "en": "30 days (configurable)" }, "thirdParty": false, "description": { "fr": "Mémorise l'interaction du visiteur avec une campagne spécifique.", "en": "Stores the visitor's interaction with a specific campaign." } },
+        { "name": "om-success-*", "expiry": { "fr": "365 jours (configurable)", "en": "365 days (configurable)" }, "thirdParty": false, "description": { "fr": "Mémorise qu'un visiteur a soumis un formulaire de campagne (opt-in réussi).", "en": "Records that a visitor successfully submitted a campaign form (successful opt-in)." } }
       ]
     }
   ]

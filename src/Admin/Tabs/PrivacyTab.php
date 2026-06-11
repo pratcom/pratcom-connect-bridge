@@ -19,7 +19,7 @@ use Pratcom\Connect\Bridge\Privacy\Presets;
  * Sections :
  *   ① Toggle FreeBanner::OPTION_ENABLED + avertissement module Connect actif.
  *   ② Bandeau de suggestions Presets::suggested() (détection passive locale).
- *   ③ Cases à cocher Presets::all() groupées par catégorie (Presets::OPTION_SELECTED).
+ *   ③ Cases à cocher Presets::all() groupées par provenance (kind) puis catégorie.
  *   ④ Bouton « Créer la page » — PolicyPage::render_admin_section().
  *   ⑤ Export CSV consentements — LocalRegistry::EXPORT_ACTION.
  *   ⑥ (O5b) Section « Privacy Connect » — iframe scan si pack privacy actif.
@@ -101,11 +101,26 @@ class PrivacyTab extends AbstractTab
         $packs               = get_option(Plugin::OPTION_FEATURE_PACKS, []);
         $privacy_pack_active = $is_connected && is_array($packs) && !empty($packs['privacy']['enabled']);
 
-        // Grouper par catégorie (ordre d'apparition dans presets.json préservé).
-        $by_category = [];
+        // Grouper par provenance (kind) puis catégorie.
+        // kind absent = 'service' (rétrocompatible).
+        $by_kind = [];
         foreach ($all_presets as $preset) {
-            $cat = (string) ($preset['category'] ?? 'unclassified');
-            $by_category[$cat][] = $preset;
+            $kind = (string) ($preset['kind'] ?? 'service');
+            $cat  = (string) ($preset['category'] ?? 'unclassified');
+            $by_kind[$kind][$cat][] = $preset;
+        }
+        // Ordre fixe : extensions WordPress d'abord, services externes ensuite.
+        $by_kind_ordered = [];
+        foreach (['plugin', 'service'] as $k) {
+            if (!empty($by_kind[$k])) {
+                $by_kind_ordered[$k] = $by_kind[$k];
+            }
+        }
+        // Conserver d'éventuels kinds futurs non prévus.
+        foreach ($by_kind as $k => $v) {
+            if (!array_key_exists($k, $by_kind_ordered)) {
+                $by_kind_ordered[$k] = $v;
+            }
         }
 
         // Notice de sauvegarde : AdminShell::render_notices() ne connaît pas
@@ -189,7 +204,7 @@ class PrivacyTab extends AbstractTab
             </div><!-- /.pc-card.pc-card--highlight -->
             <?php endif; ?>
 
-            <!-- ③ Presets groupés par catégorie --------------------------------->
+            <!-- ③ Presets groupés par provenance (kind) puis catégorie ----------->
             <div class="pc-card">
                 <h2 class="pc-card__title">
                     <?php esc_html_e('Presets de plugins populaires', 'pratcom-connect'); ?>
@@ -199,6 +214,11 @@ class PrivacyTab extends AbstractTab
                 </p>
 
                 <?php
+                $kind_labels = [
+                    'plugin'  => __('Extensions WordPress populaires', 'pratcom-connect'),
+                    'service' => __('Services et scripts externes', 'pratcom-connect'),
+                ];
+
                 $category_labels = [
                     'statistics'   => __('Statistiques', 'pratcom-connect'),
                     'marketing'    => __('Marketing', 'pratcom-connect'),
@@ -208,53 +228,64 @@ class PrivacyTab extends AbstractTab
                     'unclassified' => __('Autre', 'pratcom-connect'),
                 ];
 
-                foreach ($by_category as $cat => $presets):
-                    $cat_label = $category_labels[$cat] ?? ucfirst($cat);
+                foreach ($by_kind_ordered as $kind => $by_category):
+                    $kind_label = $kind_labels[$kind] ?? ucfirst($kind);
                 ?>
-                <fieldset class="pc-preset-group" style="border:none;padding:0;margin:0 0 20px;">
-                    <legend style="font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--pc-text-muted,#5a6a75);padding:0;margin:0 0 8px;">
-                        <?php echo esc_html($cat_label); ?>
-                    </legend>
-                    <div class="pc-preset-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;">
-                        <?php foreach ($presets as $preset):
-                            $pid          = (string) ($preset['id'] ?? '');
-                            $pname        = (string) ($preset['name'] ?? $pid);
-                            $desc_fr      = (string) ($preset['description']['fr'] ?? $preset['description']['en'] ?? '');
-                            $is_checked   = in_array($pid, $selected_ids, true);
-                            $is_suggested = in_array($pid, $suggestions, true);
-                            $is_necessary = !($preset['blockedByDefault'] ?? true);
-                        ?>
-                        <label class="pc-preset-item <?php echo $is_suggested ? 'pc-preset-item--suggested' : ''; ?>"
-                               style="display:flex;flex-direction:column;gap:3px;padding:10px 12px;border:1px solid <?php echo $is_checked ? 'var(--pc-color-primary,#377ba6)' : '#d0d7dc'; ?>;border-radius:8px;cursor:pointer;background:<?php echo $is_checked ? 'rgba(55,123,166,.07)' : '#fff'; ?>;">
-                            <span style="display:flex;align-items:center;gap:7px;">
-                                <input type="checkbox"
-                                       name="privacy_presets[]"
-                                       value="<?php echo esc_attr($pid); ?>"
-                                       <?php checked($is_checked); ?>
-                                       style="width:15px;height:15px;cursor:pointer;flex-shrink:0;" />
-                                <strong style="font-size:13px;line-height:1.3;">
-                                    <?php echo esc_html($pname); ?>
-                                </strong>
-                                <?php if ($is_suggested): ?>
-                                <span style="font-size:10px;padding:1px 6px;border-radius:10px;background:var(--pc-color-primary,#377ba6);color:#fff;white-space:nowrap;">
-                                    <?php esc_html_e('Actif ici', 'pratcom-connect'); ?>
+                <div class="pc-kind-group" style="margin-bottom:28px;">
+                    <h3 style="font-size:14px;font-weight:700;color:var(--pc-text,#1d2b36);border-bottom:2px solid var(--pc-color-primary,#377ba6);padding-bottom:6px;margin:0 0 14px;">
+                        <?php echo esc_html($kind_label); ?>
+                    </h3>
+
+                    <?php foreach ($by_category as $cat => $presets):
+                        $cat_label = $category_labels[$cat] ?? ucfirst($cat);
+                    ?>
+                    <fieldset class="pc-preset-group" style="border:none;padding:0;margin:0 0 20px;">
+                        <legend style="font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--pc-text-muted,#5a6a75);padding:0;margin:0 0 8px;">
+                            <?php echo esc_html($cat_label); ?>
+                        </legend>
+                        <div class="pc-preset-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;">
+                            <?php foreach ($presets as $preset):
+                                $pid          = (string) ($preset['id'] ?? '');
+                                $pname        = (string) ($preset['name'] ?? $pid);
+                                $desc_fr      = (string) ($preset['description']['fr'] ?? $preset['description']['en'] ?? '');
+                                $is_checked   = in_array($pid, $selected_ids, true);
+                                $is_suggested = in_array($pid, $suggestions, true);
+                                $is_necessary = !($preset['blockedByDefault'] ?? true);
+                            ?>
+                            <label class="pc-preset-item <?php echo $is_suggested ? 'pc-preset-item--suggested' : ''; ?>"
+                                   style="display:flex;flex-direction:column;gap:3px;padding:10px 12px;border:1px solid <?php echo $is_checked ? 'var(--pc-color-primary,#377ba6)' : '#d0d7dc'; ?>;border-radius:8px;cursor:pointer;background:<?php echo $is_checked ? 'rgba(55,123,166,.07)' : '#fff'; ?>;">
+                                <span style="display:flex;align-items:center;gap:7px;">
+                                    <input type="checkbox"
+                                           name="privacy_presets[]"
+                                           value="<?php echo esc_attr($pid); ?>"
+                                           <?php checked($is_checked); ?>
+                                           style="width:15px;height:15px;cursor:pointer;flex-shrink:0;" />
+                                    <strong style="font-size:13px;line-height:1.3;">
+                                        <?php echo esc_html($pname); ?>
+                                    </strong>
+                                    <?php if ($is_suggested): ?>
+                                    <span style="font-size:10px;padding:1px 6px;border-radius:10px;background:var(--pc-color-primary,#377ba6);color:#fff;white-space:nowrap;">
+                                        <?php esc_html_e('Actif ici', 'pratcom-connect'); ?>
+                                    </span>
+                                    <?php endif; ?>
+                                    <?php if ($is_necessary): ?>
+                                    <span style="font-size:10px;padding:1px 6px;border-radius:10px;background:#e8f5e9;color:#1a7f37;white-space:nowrap;">
+                                        <?php esc_html_e('Nécessaire', 'pratcom-connect'); ?>
+                                    </span>
+                                    <?php endif; ?>
+                                </span>
+                                <?php if ($desc_fr): ?>
+                                <span style="font-size:11px;color:var(--pc-text-muted,#5a6a75);line-height:1.4;padding-left:22px;">
+                                    <?php echo esc_html($desc_fr); ?>
                                 </span>
                                 <?php endif; ?>
-                                <?php if ($is_necessary): ?>
-                                <span style="font-size:10px;padding:1px 6px;border-radius:10px;background:#e8f5e9;color:#1a7f37;white-space:nowrap;">
-                                    <?php esc_html_e('Nécessaire', 'pratcom-connect'); ?>
-                                </span>
-                                <?php endif; ?>
-                            </span>
-                            <?php if ($desc_fr): ?>
-                            <span style="font-size:11px;color:var(--pc-text-muted,#5a6a75);line-height:1.4;padding-left:22px;">
-                                <?php echo esc_html($desc_fr); ?>
-                            </span>
-                            <?php endif; ?>
-                        </label>
-                        <?php endforeach; ?>
-                    </div><!-- /.pc-preset-grid -->
-                </fieldset>
+                            </label>
+                            <?php endforeach; ?>
+                        </div><!-- /.pc-preset-grid -->
+                    </fieldset>
+                    <?php endforeach; ?>
+
+                </div><!-- /.pc-kind-group -->
                 <?php endforeach; ?>
 
             </div><!-- /.pc-card (presets) -->
@@ -278,7 +309,7 @@ class PrivacyTab extends AbstractTab
             </h2>
             <p>
                 <?php esc_html_e(
-                    'Exportez la preuve d\'audit des consentements enregistrés (Loi 25, art. 14). Le fichier CSV contient tous les enregistrements depuis l\'activation de la bannière.',
+                    "Exportez la preuve d'audit des consentements enregistrés (Loi 25, art. 14). Le fichier CSV contient tous les enregistrements depuis l'activation de la bannière.",
                     'pratcom-connect'
                 ); ?>
             </p>
