@@ -39,6 +39,7 @@ class Plugin
         new Privacy\PolicyShortcode();
         new Privacy\LocalRegistry();
         new Privacy\FreeBanner();
+        new Http\PagesController();
     }
 
     public static function add_settings_link(array $links): array
