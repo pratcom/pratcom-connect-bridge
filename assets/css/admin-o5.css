@@ -58,6 +58,10 @@
     background: #fff;
 }
 
+.pc-embed-frame--short {
+    height: 440px;
+}
+
 @media screen and (max-width: 960px) {
     .pc-embed-frame {
         height: 480px;
