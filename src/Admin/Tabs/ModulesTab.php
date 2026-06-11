@@ -36,19 +36,22 @@ class ModulesTab extends AbstractTab
 
         $modules = [
             'chat' => [
-                'label' => __('Connect Chat', 'pratcom-connect'),
-                'short' => 'C',
-                'desc'  => __('Chatbot IA multilingue 24/7 avec base de connaissances RAG par client.', 'pratcom-connect'),
+                'label'    => __('Connect Chat', 'pratcom-connect'),
+                'short'    => 'C',
+                'desc'     => __('Chatbot IA multilingue 24/7 avec base de connaissances RAG par client.', 'pratcom-connect'),
+                'tab_slug' => 'pratcom-connect-chat',
             ],
             'forms' => [
-                'label' => __('Connect Forms', 'pratcom-connect'),
-                'short' => 'F',
-                'desc'  => __('Formulaires intelligents avec scoring de leads et routage automatique.', 'pratcom-connect'),
+                'label'    => __('Connect Forms', 'pratcom-connect'),
+                'short'    => 'F',
+                'desc'     => __('Formulaires intelligents avec scoring de leads et routage automatique.', 'pratcom-connect'),
+                'tab_slug' => 'pratcom-connect-forms',
             ],
             'privacy' => [
-                'label' => __('Connect Privacy', 'pratcom-connect'),
-                'short' => 'P',
-                'desc'  => __('Banniere de consentement Loi 25 et catalogue de cookies automatique.', 'pratcom-connect'),
+                'label'    => __('Connect Privacy', 'pratcom-connect'),
+                'short'    => 'P',
+                'desc'     => __('Banniere de consentement Loi 25 et catalogue de cookies automatique.', 'pratcom-connect'),
+                'tab_slug' => 'pratcom-connect-privacy',
             ],
         ];
         ?>
@@ -85,6 +88,13 @@ class ModulesTab extends AbstractTab
                     </div>
                     <p class="pc-module-card__desc"><?php echo esc_html($mod['desc']); ?></p>
                     <p class="pc-module-card__note"><?php echo esc_html($note); ?></p>
+                    <?php if ($is_active): ?>
+                        <div class="pc-actions pc-module-card__cta">
+                            <a href="<?php echo esc_url(admin_url('admin.php?page=' . $mod['tab_slug'])); ?>" class="pc-btn pc-btn--secondary">
+                                <?php esc_html_e('Ouvrir', 'pratcom-connect'); ?>
+                            </a>
+                        </div>
+                    <?php endif; ?>
                     <?php if (!$is_active): ?>
                         <div class="pc-actions pc-module-card__cta">
                             <?php if ($connected): ?>
