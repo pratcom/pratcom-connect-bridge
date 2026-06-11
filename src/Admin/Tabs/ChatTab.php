@@ -1,0 +1,174 @@
+<?php
+
+namespace Pratcom\Connect\Bridge\Admin\Tabs;
+
+use Pratcom\Connect\Bridge\Plugin;
+use Pratcom\Connect\Bridge\Http\ApiClient;
+
+/**
+ * Onglet Chat (O5) : iframe du tableau de bord d'entraînement Chatbot.
+ * Contenu = chantier Chatbot. Propriété shell = Plugin .org.
+ *
+ * Module inactif : vitrine verrouillée (upsell conforme WordPress.org).
+ * Module actif   : session signée (B1 HMAC) → iframe /embed/chat-training/{ws}.
+ *
+ * Fichier neuf (leçon #4) — jamais d'édition inline du monolithe.
+ */
+class ChatTab extends AbstractTab
+{
+    public const PAGE_SLUG = 'pratcom-connect-chat';
+
+    // ─── AbstractTab ─────────────────────────────────────────────────────────
+
+    public function slug(): string
+    {
+        return self::PAGE_SLUG;
+    }
+
+    public function label(): string
+    {
+        return __('Chat', 'pratcom-connect');
+    }
+
+    public function icon(): string
+    {
+        return 'format-chat';
+    }
+
+    // ─── Rendu ───────────────────────────────────────────────────────────────
+
+    public function render(): void
+    {
+        ?>
+        <h1 class="pc-content__title"><?php esc_html_e('Connect Chat', 'pratcom-connect'); ?></h1>
+        <p class="pc-content__subtitle">
+            <?php esc_html_e('Entraînez votre assistant virtuel, gérez les connaissances et consultez les conversations depuis votre tableau de bord.', 'pratcom-connect'); ?>
+        </p>
+        <?php
+
+        if (!Plugin::is_connected() || !$this->chat_enabled()) {
+            $this->render_locked();
+            return;
+        }
+
+        $key = Plugin::get_api_key();
+        if (!$key) {
+            $this->render_no_key();
+            return;
+        }
+
+        $result = (new ApiClient())->get_chat_session($key);
+
+        if (empty($result['ok']) || empty($result['url'])) {
+            $this->render_fallback((string) ($result['error'] ?? 'unknown'));
+            return;
+        }
+
+        $ws      = (string) ($result['workspace_slug'] ?? '');
+        $crm_url = 'https://connect.pratcom.net/crm/' . rawurlencode($ws) . '/chat';
+        $this->render_iframe(esc_url($result['url']), esc_url($crm_url));
+    }
+
+    // ─── Méthodes privées ────────────────────────────────────────────────────
+
+    private function chat_enabled(): bool
+    {
+        $packs = get_option(Plugin::OPTION_FEATURE_PACKS, []);
+        return is_array($packs) && !empty($packs['chat']);
+    }
+
+    private function render_locked(): void
+    {
+        $connected = Plugin::is_connected();
+        ?>
+        <div class="pc-card pc-module-card--locked">
+            <h2 class="pc-card__title">
+                <?php esc_html_e('Connect Chat', 'pratcom-connect'); ?>
+                <span class="pc-module-card__badge pc-module-card__badge--locked">
+                    <?php esc_html_e('Verrouillé', 'pratcom-connect'); ?>
+                </span>
+            </h2>
+            <p style="color: var(--pc-text-muted); margin: 0 0 8px 0;">
+                <?php esc_html_e('Assistant virtuel intelligent entraînable, multi-tenant, avec détection de leads chauds et escalade humaine — sans aucun plugin supplémentaire.', 'pratcom-connect'); ?>
+            </p>
+            <p class="pc-module-card__note">
+                <?php esc_html_e('Module fourni par le service Pratcom Connect (abonnement requis).', 'pratcom-connect'); ?>
+            </p>
+            <div class="pc-actions pc-module-card__cta">
+                <?php if ($connected): ?>
+                    <a href="https://connect.pratcom.net/?utm_source=wp-plugin&utm_medium=chat-tab"
+                       target="_blank" rel="noopener" class="pc-btn pc-btn--primary">
+                        <?php esc_html_e('Activer ce module', 'pratcom-connect'); ?>
+                    </a>
+                <?php else: ?>
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=' . ConnectionTab::PAGE_SLUG)); ?>"
+                       class="pc-btn pc-btn--primary">
+                        <?php esc_html_e('Connecter mon compte', 'pratcom-connect'); ?>
+                    </a>
+                    <a href="https://connect.pratcom.net/?utm_source=wp-plugin&utm_medium=chat-tab"
+                       target="_blank" rel="noopener" class="pc-btn pc-btn--secondary">
+                        <?php esc_html_e('Découvrir Connect Chat', 'pratcom-connect'); ?>
+                    </a>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php
+    }
+
+    private function render_no_key(): void
+    {
+        ?>
+        <div class="pc-notice pc-notice--warning">
+            <?php esc_html_e("Clé API non trouvée. Veuillez reconnecter le plugin depuis l'onglet Connexion.", 'pratcom-connect'); ?>
+        </div>
+        <?php
+    }
+
+    private function render_fallback(string $error_code): void
+    {
+        ?>
+        <div class="pc-card">
+            <h2 class="pc-card__title"><?php esc_html_e('Connect Chat', 'pratcom-connect'); ?></h2>
+            <div class="pc-notice pc-notice--warning" style="margin-bottom: 14px;">
+                <?php
+                printf(
+                    /* translators: %s: error code returned by the API. */
+                    esc_html__("La session de l'interface Chat est momentanément indisponible (%s). Vous pouvez accéder à votre tableau de bord directement :", 'pratcom-connect'),
+                    esc_html($error_code)
+                );
+                ?>
+            </div>
+            <div class="pc-actions">
+                <a href="https://connect.pratcom.net/" target="_blank" rel="noopener" class="pc-btn pc-btn--primary">
+                    <?php esc_html_e('Ouvrir Pratcom Connect', 'pratcom-connect'); ?>
+                </a>
+            </div>
+        </div>
+        <?php
+    }
+
+    private function render_iframe(string $src, string $crm_url): void
+    {
+        ?>
+        <div class="pc-embed-wrap">
+            <div class="pc-embed-bar">
+                <span class="pc-embed-bar__label">
+                    <?php esc_html_e("Connect Chat — Tableau de bord d'entraînement", 'pratcom-connect'); ?>
+                </span>
+                <a href="<?php echo esc_url($crm_url); ?>" target="_blank" rel="noopener"
+                   class="pc-embed-bar__link">
+                    <?php esc_html_e('Ouvrir en plein écran ↗', 'pratcom-connect'); ?>
+                </a>
+            </div>
+            <iframe
+                src="<?php echo esc_url($src); ?>"
+                class="pc-embed-frame"
+                title="<?php esc_attr_e("Interface d'entraînement Connect Chat", 'pratcom-connect'); ?>"
+                loading="lazy"
+                referrerpolicy="same-origin"
+                sandbox="allow-scripts allow-same-origin allow-forms"
+            ></iframe>
+        </div>
+        <?php
+    }
+}
