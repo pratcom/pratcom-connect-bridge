@@ -105,6 +105,20 @@ class AdminShell
             ['pratcom-connect-bridge-admin'],
             PRATCOM_CONNECT_BRIDGE_VERSION
         );
+
+        // JS additif O5b : états de chargement UX (spinner anti double-clic).
+        wp_enqueue_script(
+            'pratcom-connect-bridge-admin-feedback',
+            PRATCOM_CONNECT_BRIDGE_URL . 'assets/js/admin-feedback.js',
+            [],
+            PRATCOM_CONNECT_BRIDGE_VERSION,
+            true // footer
+        );
+        wp_localize_script(
+            'pratcom-connect-bridge-admin-feedback',
+            'pcFeedback',
+            ['processing' => __('Traitement…', 'pratcom-connect')]
+        );
     }
 
     /** Callback unique de rendu : resout l'onglet courant puis rend le chrome. */

@@ -13,6 +13,8 @@ use Pratcom\Connect\Bridge\Http\ApiClient;
  *
  * Non connecte ou module inactif : vitrine verrouillee (upsell conforme
  * WordPress.org — dans NOS pages uniquement, jamais de notice globale).
+ *
+ * O5b : section additive render_builder_section() — iframe builder signe.
  */
 class FormsTab extends AbstractTab
 {
@@ -57,6 +59,7 @@ class FormsTab extends AbstractTab
         }
 
         $this->render_list();
+        $this->render_builder_section();
     }
 
     private function forms_enabled(): bool
@@ -225,6 +228,80 @@ class FormsTab extends AbstractTab
         </form>
         <?php
     }
+
+    // ─── O5b : section builder iframe (additif) ───────────────────────────────
+
+    /**
+     * Section additive « Modifier dans le builder » — iframe signee B1.
+     * Appele uniquement si connected + forms_enabled (gardes dans render()).
+     * Repli gracieux si l'API retourne une erreur.
+     */
+    private function render_builder_section(): void
+    {
+        $key = Plugin::get_api_key();
+        if (!$key) {
+            return;
+        }
+
+        $res = (new ApiClient())->get_builder_session($key);
+
+        if (!($res['ok'] ?? false) || empty($res['url'])) {
+            $code = $res['error'] ?? 'unavailable';
+            ?>
+            <div class="pc-card" style="margin-top:24px;">
+                <h2 class="pc-card__title"><?php esc_html_e('Modifier dans le builder', 'pratcom-connect'); ?></h2>
+                <div class="pc-notice pc-notice--warning" style="margin-bottom:12px;">
+                    <?php echo esc_html(
+                        sprintf(
+                            /* translators: %s: error code */
+                            __('Le builder de formulaires est momentanement indisponible. (%s)', 'pratcom-connect'),
+                            $code
+                        )
+                    ); ?>
+                </div>
+                <div class="pc-actions">
+                    <a href="https://connect.pratcom.net/?utm_source=wp-plugin&utm_medium=forms-builder"
+                       target="_blank" rel="noopener" class="pc-btn pc-btn--secondary">
+                        <?php esc_html_e("Ouvrir l'interface web", 'pratcom-connect'); ?>
+                    </a>
+                </div>
+            </div>
+            <?php
+            return;
+        }
+
+        $src = esc_url($res['url']);
+        $crm_url = '';
+        if (!empty($res['workspace_slug'])) {
+            $crm_url = 'https://connect.pratcom.net/crm/' . rawurlencode((string) $res['workspace_slug']) . '/forms';
+        }
+        ?>
+        <div class="pc-card pc-embed-card" style="margin-top:24px;padding:0;overflow:hidden;">
+            <div class="pc-embed-header">
+                <span class="pc-embed-header__label">
+                    <?php esc_html_e('Modifier dans le builder', 'pratcom-connect'); ?>
+                </span>
+                <?php if ($crm_url): ?>
+                <a href="<?php echo esc_url($crm_url); ?>" target="_blank" rel="noopener"
+                   class="pc-embed-header__link">
+                    <?php esc_html_e("Ouvrir en plein ecran \u{2197}", 'pratcom-connect'); ?>
+                </a>
+                <?php endif; ?>
+            </div>
+            <div class="pc-embed-wrap">
+                <iframe
+                    src="<?php echo $src; ?>"
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                    allow="clipboard-write"
+                    loading="lazy"
+                    title="<?php esc_attr_e('Builder de formulaires Pratcom Connect', 'pratcom-connect'); ?>"
+                ></iframe>
+            </div>
+        </div>
+        <?php
+    }
+
+    // ─── Helpers ─────────────────────────────────────────────────────────────
 
     /** @return array{ok?: bool, forms?: array} */
     private function get_forms_cached(): array
