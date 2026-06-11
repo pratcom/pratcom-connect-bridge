@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "presetsVersion": "2026-06-09.1",
+  "presetsVersion": "2026-06-11.1",
   "presets": [
     {
       "id": "ga4",
@@ -270,6 +270,80 @@
       "blocking": { "scriptPatterns": ["chimpstatic.com", "list-manage.com"] },
       "cookies": [
         { "name": "_mcid", "expiry": { "fr": "1 an", "en": "1 year" }, "thirdParty": false, "description": { "fr": "Identifiant marketing Mailchimp.", "en": "Mailchimp marketing identifier." } }
+      ]
+    },
+    {
+      "id": "wpml",
+      "name": "WPML",
+      "provider": "OnTheGoSystems",
+      "category": "necessary",
+      "blockedByDefault": false,
+      "description": {
+        "fr": "WPML mémorise la langue choisie par le visiteur pour maintenir la navigation cohérente sur un site multilingue. Fonctionnel — non bloqué par défaut.",
+        "en": "WPML stores the visitor's chosen language to keep navigation consistent across a multilingual site. Functional — not blocked by default."
+      },
+      "detect": { "plugins": ["sitepress-multilingual-cms/sitepress.php"] },
+      "blocking": { "scriptPatterns": [] },
+      "cookies": [
+        { "name": "wp-wpml_current_language", "expiry": { "fr": "Session", "en": "Session" }, "thirdParty": false, "description": { "fr": "Mémorise la langue active choisie par le visiteur.", "en": "Stores the visitor's currently active language." } },
+        { "name": "_icl_visitor_lang_js", "expiry": { "fr": "Paramétrable (défaut : 1 jour)", "en": "Configurable (default: 1 day)" }, "thirdParty": false, "description": { "fr": "Mémorise la langue détectée via redirection navigateur (si la redirection est activée).", "en": "Stores the language detected via browser redirect (if browser redirect is enabled)." } },
+        { "name": "wpml_browser_redirect_test", "expiry": { "fr": "Session", "en": "Session" }, "thirdParty": false, "description": { "fr": "Teste si les témoins sont activés dans le navigateur (cookie de détection, supprimé après).", "en": "Tests whether cookies are enabled in the browser (detection cookie, removed immediately after)." } }
+      ]
+    },
+    {
+      "id": "hubspot",
+      "name": "HubSpot – CRM & Marketing",
+      "provider": "HubSpot",
+      "category": "marketing",
+      "blockedByDefault": true,
+      "description": {
+        "fr": "HubSpot dépose des témoins de suivi pour identifier les visiteurs entre les sessions, mesurer les conversions et activer le chat en direct.",
+        "en": "HubSpot sets tracking cookies to identify visitors across sessions, measure conversions, and enable live chat."
+      },
+      "detect": { "plugins": ["leadin/leadin.php"] },
+      "blocking": { "scriptPatterns": ["js.hs-scripts.com", "js.hsforms.net", "js.hscollectedforms.net", "js.hs-analytics.net", "js.usemessages.com"] },
+      "cookies": [
+        { "name": "hubspotutk", "expiry": { "fr": "13 mois", "en": "13 months" }, "thirdParty": false, "description": { "fr": "Identifiant unique de visiteur utilisé pour la déduplication des contacts HubSpot.", "en": "Unique visitor identifier used for HubSpot contact deduplication." } },
+        { "name": "__hstc", "expiry": { "fr": "6 mois", "en": "6 months" }, "thirdParty": false, "description": { "fr": "Témoin de suivi principal HubSpot : identité, horodatages et compteur de sessions.", "en": "Main HubSpot tracking cookie: identity, timestamps, and session counter." } },
+        { "name": "__hssc", "expiry": { "fr": "30 minutes", "en": "30 minutes" }, "thirdParty": false, "description": { "fr": "Compte les pages vues dans la session pour la mesure de performance.", "en": "Counts page views within the session for performance measurement." } },
+        { "name": "__hssrc", "expiry": { "fr": "Session", "en": "Session" }, "thirdParty": false, "description": { "fr": "Détecte si le navigateur a été redémarré depuis la dernière visite.", "en": "Detects whether the browser was restarted since the last visit." } }
+      ]
+    },
+    {
+      "id": "cloudflare-turnstile",
+      "name": "Cloudflare Turnstile",
+      "provider": "Cloudflare",
+      "category": "necessary",
+      "blockedByDefault": false,
+      "description": {
+        "fr": "Cloudflare Turnstile est un CAPTCHA respectueux de la vie privée qui vérifie que le visiteur est humain sans tracer ses activités ni déposer de témoins tiers non nécessaires. Classé nécessaire (sécurité) — non bloqué par défaut.",
+        "en": "Cloudflare Turnstile is a privacy-first CAPTCHA that verifies visitors are human without tracking activity or setting unnecessary third-party cookies. Classified as necessary (security) — not blocked by default."
+      },
+      "detect": { "plugins": ["simple-cloudflare-turnstile/simple-cloudflare-turnstile.php", "cf-turnstile/cf-turnstile.php"] },
+      "blocking": { "scriptPatterns": ["challenges.cloudflare.com/turnstile"] },
+      "cookies": [
+        { "name": "__cf_bm", "expiry": { "fr": "30 minutes", "en": "30 minutes" }, "thirdParty": true, "description": { "fr": "Témoin de protection contre les bots (Cloudflare Bot Management). Contenu chiffré, traité uniquement par Cloudflare.", "en": "Bot protection cookie (Cloudflare Bot Management). Content is encrypted and processed only by Cloudflare." } }
+      ]
+    },
+    {
+      "id": "calendly",
+      "name": "Calendly (prise de rendez-vous)",
+      "provider": "Calendly",
+      "category": "marketing",
+      "blockedByDefault": true,
+      "description": {
+        "fr": "Le widget de prise de rendez-vous Calendly dépose des témoins dès son chargement, avant toute interaction du visiteur. Bloqué par défaut jusqu'au consentement.",
+        "en": "The Calendly booking widget sets cookies as soon as it loads, before any visitor interaction. Blocked by default until consent."
+      },
+      "detect": { "plugins": [] },
+      "blocking": {
+        "scriptPatterns": ["assets.calendly.com"],
+        "iframePatterns": ["calendly.com/"]
+      },
+      "cookies": [
+        { "name": "_calendly_session", "expiry": { "fr": "Session", "en": "Session" }, "thirdParty": true, "description": { "fr": "Gère la session de réservation du visiteur sur calendly.com.", "en": "Manages the visitor's booking session on calendly.com." } },
+        { "name": "ajs_anonymous_id", "expiry": { "fr": "1 an", "en": "1 year" }, "thirdParty": true, "description": { "fr": "Identifiant anonyme Segment Analytics utilisé par Calendly pour mesurer l'utilisation.", "en": "Segment Analytics anonymous identifier used by Calendly to measure usage." } },
+        { "name": "__cf_bm (calendly.com)", "expiry": { "fr": "30 minutes", "en": "30 minutes" }, "thirdParty": true, "description": { "fr": "Témoin de protection contre les bots Cloudflare déposé par calendly.com.", "en": "Cloudflare bot protection cookie set by calendly.com." } }
       ]
     }
   ]
