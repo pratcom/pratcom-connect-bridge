@@ -42,6 +42,27 @@ class AppearanceTab extends AbstractTab
     public function register(): void
     {
         add_action('admin_post_pratcom_connect_bridge_save_theme', [$this, 'handle_save_theme']);
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_appearance_scripts']);
+    }
+
+    /**
+     * Synchro bidirectionnelle picker <-> champ HEX pour TOUTES les paires de
+     * couleurs (couleur principale + palette riche ThemePalette). Corrige le
+     * bug ou choisir une couleur au picker ne remplissait pas le champ texte
+     * des champs de la palette riche. Fichier additif (lecon #4).
+     */
+    public function enqueue_appearance_scripts(string $hook): void
+    {
+        if (strpos($hook, self::PAGE_SLUG) === false) {
+            return;
+        }
+        wp_enqueue_script(
+            'pratcom-connect-bridge-color-sync',
+            PRATCOM_CONNECT_BRIDGE_URL . 'assets/js/appearance-color-sync.js',
+            [],
+            PRATCOM_CONNECT_BRIDGE_VERSION,
+            true
+        );
     }
 
     public function render(): void
