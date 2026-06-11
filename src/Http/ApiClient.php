@@ -28,12 +28,17 @@ class ApiClient
             'plugins_count' => count((array) get_option('active_plugins', [])),
         ];
 
-        // Pousse la palette de marque au serveur (persistee workspace.settings.theme).
+        // Pousse la palette de marque riche au serveur (persistee workspace.settings.theme).
+        // Liste blanche BrandTheme — identique au type resolveTheme de connect-core.
+        // Le serveur fait un merge additif : les cles non envoyees ne sont jamais supprimees.
         $theme = Plugin::get_theme();
         if (!empty($theme['primary'])) {
-            $payload = ['primary' => $theme['primary']];
-            if (!empty($theme['onPrimary'])) {
-                $payload['onPrimary'] = $theme['onPrimary'];
+            $whitelist = ['primary', 'onPrimary', 'primaryDark', 'secondary', 'text', 'font', 'radius', 'logoUrl'];
+            $payload = [];
+            foreach ($whitelist as $key) {
+                if (!empty($theme[$key])) {
+                    $payload[$key] = $theme[$key];
+                }
             }
             $body['theme'] = $payload;
         }
@@ -56,9 +61,6 @@ class ApiClient
      * Liste les formulaires du workspace (onglet Formulaires, O2).
      * Endpoint attendu : GET /api/bridge/forms (Bearer pck_, lecture seule)
      * -> { ok: true, forms: [{ slug, name, type, status, updated_at }] }
-     * Demande inter-chantier ouverte (Plugin .org -> Forms) : tant que la
-     * route n'existe pas, l'appel retourne http_code 404 et l'onglet
-     * affiche un repli gracieux.
      */
     public function get_forms(string $api_key): array
     {
