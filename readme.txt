@@ -4,7 +4,7 @@ Tags: consent, privacy, cookies, forms, chatbot
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 2.0.3
+Stable tag: 2.0.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -79,6 +79,10 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 
 == Changelog ==
 
+= 2.0.4 =
+* "Powered by Pratcom Connect" badge in the free consent banner — enabled by default, can be turned off with a checkbox in the Privacy tab or the documented `pratcom_connect_branding` filter (see FAQ).
+* New "Attribution Notice" FAQ entry documenting badge removal options.
+
 = 2.0.3 =
 * Privacy: 14 new documented presets (Wordfence, Polylang, WordPress comments, Smash Balloon, wpDiscuz, TranslatePress, Stripe, PayPal, LiveChat, Tawk.to, Crisp, OptinMonster, Spotify, Pinterest pixel) — 34 total.
 * Privacy: presets now grouped by origin — "Popular WordPress plugins" vs "External services and scripts".
@@ -104,6 +108,9 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 * Optional connection to the Pratcom Connect service (paid modules).
 
 == Upgrade Notice ==
+
+= 2.0.4 =
+Optional "Powered by" badge in the free banner (on by default, removable via checkbox or filter).
 
 = 2.0.3 =
 More privacy presets with origin grouping, module quick-open buttons, site-scan support for Chat training.
