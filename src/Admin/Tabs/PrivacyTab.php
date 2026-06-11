@@ -3,6 +3,7 @@
 namespace Pratcom\Connect\Bridge\Admin\Tabs;
 
 use Pratcom\Connect\Bridge\Plugin;
+use Pratcom\Connect\Bridge\Http\ApiClient;
 use Pratcom\Connect\Bridge\Privacy\FreeBanner;
 use Pratcom\Connect\Bridge\Privacy\LocalRegistry;
 use Pratcom\Connect\Bridge\Privacy\PolicyPage;
@@ -21,6 +22,7 @@ use Pratcom\Connect\Bridge\Privacy\Presets;
  *   ③ Cases à cocher Presets::all() groupées par catégorie (Presets::OPTION_SELECTED).
  *   ④ Bouton « Créer la page » — PolicyPage::render_admin_section().
  *   ⑤ Export CSV consentements — LocalRegistry::EXPORT_ACTION.
+ *   ⑥ (O5b) Section « Privacy Connect » — iframe scan si pack privacy actif.
  */
 class PrivacyTab extends AbstractTab
 {
@@ -95,6 +97,10 @@ class PrivacyTab extends AbstractTab
         $suggestions    = Presets::suggested();   // string[] — ids détectés passivement
         $is_connected   = Plugin::is_connected();
 
+        // O5b : vérifier si le pack privacy est actif.
+        $packs               = get_option(Plugin::OPTION_FEATURE_PACKS, []);
+        $privacy_pack_active = $is_connected && is_array($packs) && !empty($packs['privacy']['enabled']);
+
         // Grouper par catégorie (ordre d'apparition dans presets.json préservé).
         $by_category = [];
         foreach ($all_presets as $preset) {
@@ -125,7 +131,7 @@ class PrivacyTab extends AbstractTab
             <input type="hidden" name="action" value="<?php echo esc_attr(self::ACTION_SAVE); ?>" />
             <?php wp_nonce_field(self::NONCE_SETTINGS); ?>
 
-            <!-- ① Bannière Free ------------------------------------------------->>
+            <!-- ① Bannière Free ------------------------------------------------->
             <div class="pc-card">
                 <h2 class="pc-card__title">
                     <?php esc_html_e('Bannière de consentement Free', 'pratcom-connect'); ?>
@@ -284,6 +290,83 @@ class PrivacyTab extends AbstractTab
                 </button>
             </form>
         </div><!-- /.pc-card (export) -->
+
+        <?php
+        // ⑥ O5b : section Privacy Connect (iframe scan) — additif, pack requis.
+        if ($privacy_pack_active) {
+            $this->render_connected_section();
+        }
+    }
+
+    // ─── O5b : section Privacy Connect iframe (additif) ──────────────────────
+
+    /**
+     * Section « Privacy Connect » — scan de confidentialité dans une iframe signée.
+     * Visible uniquement si le site est connecté ET le pack privacy est actif.
+     * Privacy Free (sections ①-⑤) reste intouché.
+     */
+    private function render_connected_section(): void
+    {
+        $key = Plugin::get_api_key();
+        if (!$key) {
+            return;
+        }
+
+        $res = (new ApiClient())->get_privacy_session($key);
+
+        if (!($res['ok'] ?? false) || empty($res['url'])) {
+            $code = $res['error'] ?? 'unavailable';
+            ?>
+            <div class="pc-card" style="margin-top:24px;">
+                <h2 class="pc-card__title"><?php esc_html_e('Privacy Connect — Scan de confidentialité', 'pratcom-connect'); ?></h2>
+                <div class="pc-notice pc-notice--warning" style="margin-bottom:12px;">
+                    <?php echo esc_html(
+                        sprintf(
+                            /* translators: %s: error code */
+                            __('Le tableau de bord Privacy Connect est momentanement indisponible. (%s)', 'pratcom-connect'),
+                            $code
+                        )
+                    ); ?>
+                </div>
+                <div class="pc-actions">
+                    <a href="https://connect.pratcom.net/?utm_source=wp-plugin&utm_medium=privacy-scan"
+                       target="_blank" rel="noopener" class="pc-btn pc-btn--secondary">
+                        <?php esc_html_e("Ouvrir l'interface web", 'pratcom-connect'); ?>
+                    </a>
+                </div>
+            </div>
+            <?php
+            return;
+        }
+
+        $src = esc_url($res['url']);
+        $crm_url = '';
+        if (!empty($res['workspace_slug'])) {
+            $crm_url = 'https://connect.pratcom.net/crm/' . rawurlencode((string) $res['workspace_slug']) . '/privacy';
+        }
+        ?>
+        <div class="pc-card pc-embed-card" style="margin-top:24px;padding:0;overflow:hidden;">
+            <div class="pc-embed-header">
+                <span class="pc-embed-header__label">
+                    <?php esc_html_e('Privacy Connect — Scan de confidentialité', 'pratcom-connect'); ?>
+                </span>
+                <?php if ($crm_url): ?>
+                <a href="<?php echo esc_url($crm_url); ?>" target="_blank" rel="noopener"
+                   class="pc-embed-header__link">
+                    <?php esc_html_e("Ouvrir en plein ecran \u{2197}", 'pratcom-connect'); ?>
+                </a>
+                <?php endif; ?>
+            </div>
+            <div class="pc-embed-wrap">
+                <iframe
+                    src="<?php echo $src; ?>"
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                    allow="clipboard-write"
+                    loading="lazy"
+                    title="<?php esc_attr_e('Scan de confidentialité Pratcom Connect', 'pratcom-connect'); ?>"
+                ></iframe>
+            </div>
+        </div>
         <?php
     }
 }
