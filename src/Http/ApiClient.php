@@ -70,6 +70,40 @@ class ApiClient
         return $this->request('GET', '/api/bridge/version');
     }
 
+    // ─── O5 : sessions signées pour les iframes mirror ───────────────────────
+
+    /**
+     * Ouvre une session signée pour l'iframe du gestionnaire de formulaires (B1).
+     * POST /api/bridge/forms-builder-session (Bearer pck_)
+     * -> { ok, workspace_slug, url, expires_at }
+     */
+    public function get_builder_session(string $api_key): array
+    {
+        return $this->request('POST', '/api/bridge/forms-builder-session', null, $api_key);
+    }
+
+    /**
+     * Ouvre une session signée pour l'iframe d'entraînement Chat.
+     * POST /api/bridge/chat-session (Bearer pck_)
+     * -> { ok, workspace_slug, url, expires_at }
+     */
+    public function get_chat_session(string $api_key): array
+    {
+        return $this->request('POST', '/api/bridge/chat-session', null, $api_key);
+    }
+
+    /**
+     * Ouvre une session signée pour l'iframe de scan Privacy.
+     * POST /api/bridge/privacy-session (Bearer pck_)
+     * -> { ok, workspace_slug, url, expires_at }
+     */
+    public function get_privacy_session(string $api_key): array
+    {
+        return $this->request('POST', '/api/bridge/privacy-session', null, $api_key);
+    }
+
+    // ─── Transport ───────────────────────────────────────────────────────────
+
     private function request(string $method, string $path, ?array $body = null, ?string $bearer = null): array
     {
         $args = [

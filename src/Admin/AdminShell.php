@@ -5,6 +5,7 @@ namespace Pratcom\Connect\Bridge\Admin;
 use Pratcom\Connect\Bridge\Plugin;
 use Pratcom\Connect\Bridge\Admin\Tabs\AbstractTab;
 use Pratcom\Connect\Bridge\Admin\Tabs\AppearanceTab;
+use Pratcom\Connect\Bridge\Admin\Tabs\ChatTab;
 use Pratcom\Connect\Bridge\Admin\Tabs\ConnectionTab;
 use Pratcom\Connect\Bridge\Admin\Tabs\DashboardTab;
 use Pratcom\Connect\Bridge\Admin\Tabs\FormsTab;
@@ -47,6 +48,7 @@ class AdminShell
             new ModulesTab(),
             new AppearanceTab(),
             new FormsTab(),
+            new ChatTab(),
             new ConnectionTab(),
             new HelpTab(),
         ];
@@ -92,6 +94,14 @@ class AdminShell
         wp_enqueue_style(
             'pratcom-connect-bridge-admin-o2',
             PRATCOM_CONNECT_BRIDGE_URL . 'assets/css/admin-o2.css',
+            ['pratcom-connect-bridge-admin'],
+            PRATCOM_CONNECT_BRIDGE_VERSION
+        );
+
+        // Styles additifs O5 (iframes mirror sessions) — fichier separe (lecon #4).
+        wp_enqueue_style(
+            'pratcom-connect-bridge-admin-o5',
+            PRATCOM_CONNECT_BRIDGE_URL . 'assets/css/admin-o5.css',
             ['pratcom-connect-bridge-admin'],
             PRATCOM_CONNECT_BRIDGE_VERSION
         );
