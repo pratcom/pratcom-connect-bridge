@@ -290,7 +290,8 @@ class FormsTab extends AbstractTab
             </div>
             <div class="pc-embed-wrap">
                 <iframe
-                    src="<?php echo $src; ?>"
+                    src="<?php echo esc_url($src); ?>"
+                    class="pc-embed-frame"
                     sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
                     allow="clipboard-write"
                     loading="lazy"
