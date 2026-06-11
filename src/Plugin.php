@@ -13,8 +13,10 @@ class Plugin
     public const OPTION_LAST_HANDSHAKE = 'pratcom_connect_bridge_last_handshake';
     public const OPTION_STATUS = 'pratcom_connect_bridge_status'; // connected / disconnected / error / revoked
     public const OPTION_LAST_ERROR = 'pratcom_connect_bridge_last_error';
-    // Palette de marque (presentation) : { primary: '#hex', onPrimary?: '#hex' }
+    // Palette de marque riche (BrandTheme) :
+    // { primary, onPrimary?, primaryDark?, secondary?, text?, font?, radius?, logoUrl? }
     // Injectee dans window.__pratcomConnect.theme et poussee au serveur au handshake.
+    // Stockage via ThemePalette::sanitize() depuis AppearanceTab::handle_save_theme().
     public const OPTION_THEME = 'pratcom_connect_bridge_theme';
 
     public static function boot(): void
@@ -104,7 +106,13 @@ class Plugin
         return $v ? (string) $v : null;
     }
 
-    /** @return array{primary?: string, onPrimary?: string} */
+    /**
+     * Retourne la palette de marque stockee localement (BrandTheme).
+     * Toutes les cles sont optionnelles — seul `primary` est requis pour
+     * que le handshake pousse le theme au serveur.
+     *
+     * @return array{primary?: string, onPrimary?: string, primaryDark?: string, secondary?: string, text?: string, font?: string, radius?: string, logoUrl?: string}
+     */
     public static function get_theme(): array
     {
         $v = get_option(self::OPTION_THEME, []);
