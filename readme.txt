@@ -58,6 +58,12 @@ The plugin provides the required mechanisms (prior consent per category, easy wi
 
 Yes, French and English (banner texts are editable in both languages).
 
+= How do I remove the "Powered by Pratcom Connect" attribution? =
+
+The consent banner shows a small "Powered by Pratcom Connect" link by default (an attribution notice). You can remove it at any time: uncheck **"Show the Powered by Pratcom Connect badge"** in the Privacy tab. Developers can also remove it programmatically with the `pratcom_connect_branding` filter:
+
+`add_filter( 'pratcom_connect_branding', '__return_false' );`
+
 = How do I enable the Forms and Chat modules? =
 
 Create an account at connect.pratcom.net, choose your modules, then paste your API key in the plugin's Account tab.
