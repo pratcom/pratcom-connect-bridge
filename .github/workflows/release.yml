@@ -4,6 +4,11 @@ name: Build premium & attach plugin zip (canal GitHub/PUC)
 # (avec le dossier vendor/ resolu par Composer) et le joint a la release.
 # C'est ce .zip que le Plugin Update Checker telecharge (enableReleaseAssets).
 # Sans cet asset, WordPress installe un paquet incomplet -> erreur fatale.
+#
+# NOTE (incident v2.0.3) : un tag "v.2.0.3" (typo) a fait echouer le guard
+# et la release est restee sans zip premium. Le guard normalise maintenant
+# les prefixes "v" et "v." avant comparaison. Le numero doit toujours
+# correspondre au header/constante (lecon 5).
 
 on:
   release:
@@ -22,6 +27,7 @@ jobs:
       - name: Verifier header et constante == tag (lecon 5)
         run: |
           TAG="${GITHUB_REF_NAME#v}"
+          TAG="${TAG#.}"
           HEADER=$(grep -oP '^\s\*\s*Version:\s*\K\S+' pratcom-connect-bridge.php)
           CONST=$(grep -oP "define\('PRATCOM_CONNECT_BRIDGE_VERSION',\s*'\K[^']+" pratcom-connect-bridge.php)
           echo "tag=$TAG header=$HEADER constante=$CONST"
