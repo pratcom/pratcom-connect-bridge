@@ -19,6 +19,7 @@ use Pratcom\Connect\Bridge\Plugin;
 class FreeBanner
 {
     public const OPTION_ENABLED = 'pratcom_connect_privacy_free_enabled';
+    public const OPTION_BADGE_ENABLED = 'pratcom_connect_privacy_free_badge';
     public const HANDLE = 'pratcom-connect-privacy-free';
 
     public function __construct()
@@ -74,6 +75,16 @@ class FreeBanner
             'theme'    => Plugin::get_theme() ?: null,
             'trackers' => Presets::trackers_for_banner(),
         ];
+
+        // Badge « Propulsé par Pratcom Connect » (spec Badge §5.4) — affiché par
+        // défaut, retirable via la case de l'onglet Confidentialité OU le filtre
+        // pratcom_connect_branding (conformité guideline WP.org : retrait
+        // documenté, voir readme « Attribution Notice »). privacy.js lit
+        // config.showBadge.privacy (=== false pour masquer).
+        $badge_enabled = get_option(self::OPTION_BADGE_ENABLED, '1') === '1';
+        $show_badge = (bool) apply_filters('pratcom_connect_branding', $badge_enabled, 'privacy', null);
+        $config['showBadge'] = ['privacy' => $show_badge];
+
         $local = [
             'config'          => $config,
             'consentEndpoint' => rest_url('pratcom-connect/v1/consent'),

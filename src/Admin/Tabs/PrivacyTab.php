@@ -66,6 +66,10 @@ class PrivacyTab extends AbstractTab
         $enabled = !empty($_POST['privacy_free_enabled']) ? '1' : '';
         update_option(FreeBanner::OPTION_ENABLED, $enabled);
 
+        // ①b Badge « Propulsé par Pratcom Connect » — défaut ON ; case décochée = retrait.
+        $badge = !empty($_POST['privacy_free_badge']) ? '1' : '0';
+        update_option(FreeBanner::OPTION_BADGE_ENABLED, $badge);
+
         // ② Presets sélectionnés : valider contre la liste connue.
         $valid_ids = array_map(
             static fn(array $p): string => (string) ($p['id'] ?? ''),
@@ -92,6 +96,7 @@ class PrivacyTab extends AbstractTab
         }
 
         $banner_enabled = (bool) get_option(FreeBanner::OPTION_ENABLED);
+        $badge_enabled  = get_option(FreeBanner::OPTION_BADGE_ENABLED, '1') === '1';
         $selected_ids   = (array) get_option(Presets::OPTION_SELECTED, []);
         $all_presets    = Presets::all();
         $suggestions    = Presets::suggested();   // string[] — ids détectés passivement
@@ -169,6 +174,16 @@ class PrivacyTab extends AbstractTab
                 </label>
                 <p class="pc-form-help">
                     <?php esc_html_e('La bannière utilise les presets cochés ci-dessous pour bloquer les scripts non essentiels avant le consentement du visiteur.', 'pratcom-connect'); ?>
+                </p>
+
+                <label class="pc-form-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-top:18px;">
+                    <input type="checkbox" name="privacy_free_badge" value="1"
+                           <?php checked($badge_enabled); ?>
+                           style="width:18px;height:18px;cursor:pointer;" />
+                    <span><?php esc_html_e('Afficher le badge « Propulsé par Pratcom Connect » dans la bannière', 'pratcom-connect'); ?></span>
+                </label>
+                <p class="pc-form-help">
+                    <?php esc_html_e('Crédit discret, affiché par défaut. Décochez pour le retirer. Les développeurs peuvent aussi le retirer par code via le filtre pratcom_connect_branding.', 'pratcom-connect'); ?>
                 </p>
             </div><!-- /.pc-card -->
 
