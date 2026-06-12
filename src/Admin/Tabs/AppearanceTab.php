@@ -121,29 +121,6 @@ class AppearanceTab extends AbstractTab
             </div>
         </form>
 
-        <script>
-        (function () {
-            var picker = document.getElementById('pratcom_primary');
-            var hex = document.getElementById('pratcom_primary_hex');
-            var prev = document.getElementById('pratcom_preview');
-            function lum(h) {
-                h = h.replace('#', ''); if (h.length !== 6) return 1;
-                var n = parseInt(h, 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
-                function c(v) { return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }
-                return 0.2126 * c(r) + 0.7152 * c(g) + 0.0722 * c(b);
-            }
-            function apply(v) {
-                if (!/^#[0-9a-fA-F]{6}$/.test(v)) return;
-                prev.style.background = v;
-                prev.style.color = lum(v) > 0.45 ? '#10222b' : '#ffffff';
-            }
-            if (picker && hex && prev) {
-                picker.addEventListener('input', function () { hex.value = picker.value; apply(picker.value); });
-                hex.addEventListener('input', function () { if (/^#[0-9a-fA-F]{6}$/.test(hex.value)) { picker.value = hex.value; apply(hex.value); } });
-                apply(picker.value);
-            }
-        })();
-        </script>
         <?php
     }
 
