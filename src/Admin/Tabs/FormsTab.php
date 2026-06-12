@@ -42,6 +42,31 @@ class FormsTab extends AbstractTab
     public function register(): void
     {
         add_action('admin_post_pratcom_connect_bridge_forms_refresh', [$this, 'handle_refresh']);
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_forms_scripts']);
+    }
+
+    /**
+     * JS de l'onglet Formulaires (copie du shortcode, selection au focus) —
+     * fichier enqueue page-scoped, remplace le <script> inline historique
+     * (revue WordPress.org : pas de balise script brute dans l'admin).
+     */
+    public function enqueue_forms_scripts(string $hook): void
+    {
+        if (strpos($hook, self::PAGE_SLUG) === false) {
+            return;
+        }
+        wp_enqueue_script(
+            'pratcom-connect-bridge-forms-copy',
+            PRATCOM_CONNECT_BRIDGE_URL . 'assets/js/forms-copy-shortcode.js',
+            [],
+            PRATCOM_CONNECT_BRIDGE_VERSION,
+            true
+        );
+        wp_localize_script(
+            'pratcom-connect-bridge-forms-copy',
+            'pcFormsCopy',
+            ['copied' => __('Copie !', 'pratcom-connect')]
+        );
     }
 
     public function render(): void
@@ -173,7 +198,7 @@ class FormsTab extends AbstractTab
                             <td>
                                 <div class="pc-shortcode">
                                     <input type="text" readonly value="<?php echo esc_attr($shortcode); ?>"
-                                        onfocus="this.select();" aria-label="<?php esc_attr_e('Shortcode du formulaire', 'pratcom-connect'); ?>" />
+                                        aria-label="<?php esc_attr_e('Shortcode du formulaire', 'pratcom-connect'); ?>" />
                                     <button type="button" class="pc-btn pc-btn--secondary pc-copy-shortcode"
                                         data-shortcode="<?php echo esc_attr($shortcode); ?>">
                                         <?php esc_html_e('Copier', 'pratcom-connect'); ?>
@@ -190,30 +215,6 @@ class FormsTab extends AbstractTab
         </div>
         <?php
         $this->render_refresh_button();
-        ?>
-        <script>
-        (function () {
-            document.querySelectorAll('.pc-copy-shortcode').forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    var sc = btn.getAttribute('data-shortcode');
-                    var done = function () {
-                        var prev = btn.textContent;
-                        btn.textContent = '<?php echo esc_js(__('Copie !', 'pratcom-connect')); ?>';
-                        setTimeout(function () { btn.textContent = prev; }, 1500);
-                    };
-                    if (navigator.clipboard && navigator.clipboard.writeText) {
-                        navigator.clipboard.writeText(sc).then(done);
-                    } else {
-                        var input = btn.parentNode.querySelector('input');
-                        input.select();
-                        document.execCommand('copy');
-                        done();
-                    }
-                });
-            });
-        })();
-        </script>
-        <?php
     }
 
     private function render_refresh_button(): void
@@ -229,7 +230,7 @@ class FormsTab extends AbstractTab
         <?php
     }
 
-    // ─── O5b : section builder iframe (additif) ───────────────────────────────
+    // ─── O5b : section builder iframe (additif) ─────────────────────────
 
     /**
      * Section additive « Modifier dans le builder » — iframe signee B1.
@@ -302,7 +303,7 @@ class FormsTab extends AbstractTab
         <?php
     }
 
-    // ─── Helpers ─────────────────────────────────────────────────────────────
+    // ─── Helpers ───────────────────────────────────────────────────────────
 
     /** @return array{ok?: bool, forms?: array} */
     private function get_forms_cached(): array
