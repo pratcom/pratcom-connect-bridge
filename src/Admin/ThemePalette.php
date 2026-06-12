@@ -134,8 +134,7 @@ class ThemePalette
                         <input type="text" class="pc-form-input" name="<?php echo esc_attr($key); ?>_hex"
                                value="<?php echo esc_attr($field['value']); ?>" style="max-width:140px;"
                                pattern="^#[0-9a-fA-F]{6}$" placeholder="<?php esc_attr_e('(auto)', 'pratcom-connect'); ?>"
-                               autocomplete="off"
-                               oninput="var p=this.previousElementSibling; if(/^#[0-9a-fA-F]{6}$/.test(this.value)){p.value=this.value;}" />
+                               autocomplete="off" />
                     </div>
                     <p class="pc-form-help"><?php echo esc_html($field['help']); ?></p>
                 </div>

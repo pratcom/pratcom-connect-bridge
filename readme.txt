@@ -4,7 +4,7 @@ Tags: consent, privacy, cookies, forms, chatbot
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 2.0.4
+Stable tag: 2.0.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -78,6 +78,9 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 6. Front-end — the consent banner live on a website, in the visitor's language.
 
 == Changelog ==
+
+= 2.0.5 =
+* All admin JavaScript now loads through wp_enqueue_script / wp_localize_script — no more inline script tags or inline event attributes (WordPress.org review feedback).
 
 = 2.0.4 =
 * "Powered by Pratcom Connect" badge in the free consent banner — enabled by default, can be turned off with a checkbox in the Privacy tab or the documented `pratcom_connect_branding` filter (see FAQ).
