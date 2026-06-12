@@ -195,6 +195,7 @@ class PagesController
         $previous = $post;
         $post     = $item;
         setup_postdata($item);
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- applying the core 'the_content' filter to render the post, not declaring a custom hook.
         $html = apply_filters('the_content', $item->post_content);
         wp_reset_postdata();
         $post = $previous;
