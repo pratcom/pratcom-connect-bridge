@@ -32,7 +32,7 @@ class PrivacyTab extends AbstractTab
     private const NONCE_SETTINGS = 'pratcom_privacy_free_save_settings';
     private const ACTION_SAVE    = 'pratcom_connect_bridge_save_privacy_free';
 
-    // ─── AbstractTab ─────────────────────────────────────────────────────────
+    // ─── AbstractTab ───
 
     public function slug(): string
     {
@@ -54,7 +54,7 @@ class PrivacyTab extends AbstractTab
         add_action('admin_post_' . self::ACTION_SAVE, [$this, 'handle_save']);
     }
 
-    // ─── Handler admin-post ─────────────────────────────────────────────
+    // ─── Handler admin-post ───
 
     public function handle_save(): void
     {
@@ -88,7 +88,7 @@ class PrivacyTab extends AbstractTab
         $this->redirect_with_notice(self::PAGE_SLUG, 'privacy_saved', '');
     }
 
-    // ─── Rendu ──────────────────────────────────────────────────────────────
+    // ─── Rendu ───
 
     public function render(): void
     {
@@ -313,12 +313,12 @@ class PrivacyTab extends AbstractTab
             </div>
         </form>
 
-        <!-- ④ Page de politique ──────────────────────────-->
+        <!-- ④ Page de politique ───-->
         <div class="pc-card" style="margin-top:0;">
             <?php PolicyPage::render_admin_section(); ?>
         </div>
 
-        <!-- ⑤ Export CSV registre ────────────────────────-->
+        <!-- ⑤ Export CSV registre ───-->
         <div class="pc-card" style="margin-top:24px;">
             <h2 class="pc-card__title">
                 <?php esc_html_e('Registre de consentements', 'pratcom-connect'); ?>
@@ -345,7 +345,7 @@ class PrivacyTab extends AbstractTab
         }
     }
 
-    // ─── O5b : section Privacy Connect iframe (additif) ──────────────────
+    // ─── O5b : section Privacy Connect iframe (additif) ───
 
     /**
      * Section « Privacy Connect » — scan de confidentialité dans une iframe signée.
