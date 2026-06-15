@@ -53,6 +53,7 @@ jobs:
             --exclude='composer.lock' \
             --exclude='vendor' \
             --exclude='*.md' \
+            --exclude='.wordpress-org' \
             ./ build/pratcom-connect/
 
       - name: Garde-fous .org (zero PUC, zero Updater, canal org)
@@ -62,6 +63,13 @@ jobs:
           ! grep -ri "PucFactory" build/pratcom-connect
           test ! -f build/pratcom-connect/src/Updater.php
           grep -q "define('PRATCOM_CONNECT_BRIDGE_CHANNEL', 'org');" build/pratcom-connect/pratcom-connect-bridge.php
+          # Aucune iframe d'app tierce dans le build .org : la garde de canal doit
+          # rester presente dans les 3 onglets concernes (revue WordPress.org).
+          grep -q "PRATCOM_CONNECT_BRIDGE_CHANNEL === 'org'" build/pratcom-connect/src/Admin/Tabs/ChatTab.php
+          grep -q "PRATCOM_CONNECT_BRIDGE_CHANNEL === 'org'" build/pratcom-connect/src/Admin/Tabs/FormsTab.php
+          grep -q "PRATCOM_CONNECT_BRIDGE_CHANNEL === 'org'" build/pratcom-connect/src/Admin/Tabs/PrivacyTab.php
+          # Le dossier d'assets WordPress.org ne doit jamais entrer dans le zip.
+          test ! -d build/pratcom-connect/.wordpress-org
           php -l build/pratcom-connect/pratcom-connect-bridge.php
 
       - name: Zip
