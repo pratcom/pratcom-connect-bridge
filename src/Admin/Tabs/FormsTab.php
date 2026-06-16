@@ -4,6 +4,7 @@ namespace Pratcom\Connect\Bridge\Admin\Tabs;
 
 use Pratcom\Connect\Bridge\Plugin;
 use Pratcom\Connect\Bridge\Http\ApiClient;
+use Pratcom\Connect\Bridge\Admin\OrgManagePanel;
 
 /**
  * Onglet Formulaires (O2) : liste des formulaires du workspace + shortcode
@@ -241,6 +242,19 @@ class FormsTab extends AbstractTab
     {
         $key = Plugin::get_api_key();
         if (!$key) {
+            return;
+        }
+
+        // Build .org : pas d'iframe builder dans le wp-admin (revue WordPress.org).
+        // La liste des formulaires + shortcodes (render_list) reste native ; le
+        // builder se gere via un lien sortant. Le build premium garde l'iframe.
+        if (PRATCOM_CONNECT_BRIDGE_CHANNEL === 'org') {
+            OrgManagePanel::render(
+                __('Modifier dans le builder', 'pratcom-connect'),
+                __('La création et la modification de formulaires se font dans le builder de votre tableau de bord Pratcom Connect. Insérez ensuite chaque formulaire avec son shortcode ci-dessus.', 'pratcom-connect'),
+                'forms',
+                __('Ouvrir le builder', 'pratcom-connect')
+            );
             return;
         }
 

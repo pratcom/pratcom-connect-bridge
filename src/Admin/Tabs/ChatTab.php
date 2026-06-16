@@ -4,6 +4,7 @@ namespace Pratcom\Connect\Bridge\Admin\Tabs;
 
 use Pratcom\Connect\Bridge\Plugin;
 use Pratcom\Connect\Bridge\Http\ApiClient;
+use Pratcom\Connect\Bridge\Admin\OrgManagePanel;
 
 /**
  * Onglet Chat (O5) : iframe du tableau de bord d'entraînement Chatbot.
@@ -54,6 +55,19 @@ class ChatTab extends AbstractTab
         $key = Plugin::get_api_key();
         if (!$key) {
             $this->render_no_key();
+            return;
+        }
+
+        // Build .org : aucune iframe d'app tierce dans le wp-admin (revue
+        // WordPress.org). Panneau natif (statut + cle) + lien sortant vers le
+        // tableau de bord. Le build premium garde le miroir iframe ci-dessous.
+        if (PRATCOM_CONNECT_BRIDGE_CHANNEL === 'org') {
+            OrgManagePanel::render(
+                __('Entraînement géré dans votre tableau de bord', 'pratcom-connect'),
+                __("L'entraînement de l'assistant (connaissances, directives, conversations) se gère dans votre tableau de bord Pratcom Connect.", 'pratcom-connect'),
+                'chat',
+                __('Gérer dans le tableau de bord', 'pratcom-connect')
+            );
             return;
         }
 

@@ -55,6 +55,7 @@ jobs:
             --exclude='tests' \
             --exclude='.gitignore' \
             --exclude='composer.lock' \
+            --exclude='.wordpress-org' \
             ./ build/pratcom-connect-bridge/
 
       - name: Create zip
