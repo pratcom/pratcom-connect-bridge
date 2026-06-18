@@ -4,7 +4,7 @@ Tags: consent, privacy, cookies, forms, chatbot
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 2.0.7
+Stable tag: 2.0.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -79,6 +79,9 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 
 == Changelog ==
 
+= 2.0.9 =
+* Premium build: the Chat, Forms and Privacy admin tabs now render their embedded dashboard as a seamless, native-looking panel — the iframe auto-sizes to its content (no inner scrollbar) and the Forms list refreshes on its own when you create, edit or delete a form in the builder (the manual "Refresh list" button is gone). WordPress.org build is unchanged (these tabs still link out to your dashboard).
+
 = 2.0.7 =
 * WordPress.org build: the Chat, Forms and Privacy admin tabs no longer embed the Connect dashboard in an iframe. They now show your connection status and a direct link to manage each module in your dashboard (WordPress.org review feedback).
 * Build: the .wordpress-org assets directory is no longer bundled in the distributed plugin zip.
@@ -118,6 +121,9 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 * Optional connection to the Pratcom Connect service (paid modules).
 
 == Upgrade Notice ==
+
+= 2.0.9 =
+Premium build only: embedded Chat/Forms/Privacy panels auto-size and the Forms list self-refreshes (no more manual refresh button). No change to the consent banner or the WordPress.org build.
 
 = 2.0.7 =
 WordPress.org build: admin module tabs link out to your dashboard instead of embedding it. No change to the consent banner.
