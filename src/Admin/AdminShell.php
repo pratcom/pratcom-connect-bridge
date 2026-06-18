@@ -116,7 +116,7 @@ class AdminShell
         );
         wp_localize_script(
             'pratcom-connect-bridge-admin-feedback',
-            'pcFeedback',
+            'pratcomFeedback',
             ['processing' => __('Traitement…', 'pratcom-connect')]
         );
     }

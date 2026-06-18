@@ -4,7 +4,7 @@ Tags: consent, privacy, cookies, forms, chatbot
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 2.0.7
+Stable tag: 2.0.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -79,6 +79,9 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 
 == Changelog ==
 
+= 2.0.9 =
+* Renamed two localized JS globals to the pratcom prefix (WP.org review).
+
 = 2.0.7 =
 * WordPress.org build: the Chat, Forms and Privacy admin tabs no longer embed the Connect dashboard in an iframe. They now show your connection status and a direct link to manage each module in your dashboard (WordPress.org review feedback).
 * Build: the .wordpress-org assets directory is no longer bundled in the distributed plugin zip.
@@ -118,6 +121,9 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 * Optional connection to the Pratcom Connect service (paid modules).
 
 == Upgrade Notice ==
+
+= 2.0.9 =
+Internal rename of two admin JavaScript globals to satisfy WordPress.org naming guidelines. No functional change.
 
 = 2.0.7 =
 WordPress.org build: admin module tabs link out to your dashboard instead of embedding it. No change to the consent banner.
