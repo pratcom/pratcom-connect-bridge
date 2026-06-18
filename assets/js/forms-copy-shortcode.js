@@ -6,13 +6,13 @@
  * FormsTab::render_list() et l'attribut onfocus inline du champ shortcode
  * (revue WordPress.org : tout JS admin passe par wp_enqueue_script).
  *
- * Le libellé « Copié ! » est fourni via wp_localize_script (objet pcFormsCopy).
+ * Le libellé « Copié ! » est fourni via wp_localize_script (objet pratcomFormsCopy).
  */
 (function () {
     'use strict';
 
     document.addEventListener('DOMContentLoaded', function () {
-        var copiedLabel = (window.pcFormsCopy && window.pcFormsCopy.copied) || 'Copied!';
+        var copiedLabel = (window.pratcomFormsCopy && window.pratcomFormsCopy.copied) || 'Copied!';
 
         // Sélection automatique du shortcode au focus (ex-attribut onfocus inline).
         document.querySelectorAll('.pc-shortcode input[readonly]').forEach(function (input) {

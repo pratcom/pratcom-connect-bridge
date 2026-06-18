@@ -65,7 +65,7 @@ class FormsTab extends AbstractTab
         );
         wp_localize_script(
             'pratcom-connect-bridge-forms-copy',
-            'pcFormsCopy',
+            'pratcomFormsCopy',
             ['copied' => __('Copie !', 'pratcom-connect')]
         );
     }

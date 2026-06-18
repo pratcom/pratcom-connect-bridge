@@ -14,8 +14,8 @@
     'use strict';
 
     /** Label localisé injecté par wp_localize_script, fallback FR. */
-    var LABEL = (typeof pcFeedback !== 'undefined' && pcFeedback.processing)
-        ? pcFeedback.processing
+    var LABEL = (typeof pratcomFeedback !== 'undefined' && pratcomFeedback.processing)
+        ? pratcomFeedback.processing
         : 'Traitement…';
 
     /** Attache le comportement de feedback à un formulaire donné. */
