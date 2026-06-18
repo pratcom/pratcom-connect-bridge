@@ -16,6 +16,12 @@ use Pratcom\Connect\Bridge\Admin\OrgManagePanel;
  * WordPress.org — dans NOS pages uniquement, jamais de notice globale).
  *
  * O5b : section additive render_builder_section() — iframe builder signe.
+ *
+ * Coquille integree (premium) : le builder est enveloppe dans .pc-embed-wrapper
+ * (auto-hauteur via admin-o5.js) et le rafraichissement de la liste est
+ * automatique (le bouton « Actualiser » manuel devient un formulaire masque
+ * declenche par le message postMessage 'changed'/'forms'). Le canal .org garde
+ * le bouton visible (aucune iframe, aucun JS d'auto-hauteur).
  */
 class FormsTab extends AbstractTab
 {
@@ -142,7 +148,7 @@ class FormsTab extends AbstractTab
                 <code>[pratcom_form slug="contact"]</code>
             </div>
             <?php
-            $this->render_refresh_button();
+            $this->render_refresh_control();
             return;
         }
 
@@ -161,7 +167,7 @@ class FormsTab extends AbstractTab
                 </div>
             </div>
             <?php
-            $this->render_refresh_button();
+            $this->render_refresh_control();
             return;
         }
         ?>
@@ -215,23 +221,43 @@ class FormsTab extends AbstractTab
             </p>
         </div>
         <?php
-        $this->render_refresh_button();
+        $this->render_refresh_control();
     }
 
-    private function render_refresh_button(): void
+    /**
+     * Controle de rafraichissement de la liste.
+     *
+     * - Canal PREMIUM : formulaire MASQUE (#pc-forms-refresh-form). Aucun bouton
+     *   visible — admin-o5.js le soumet automatiquement a la reception du
+     *   message postMessage { source:'pratcom-connect', kind:'changed',
+     *   scope:'forms' } emis par le builder quand un formulaire est cree,
+     *   modifie ou supprime. Le handler purge le cache transient puis recharge
+     *   avec la liste a jour. La liste se met donc a jour « toute seule ».
+     * - Canal ORG : bouton VISIBLE « Actualiser la liste » (comportement
+     *   historique inchange — pas d'iframe builder, donc rafraichissement
+     *   manuel). Le handler est identique dans les deux cas.
+     */
+    private function render_refresh_control(): void
     {
+        $is_premium = (PRATCOM_CONNECT_BRIDGE_CHANNEL === 'premium');
         ?>
-        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="margin-top: 12px;">
+        <form
+            method="post"
+            action="<?php echo esc_url(admin_url('admin-post.php')); ?>"
+            <?php if ($is_premium): ?>id="pc-forms-refresh-form" hidden<?php else: ?>style="margin-top: 12px;"<?php endif; ?>
+        >
             <input type="hidden" name="action" value="pratcom_connect_bridge_forms_refresh" />
             <?php wp_nonce_field(self::NONCE_REFRESH); ?>
+            <?php if (!$is_premium): ?>
             <button type="submit" class="pc-btn pc-btn--secondary">
                 <?php esc_html_e('Actualiser la liste', 'pratcom-connect'); ?>
             </button>
+            <?php endif; ?>
         </form>
         <?php
     }
 
-    // ─── O5b : section builder iframe (additif) ─────────────────────────
+    // ─── O5b : section builder iframe (additif) ───────────────────
 
     /**
      * Section additive « Modifier dans le builder » — iframe signee B1.
@@ -290,8 +316,12 @@ class FormsTab extends AbstractTab
         if (!empty($res['workspace_slug'])) {
             $crm_url = 'https://connect.pratcom.net/crm/' . rawurlencode((string) $res['workspace_slug']) . '/forms';
         }
+        // Coquille integree premium : la div carte porte aussi .pc-embed-wrapper
+        // + data-pc-embed pour servir de cible au recepteur admin-o5.js
+        // (auto-hauteur via postMessage 'resize'). Bloc carte distinct, place
+        // sous la liste des formulaires (interpretation du layout demande).
         ?>
-        <div class="pc-card pc-embed-card" style="margin-top:24px;padding:0;overflow:hidden;">
+        <div class="pc-card pc-embed-card pc-embed-wrapper" data-pc-embed="forms" style="margin-top:24px;padding:0;overflow:hidden;">
             <div class="pc-embed-header">
                 <span class="pc-embed-header__label">
                     <?php esc_html_e('Modifier dans le builder', 'pratcom-connect'); ?>
@@ -317,7 +347,7 @@ class FormsTab extends AbstractTab
         <?php
     }
 
-    // ─── Helpers ───────────────────────────────────────────────────────────
+    // ─── Helpers ────────────────────────────────────────────────
 
     /** @return array{ok?: bool, forms?: array} */
     private function get_forms_cached(): array
