@@ -119,6 +119,48 @@ class AdminShell
             'pcFeedback',
             ['processing' => __('Traitement…', 'pratcom-connect')]
         );
+
+        // Coquille iframe integree (canal PREMIUM uniquement) : recepteur du
+        // contrat postMessage 'resize'/'changed' emis par les pages embed du
+        // service. JAMAIS charge sur le canal .org (qui n'affiche aucune iframe
+        // — OrgManagePanel + liens sortants). Garde dure : === 'premium'.
+        if (PRATCOM_CONNECT_BRIDGE_CHANNEL === 'premium') {
+            wp_enqueue_script(
+                'pratcom-connect-bridge-admin-o5',
+                PRATCOM_CONNECT_BRIDGE_URL . 'assets/js/admin-o5.js',
+                [],
+                PRATCOM_CONNECT_BRIDGE_VERSION,
+                true // footer
+            );
+            wp_localize_script(
+                'pratcom-connect-bridge-admin-o5',
+                'pcEmbed',
+                ['origins' => self::embed_origins()]
+            );
+        }
+    }
+
+    /**
+     * Origines autorisees pour la validation postMessage cote recepteur.
+     * Derivees des constantes de service (hote du tableau de bord public +
+     * hote de l'API) — les iframes d'embed sont servies depuis ces hotes.
+     *
+     * @return array<int, string> ex. ['https://connect.pratcom.net', 'https://api.connect.pratcom.net']
+     */
+    private static function embed_origins(): array
+    {
+        $origins = [];
+        foreach ([PRATCOM_CONNECT_BRIDGE_LOADER_URL, PRATCOM_CONNECT_BRIDGE_API_BASE] as $url) {
+            $scheme = wp_parse_url($url, PHP_URL_SCHEME);
+            $host   = wp_parse_url($url, PHP_URL_HOST);
+            if ($scheme && $host) {
+                $origin = $scheme . '://' . $host;
+                if (!in_array($origin, $origins, true)) {
+                    $origins[] = $origin;
+                }
+            }
+        }
+        return $origins;
     }
 
     /** Callback unique de rendu : resout l'onglet courant puis rend le chrome. */

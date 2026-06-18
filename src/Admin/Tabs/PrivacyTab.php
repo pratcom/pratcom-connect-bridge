@@ -405,8 +405,11 @@ class PrivacyTab extends AbstractTab
         if (!empty($res['workspace_slug'])) {
             $crm_url = 'https://connect.pratcom.net/crm/' . rawurlencode((string) $res['workspace_slug']) . '/privacy';
         }
+        // Coquille integree premium : la div carte porte aussi .pc-embed-wrapper
+        // + data-pc-embed pour servir de cible au recepteur admin-o5.js
+        // (auto-hauteur via postMessage 'resize').
         ?>
-        <div class="pc-card pc-embed-card" style="margin-top:24px;padding:0;overflow:hidden;">
+        <div class="pc-card pc-embed-card pc-embed-wrapper" data-pc-embed="privacy" style="margin-top:24px;padding:0;overflow:hidden;">
             <div class="pc-embed-header">
                 <span class="pc-embed-header__label">
                     <?php esc_html_e('Privacy Connect — Scan de confidentialité', 'pratcom-connect'); ?>

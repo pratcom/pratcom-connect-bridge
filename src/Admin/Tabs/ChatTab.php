@@ -19,7 +19,7 @@ class ChatTab extends AbstractTab
 {
     public const PAGE_SLUG = 'pratcom-connect-chat';
 
-    // ─── AbstractTab ─────────────────────────────────────────────────────────
+    // ─── AbstractTab ────────────────────────────────────────────────
 
     public function slug(): string
     {
@@ -36,7 +36,7 @@ class ChatTab extends AbstractTab
         return 'format-chat';
     }
 
-    // ─── Rendu ───────────────────────────────────────────────────────────────
+    // ─── Rendu ────────────────────────────────────────────────────
 
     public function render(): void
     {
@@ -83,7 +83,7 @@ class ChatTab extends AbstractTab
         $this->render_iframe(esc_url($result['url']), esc_url($crm_url));
     }
 
-    // ─── Méthodes privées ────────────────────────────────────────────────────
+    // ─── Méthodes privées ───────────────────────────────────────────
 
     private function chat_enabled(): bool
     {
@@ -163,25 +163,30 @@ class ChatTab extends AbstractTab
 
     private function render_iframe(string $src, string $crm_url): void
     {
+        // Coquille integree premium : enveloppe carte + iframe auto-haute
+        // (admin-o5.js applique la hauteur via postMessage 'resize'). Le
+        // conteneur data-pc-embed sert de cible au recepteur JS.
         ?>
-        <div class="pc-embed-wrap">
-            <div class="pc-embed-bar">
-                <span class="pc-embed-bar__label">
-                    <?php esc_html_e("Connect Chat — Tableau de bord d'entraînement", 'pratcom-connect'); ?>
-                </span>
-                <a href="<?php echo esc_url($crm_url); ?>" target="_blank" rel="noopener"
-                   class="pc-embed-bar__link">
-                    <?php esc_html_e('Ouvrir en plein écran ↗', 'pratcom-connect'); ?>
-                </a>
+        <div class="pc-embed-wrapper" data-pc-embed="chat">
+            <div class="pc-embed-wrap">
+                <div class="pc-embed-bar">
+                    <span class="pc-embed-bar__label">
+                        <?php esc_html_e("Connect Chat — Tableau de bord d'entraînement", 'pratcom-connect'); ?>
+                    </span>
+                    <a href="<?php echo esc_url($crm_url); ?>" target="_blank" rel="noopener"
+                       class="pc-embed-bar__link">
+                        <?php esc_html_e('Ouvrir en plein écran ↗', 'pratcom-connect'); ?>
+                    </a>
+                </div>
+                <iframe
+                    src="<?php echo esc_url($src); ?>"
+                    class="pc-embed-frame"
+                    title="<?php esc_attr_e("Interface d'entraînement Connect Chat", 'pratcom-connect'); ?>"
+                    loading="lazy"
+                    referrerpolicy="same-origin"
+                    sandbox="allow-scripts allow-same-origin allow-forms"
+                ></iframe>
             </div>
-            <iframe
-                src="<?php echo esc_url($src); ?>"
-                class="pc-embed-frame"
-                title="<?php esc_attr_e("Interface d'entraînement Connect Chat", 'pratcom-connect'); ?>"
-                loading="lazy"
-                referrerpolicy="same-origin"
-                sandbox="allow-scripts allow-same-origin allow-forms"
-            ></iframe>
         </div>
         <?php
     }
