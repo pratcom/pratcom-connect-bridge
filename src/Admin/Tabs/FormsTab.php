@@ -5,6 +5,7 @@ namespace Pratcom\Connect\Bridge\Admin\Tabs;
 use Pratcom\Connect\Bridge\Plugin;
 use Pratcom\Connect\Bridge\Http\ApiClient;
 use Pratcom\Connect\Bridge\Admin\OrgManagePanel;
+use Pratcom\Connect\Bridge\Admin\AdminShell;
 
 /**
  * Onglet Formulaires (O2) : liste des formulaires du workspace + shortcode
@@ -66,7 +67,7 @@ class FormsTab extends AbstractTab
         wp_localize_script(
             'pratcom-connect-bridge-forms-copy',
             'pratcomFormsCopy',
-            ['copied' => __('Copie !', 'pratcom-connect')]
+            ['copied' => __('Copié !', 'pratcom-connect')]
         );
     }
 
@@ -75,7 +76,7 @@ class FormsTab extends AbstractTab
         ?>
         <h1 class="pc-content__title"><?php esc_html_e('Formulaires', 'pratcom-connect'); ?></h1>
         <p class="pc-content__subtitle">
-            <?php esc_html_e('Formulaires intelligents Connect Forms : inserez-les n\'importe ou avec un shortcode.', 'pratcom-connect'); ?>
+            <?php esc_html_e('Formulaires intelligents Connect Forms : insérez-les n\'importe où avec un shortcode.', 'pratcom-connect'); ?>
         </p>
         <?php
 
@@ -103,11 +104,11 @@ class FormsTab extends AbstractTab
             <h2 class="pc-card__title">
                 <?php esc_html_e('Connect Forms', 'pratcom-connect'); ?>
                 <span class="pc-module-card__badge pc-module-card__badge--locked">
-                    <?php esc_html_e('Verrouille', 'pratcom-connect'); ?>
+                    <?php esc_html_e('Verrouillé', 'pratcom-connect'); ?>
                 </span>
             </h2>
             <p style="color: var(--pc-text-muted); margin: 0 0 8px 0;">
-                <?php esc_html_e('Formulaires multi-etapes avec scoring de leads, double opt-in conforme, notifications bilingues et insertion par shortcode — sans aucune extension supplementaire.', 'pratcom-connect'); ?>
+                <?php esc_html_e('Formulaires multi-étapes avec scoring de leads, double opt-in conforme, notifications bilingues et insertion par shortcode — sans aucune extension supplémentaire.', 'pratcom-connect'); ?>
             </p>
             <p class="pc-module-card__note">
                 <?php esc_html_e('Module fourni par le service Pratcom Connect (abonnement requis).', 'pratcom-connect'); ?>
@@ -121,8 +122,8 @@ class FormsTab extends AbstractTab
                     <a href="<?php echo esc_url(admin_url('admin.php?page=' . ConnectionTab::PAGE_SLUG)); ?>" class="pc-btn pc-btn--primary">
                         <?php esc_html_e('Connecter mon compte', 'pratcom-connect'); ?>
                     </a>
-                    <a href="https://connect.pratcom.net/?utm_source=wp-plugin&utm_medium=forms-tab" target="_blank" rel="noopener" class="pc-btn pc-btn--secondary">
-                        <?php esc_html_e('Decouvrir Connect Forms', 'pratcom-connect'); ?>
+                    <a href="<?php echo esc_url(AdminShell::marketing_url('#forms')); ?>" target="_blank" rel="noopener" class="pc-btn pc-btn--secondary">
+                        <?php esc_html_e('Découvrir Connect Forms', 'pratcom-connect'); ?>
                     </a>
                 <?php endif; ?>
             </div>
@@ -138,7 +139,7 @@ class FormsTab extends AbstractTab
         if (!($result['ok'] ?? false)) {
             ?>
             <div class="pc-notice pc-notice--warning">
-                <?php esc_html_e('La liste des formulaires est momentanement indisponible. Vous pouvez tout de meme inserer un formulaire avec son shortcode :', 'pratcom-connect'); ?>
+                <?php esc_html_e('La liste des formulaires est momentanément indisponible. Vous pouvez tout de même insérer un formulaire avec son shortcode :', 'pratcom-connect'); ?>
                 <code>[pratcom_form slug="contact"]</code>
             </div>
             <?php
@@ -152,7 +153,7 @@ class FormsTab extends AbstractTab
             <div class="pc-card">
                 <h2 class="pc-card__title"><?php esc_html_e('Aucun formulaire', 'pratcom-connect'); ?></h2>
                 <p style="color: var(--pc-text-muted); margin: 0 0 12px 0;">
-                    <?php esc_html_e('Aucun formulaire n\'est defini pour ce workspace. Creez-en un depuis votre tableau de bord Pratcom Connect.', 'pratcom-connect'); ?>
+                    <?php esc_html_e('Aucun formulaire n\'est défini pour ce workspace. Créez-en un depuis votre tableau de bord Pratcom Connect.', 'pratcom-connect'); ?>
                 </p>
                 <div class="pc-actions">
                     <a href="https://connect.pratcom.net/?utm_source=wp-plugin&utm_medium=forms-tab" target="_blank" rel="noopener" class="pc-btn pc-btn--primary">
@@ -231,7 +232,7 @@ class FormsTab extends AbstractTab
         <?php
     }
 
-    // ─── O5b : section builder iframe (additif) ─────────────────────────
+    // ─── O5b : section builder iframe (additif) ───────────────────
 
     /**
      * Section additive « Modifier dans le builder » — iframe signee B1.
@@ -269,7 +270,7 @@ class FormsTab extends AbstractTab
                     <?php echo esc_html(
                         sprintf(
                             /* translators: %s: error code */
-                            __('Le builder de formulaires est momentanement indisponible. (%s)', 'pratcom-connect'),
+                            __('Le builder de formulaires est momentanément indisponible. (%s)', 'pratcom-connect'),
                             $code
                         )
                     ); ?>
@@ -299,7 +300,7 @@ class FormsTab extends AbstractTab
                 <?php if ($crm_url): ?>
                 <a href="<?php echo esc_url($crm_url); ?>" target="_blank" rel="noopener"
                    class="pc-embed-header__link">
-                    <?php esc_html_e("Ouvrir en plein ecran \u{2197}", 'pratcom-connect'); ?>
+                    <?php esc_html_e("Ouvrir en plein écran \u{2197}", 'pratcom-connect'); ?>
                 </a>
                 <?php endif; ?>
             </div>
@@ -317,7 +318,7 @@ class FormsTab extends AbstractTab
         <?php
     }
 
-    // ─── Helpers ───────────────────────────────────────────────────────────
+    // ─── Helpers ────────────────────────────────────
 
     /** @return array{ok?: bool, forms?: array} */
     private function get_forms_cached(): array
