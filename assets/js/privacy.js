@@ -648,9 +648,11 @@
       '.ppc-embed-desc{font-size:13px;line-height:1.5;margin:0 0 14px}' +
       '.ppc-embed-btn{border:0;border-radius:10px;background:' + c.primary + ';color:' + c.onPrimary + ';font:inherit;font-size:14px;font-weight:600;padding:10px 18px;cursor:pointer}' +
       '.ppc-embed-btn:hover{background:' + c.primaryStrong + '}' +
+      // Accessibilité (WCAG 2.2 AA) : focus clavier visible sur tous les contrôles
       O + ' .ppc-btn:focus-visible,' + O + ' .ppc-cookies-toggle:focus-visible,' + O + ' .ppc-close:focus-visible,' + O + ' .ppc-record a:focus-visible,' + O + ' .ppc-desc a:focus-visible{outline:2px solid #1c2b33;outline-offset:2px;border-radius:8px}' +
       O + ' .ppc-switch input:focus-visible + .ppc-slider{outline:2px solid #1c2b33;outline-offset:2px}' +
       '.ppc-manage:focus-visible,.ppc-embed-btn:focus-visible{outline:2px solid #1c2b33;outline-offset:2px}' +
+      // Respect de prefers-reduced-motion (WCAG 2.3.3) : neutralise l'animation d'entrée
       '@media(prefers-reduced-motion:reduce){' + O + ' .ppc-card{animation:none}' + O + ' .ppc-slider,' + O + ' .ppc-slider:before,' + O + ' .ppc-btn,' + O + ' .ppc-caret{transition:none}}' +
       '@media(max-width:520px){' + O + ' .ppc-card{padding:24px 22px 20px}' + O + ' .ppc-actions{flex-direction:column}}' +
       '@media(max-width:480px){html.pratcom-chat-open .ppc-manage{display:none}}';
