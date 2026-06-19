@@ -12,6 +12,11 @@ namespace Pratcom\Connect\Bridge\Privacy;
  * wp_page_for_privacy_policy). On se contente donc de creer/publier la page
  * et de memoriser son ID ; le statut « linked » = page simplement publiee.
  *
+ * W5 — pages legales bilingues : si WPML ou Polylang est actif, ensure_page()
+ * cree + lie automatiquement une page dans CHAQUE langue active (l'admin ne
+ * fait rien). Repli inchange : 1 page si aucun plugin multilingue. Logique
+ * multilingue deleguee a Multilang (defensif, zero dependance dure).
+ *
  * Le rendu du bouton (render_admin_section) est appele par l'onglet
  * Confidentialite du shell admin — cette classe ne touche pas SettingsPage /
  * AdminShell. Le handler admin_post est autonome (enregistre ici).
@@ -19,6 +24,8 @@ namespace Pratcom\Connect\Bridge\Privacy;
 class CookiePolicyPage
 {
     public const OPTION_PAGE_ID = 'pratcom_connect_privacy_cookie_page_id';
+    // Map code_langue => post_id des pages traduites (WPML / Polylang).
+    public const OPTION_PAGE_IDS_BY_LANG = 'pratcom_connect_privacy_cookie_page_ids';
     public const ACTION = 'pratcom_privacy_create_cookie_page';
     public const SHORTCODE = 'pratcom_cookie_declaration';
 
@@ -74,11 +81,19 @@ class CookiePolicyPage
 
     /**
      * Cree (et publie) la page si elle n'existe pas encore. Idempotent :
-     * ne duplique jamais une page contenant deja le shortcode. Renvoie l'ID
-     * de page (ou 0). Sert au handler ET a l'auto-creation a l'activation.
+     * ne duplique jamais une page contenant deja le shortcode.
+     *
+     * Multilingue (WPML / Polylang) : cree + lie une page dans CHAQUE langue
+     * active ; OPTION_PAGE_ID = page de la langue par defaut. Repli mono-page
+     * sinon. Renvoie l'ID de page (langue par defaut) ou 0. Sert au handler
+     * ET a l'auto-creation a l'activation.
      */
     public static function ensure_page(): int
     {
+        if (Multilang::is_active()) {
+            return self::ensure_multilingual();
+        }
+
         $page = self::find_page();
         if ($page instanceof \WP_Post) {
             if ($page->post_status !== 'publish') {
@@ -99,6 +114,110 @@ class CookiePolicyPage
             return (int) $page_id;
         }
         return 0;
+    }
+
+    /**
+     * Cree / detecte / lie une page par langue active (WPML ou Polylang).
+     * Idempotent : ne recree jamais une page deja presente dans une langue.
+     * Renvoie l'ID de la page de la langue PAR DEFAUT (ou 0).
+     *
+     * Appele uniquement quand Multilang::is_active() est vrai.
+     */
+    private static function ensure_multilingual(): int
+    {
+        $languages = Multilang::languages();
+        $default   = Multilang::default_language();
+
+        if (empty($languages)) {
+            return 0;
+        }
+        if ($default === '' || !in_array($default, $languages, true)) {
+            $default = (string) reset($languages);
+        }
+
+        $ordered = array_merge([$default], array_values(array_diff($languages, [$default])));
+
+        $by_lang   = [];
+        $source_id = 0;
+
+        foreach ($ordered as $lang) {
+            $existing = self::find_page_for_lang($lang, $source_id);
+            if ($existing > 0) {
+                $post = get_post($existing);
+                if ($post instanceof \WP_Post && $post->post_status !== 'publish') {
+                    wp_update_post(['ID' => $existing, 'post_status' => 'publish']);
+                }
+                $page_id = $existing;
+            } else {
+                $page_id = self::insert_lang_page($lang);
+            }
+
+            if ($page_id > 0) {
+                $by_lang[$lang] = $page_id;
+                if ($lang === $default) {
+                    $source_id = $page_id;
+                }
+            }
+        }
+
+        foreach ($by_lang as $lang => $page_id) {
+            Multilang::link_translation($page_id, $lang, $by_lang, $default, $source_id);
+        }
+
+        if (!empty($by_lang)) {
+            update_option(self::OPTION_PAGE_IDS_BY_LANG, array_map('intval', $by_lang));
+        }
+
+        $default_id = isset($by_lang[$default]) ? (int) $by_lang[$default] : 0;
+        if ($default_id > 0) {
+            update_option(self::OPTION_PAGE_ID, $default_id);
+        }
+        return $default_id;
+    }
+
+    /**
+     * Detecte une page existante pour une langue donnee (idempotence).
+     * Ordre : traduction liee a la source (si connue) -> page portant le
+     * shortcode ET deja assignee a cette langue. 0 si aucune.
+     */
+    private static function find_page_for_lang(string $lang, int $source_id): int
+    {
+        if ($source_id > 0) {
+            $tid = Multilang::translation_id($source_id, $lang);
+            if ($tid > 0) {
+                $post = get_post($tid);
+                if ($post instanceof \WP_Post
+                    && $post->post_type === 'page'
+                    && $post->post_status !== 'trash'
+                    && has_shortcode($post->post_content, self::SHORTCODE)
+                ) {
+                    return (int) $tid;
+                }
+            }
+        }
+
+        $pages = get_pages(['number' => 200, 'post_status' => 'publish,draft']);
+        foreach ($pages as $page) {
+            if (!has_shortcode($page->post_content, self::SHORTCODE)) {
+                continue;
+            }
+            if (Multilang::post_language((int) $page->ID) === $lang) {
+                return (int) $page->ID;
+            }
+        }
+        return 0;
+    }
+
+    /** Insere une page (publiee) pour une langue ; shortcode force sur $lang. */
+    private static function insert_lang_page(string $lang): int
+    {
+        $page_id = wp_insert_post([
+            'post_type'    => 'page',
+            'post_status'  => 'publish',
+            'post_title'   => Multilang::page_title('cookie', $lang),
+            'post_content' => '<!-- wp:shortcode -->[' . self::SHORTCODE . ' lang="' . esc_attr($lang) . '"]<!-- /wp:shortcode -->',
+        ]);
+        return (!is_wp_error($page_id) && $page_id) ? (int) $page_id : 0;
     }
 
     /** Handler admin-post (cap manage_options + nonce). */
