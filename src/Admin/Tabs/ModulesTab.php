@@ -114,7 +114,7 @@ class ModulesTab extends AbstractTab
                                     ?>
                                 </a>
                             <?php endif; ?>
-                            <a href="<?php echo esc_url(AdminShell::marketing_url('#' . $key)); ?>"
+                            <a href="<?php echo esc_url(AdminShell::marketing_url($key . '/')); ?>"
                                target="_blank" rel="noopener" class="pc-btn pc-btn--ghost">
                                 <?php
                                 /* translators: %s: module name, e.g. "Connect Chat". */
