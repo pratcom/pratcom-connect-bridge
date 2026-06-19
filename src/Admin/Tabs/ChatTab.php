@@ -5,6 +5,7 @@ namespace Pratcom\Connect\Bridge\Admin\Tabs;
 use Pratcom\Connect\Bridge\Plugin;
 use Pratcom\Connect\Bridge\Http\ApiClient;
 use Pratcom\Connect\Bridge\Admin\OrgManagePanel;
+use Pratcom\Connect\Bridge\Admin\AdminShell;
 
 /**
  * Onglet Chat (O5) : iframe du tableau de bord d'entraînement Chatbot.
@@ -19,7 +20,7 @@ class ChatTab extends AbstractTab
 {
     public const PAGE_SLUG = 'pratcom-connect-chat';
 
-    // ─── AbstractTab ─────────────────────────────────────────────────────────
+    // ─── AbstractTab ────────────────────────────────────
 
     public function slug(): string
     {
@@ -36,7 +37,7 @@ class ChatTab extends AbstractTab
         return 'format-chat';
     }
 
-    // ─── Rendu ───────────────────────────────────────────────────────────────
+    // ─── Rendu ────────────────────────────────────────
 
     public function render(): void
     {
@@ -83,7 +84,7 @@ class ChatTab extends AbstractTab
         $this->render_iframe(esc_url($result['url']), esc_url($crm_url));
     }
 
-    // ─── Méthodes privées ────────────────────────────────────────────────────
+    // ─── Méthodes privées ──────────────────────────────────
 
     private function chat_enabled(): bool
     {
@@ -119,7 +120,7 @@ class ChatTab extends AbstractTab
                        class="pc-btn pc-btn--primary">
                         <?php esc_html_e('Connecter mon compte', 'pratcom-connect'); ?>
                     </a>
-                    <a href="https://connect.pratcom.net/?utm_source=wp-plugin&utm_medium=chat-tab"
+                    <a href="<?php echo esc_url(AdminShell::marketing_url('#chat')); ?>"
                        target="_blank" rel="noopener" class="pc-btn pc-btn--secondary">
                         <?php esc_html_e('Découvrir Connect Chat', 'pratcom-connect'); ?>
                     </a>
