@@ -3,6 +3,7 @@
 .gitignore
 .distignore
 build/
+docs/
 node_modules/
 tests/
 composer.lock
