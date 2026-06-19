@@ -233,10 +233,19 @@ class LocalPolicy
      * sélectionnés (Presets::cookie_rows) + liste manuelle (OPTION_COOKIES) +
      * noms détectés par le mini-scan local. Les entrées manuelles sont
      * conservées (jamais écrasées). 100 % local, zéro appel serveur.
+     *
+     * ⚠️ RENDU PUBLIC : les témoins « non classés » (unclassified) sont exclus
+     * de ce tableau — ils ne doivent jamais paraître côté visiteur. Ils restent
+     * visibles dans l'onglet d'administration pour être classés.
      */
     private static function render_cookie_table(string $lang): string
     {
-        $cookies = CookieScan::merged_rows($lang);
+        $cookies = array_values(array_filter(
+            CookieScan::merged_rows($lang),
+            static function ($c): bool {
+                return is_array($c) && (string) ($c['category'] ?? '') !== 'unclassified';
+            }
+        ));
         if (!count($cookies)) {
             $msg = $lang === 'en'
                 ? 'The cookie list has not been completed yet. It can be filled in from the Pratcom Connect settings (presets, manual list or local scan).'

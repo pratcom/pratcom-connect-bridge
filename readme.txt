@@ -4,7 +4,7 @@ Tags: consent, privacy, cookies, forms, chatbot
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 2.0.10
+Stable tag: 2.0.11
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,9 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 
 == Changelog ==
 
+= 2.0.11 =
+* Cookie scan ignores WordPress admin/auth cookies; public cookie declaration only lists classified cookies.
+
 = 2.0.10 =
 * Local legal pages: standalone cookie declaration (Cookiebot-style, grouped by category) plus dynamic cookie table (presets / local scan / manual entries) in the privacy policy, with both pages auto-created on activation. New shortcode [pratcom_cookie_declaration]. New company-info and manual-cookie editors in the Privacy tab. 100% local, no server calls in the free version.
 
@@ -125,6 +128,9 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 * Optional connection to the Pratcom Connect service (paid modules).
 
 == Upgrade Notice ==
+
+= 2.0.11 =
+The local cookie scan now ignores WordPress admin and authentication cookies, and the public cookie declaration lists only classified cookies. Unclassified cookies stay visible in the admin for you to classify. No change to paid modules.
 
 = 2.0.10 =
 New local legal pages: a standalone cookie declaration and a dynamic cookie table fed by your presets, a local scan and manual entries. Both pages are created automatically on activation. No change to paid modules.
