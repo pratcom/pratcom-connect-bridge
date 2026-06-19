@@ -73,7 +73,7 @@ class AppearanceTab extends AbstractTab
         ?>
         <h1 class="pc-content__title"><?php esc_html_e('Apparence', 'pratcom-connect'); ?></h1>
         <p class="pc-content__subtitle">
-            <?php esc_html_e('Couleurs de marque utilisees par les modules Pratcom Connect (banniere Privacy, et a venir le chat et les formulaires).', 'pratcom-connect'); ?>
+            <?php esc_html_e('Couleurs de marque utilisées par les modules Pratcom Connect (bannière Privacy, et à venir le chat et les formulaires).', 'pratcom-connect'); ?>
         </p>
 
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
@@ -83,7 +83,7 @@ class AppearanceTab extends AbstractTab
             <div class="pc-card">
                 <h2 class="pc-card__title"><?php esc_html_e('Palette de marque', 'pratcom-connect'); ?></h2>
                 <p style="color: var(--pc-text-muted); margin: 0 0 18px 0;">
-                    <?php esc_html_e('Choisissez la couleur principale de votre marque. Le texte des boutons est calcule automatiquement pour respecter le contraste (accessibilite WCAG).', 'pratcom-connect'); ?>
+                    <?php esc_html_e('Choisissez la couleur principale de votre marque. Le texte des boutons est calculé automatiquement pour respecter le contraste (accessibilité WCAG).', 'pratcom-connect'); ?>
                 </p>
 
                 <div class="pc-form-field">
@@ -103,7 +103,7 @@ class AppearanceTab extends AbstractTab
                         </span>
                     </div>
                     <p class="pc-form-help">
-                        <?php esc_html_e('Format hexadecimal, ex : #99BF38.', 'pratcom-connect'); ?>
+                        <?php esc_html_e('Format hexadécimal, ex : #99BF38.', 'pratcom-connect'); ?>
                     </p>
                 </div>
             </div>

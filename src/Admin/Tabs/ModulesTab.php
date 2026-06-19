@@ -3,6 +3,7 @@
 namespace Pratcom\Connect\Bridge\Admin\Tabs;
 
 use Pratcom\Connect\Bridge\Plugin;
+use Pratcom\Connect\Bridge\Admin\AdminShell;
 
 /**
  * Onglet Modules. Contenu iso-fonctionnel au monolithe (O0).
@@ -50,7 +51,7 @@ class ModulesTab extends AbstractTab
             'privacy' => [
                 'label'    => __('Connect Privacy', 'pratcom-connect'),
                 'short'    => 'P',
-                'desc'     => __('Banniere de consentement Loi 25 et catalogue de cookies automatique.', 'pratcom-connect'),
+                'desc'     => __('Bannière de consentement Loi 25 et catalogue de témoins automatique.', 'pratcom-connect'),
                 'tab_slug' => 'pratcom-connect-privacy',
             ],
         ];
@@ -67,12 +68,12 @@ class ModulesTab extends AbstractTab
                 if ($is_active) {
                     $badge_class = 'active';
                     $badge_label = __('Actif', 'pratcom-connect');
-                    $note = __('Gere via votre compte Pratcom Connect.', 'pratcom-connect');
+                    $note = __('Géré via votre compte Pratcom Connect.', 'pratcom-connect');
                 } else {
                     // Vitrine O2 : module verrouille, upsell conforme .org
                     // (dans NOS pages uniquement, jamais de notice globale).
                     $badge_class = 'locked';
-                    $badge_label = __('Verrouille', 'pratcom-connect');
+                    $badge_label = __('Verrouillé', 'pratcom-connect');
                     $note = $connected
                         ? __('Disponible avec un abonnement Pratcom Connect.', 'pratcom-connect')
                         : __('Connectez votre compte pour activer ce module.', 'pratcom-connect');
@@ -106,7 +107,20 @@ class ModulesTab extends AbstractTab
                                 <a href="<?php echo esc_url(admin_url('admin.php?page=' . ConnectionTab::PAGE_SLUG)); ?>" class="pc-btn pc-btn--primary">
                                     <?php esc_html_e('Connecter mon compte', 'pratcom-connect'); ?>
                                 </a>
+                                <a href="<?php echo esc_url(admin_url('admin.php?page=' . $mod['tab_slug'])); ?>" class="pc-btn pc-btn--secondary">
+                                    <?php
+                                    /* translators: %s: module name, e.g. "Connect Chat". */
+                                    echo esc_html(sprintf(__('C\'est quoi %s', 'pratcom-connect'), $mod['label']));
+                                    ?>
+                                </a>
                             <?php endif; ?>
+                            <a href="<?php echo esc_url(AdminShell::marketing_url('#' . $key)); ?>"
+                               target="_blank" rel="noopener" class="pc-btn pc-btn--ghost">
+                                <?php
+                                /* translators: %s: module name, e.g. "Connect Chat". */
+                                echo esc_html(sprintf(__('Découvrir %s', 'pratcom-connect'), $mod['label']));
+                                ?>
+                            </a>
                         </div>
                     <?php endif; ?>
                 </article>

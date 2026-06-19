@@ -5,6 +5,7 @@ namespace Pratcom\Connect\Bridge\Admin\Tabs;
 use Pratcom\Connect\Bridge\Plugin;
 use Pratcom\Connect\Bridge\Http\ApiClient;
 use Pratcom\Connect\Bridge\HealthCheck;
+use Pratcom\Connect\Bridge\Admin\AdminShell;
 
 /**
  * Onglet Connexion : liaison du site au workspace Pratcom Connect (cle pck_).
@@ -55,7 +56,7 @@ class ConnectionTab extends AbstractTab
         ?>
         <h1 class="pc-content__title"><?php esc_html_e('Compte', 'pratcom-connect'); ?></h1>
         <p class="pc-content__subtitle">
-            <?php esc_html_e('Gerez la liaison entre ce site et votre compte Pratcom Connect.', 'pratcom-connect'); ?>
+            <?php esc_html_e('Gérez la liaison entre ce site et votre compte Pratcom Connect.', 'pratcom-connect'); ?>
         </p>
 
         <?php if ($connected): ?>
@@ -70,7 +71,7 @@ class ConnectionTab extends AbstractTab
                     <span class="pc-card__value"><?php echo esc_html($workspace_id); ?></span>
                 </div>
                 <div class="pc-card__row">
-                    <span class="pc-card__label"><?php esc_html_e('Cle API', 'pratcom-connect'); ?></span>
+                    <span class="pc-card__label"><?php esc_html_e('Clé API', 'pratcom-connect'); ?></span>
                     <span class="pc-card__value"><?php echo esc_html($prefix); ?>&hellip;<?php echo esc_html($last_four); ?></span>
                 </div>
                 <div class="pc-card__row">
@@ -86,15 +87,15 @@ class ConnectionTab extends AbstractTab
                         <input type="hidden" name="action" value="pratcom_connect_bridge_check_now" />
                         <?php wp_nonce_field(self::NONCE_CHECK); ?>
                         <button type="submit" class="pc-btn pc-btn--secondary">
-                            <?php esc_html_e('Verifier maintenant', 'pratcom-connect'); ?>
+                            <?php esc_html_e('Vérifier maintenant', 'pratcom-connect'); ?>
                         </button>
                     </form>
                     <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline;">
                         <input type="hidden" name="action" value="pratcom_connect_bridge_disconnect" />
                         <?php wp_nonce_field(self::NONCE_DISCONNECT); ?>
                         <button type="submit" class="pc-btn pc-btn--danger"
-                            onclick="return confirm('<?php echo esc_js(__('Confirmer la deconnexion ?', 'pratcom-connect')); ?>')">
-                            <?php esc_html_e('Se deconnecter', 'pratcom-connect'); ?>
+                            onclick="return confirm('<?php echo esc_js(__('Confirmer la déconnexion ?', 'pratcom-connect')); ?>')">
+                            <?php esc_html_e('Se déconnecter', 'pratcom-connect'); ?>
                         </button>
                     </form>
                 </div>
@@ -103,7 +104,7 @@ class ConnectionTab extends AbstractTab
             <div class="pc-card" style="border-left: 4px solid var(--pc-danger);">
                 <h2 class="pc-card__title">
                     <?php echo esc_html($status === 'revoked'
-                        ? __('Cle revoquee', 'pratcom-connect')
+                        ? __('Clé révoquée', 'pratcom-connect')
                         : __('Erreur de connexion', 'pratcom-connect')); ?>
                 </h2>
                 <p style="color: var(--pc-text-muted);"><?php echo esc_html($last_error); ?></p>
@@ -113,14 +114,14 @@ class ConnectionTab extends AbstractTab
                         <input type="hidden" name="action" value="pratcom_connect_bridge_check_now" />
                         <?php wp_nonce_field(self::NONCE_CHECK); ?>
                         <button type="submit" class="pc-btn pc-btn--primary">
-                            <?php esc_html_e('Re-essayer', 'pratcom-connect'); ?>
+                            <?php esc_html_e('Réessayer', 'pratcom-connect'); ?>
                         </button>
                     </form>
                     <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline;">
                         <input type="hidden" name="action" value="pratcom_connect_bridge_disconnect" />
                         <?php wp_nonce_field(self::NONCE_DISCONNECT); ?>
                         <button type="submit" class="pc-btn pc-btn--danger">
-                            <?php esc_html_e('Effacer la cle', 'pratcom-connect'); ?>
+                            <?php esc_html_e('Effacer la clé', 'pratcom-connect'); ?>
                         </button>
                     </form>
                 </div>
@@ -129,7 +130,7 @@ class ConnectionTab extends AbstractTab
             <div class="pc-card">
                 <h2 class="pc-card__title"><?php esc_html_e('Connecter ce site', 'pratcom-connect'); ?></h2>
                 <p style="color: var(--pc-text-muted); margin: 0 0 16px 0;">
-                    <?php esc_html_e('Collez la cle API fournie par Pratcom Media. Format : pck_workspace_xxxx (48 caracteres).', 'pratcom-connect'); ?>
+                    <?php esc_html_e('Collez la clé API fournie par Pratcom Média. Format : pck_workspace_xxxx (48 caractères).', 'pratcom-connect'); ?>
                 </p>
 
                 <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
@@ -138,13 +139,13 @@ class ConnectionTab extends AbstractTab
 
                     <div class="pc-form-field">
                         <label for="pratcom_api_key" class="pc-form-label">
-                            <?php esc_html_e('Cle API', 'pratcom-connect'); ?>
+                            <?php esc_html_e('Clé API', 'pratcom-connect'); ?>
                         </label>
                         <input type="password" id="pratcom_api_key" name="pratcom_api_key" class="pc-form-input"
                             placeholder="pck_workspace-slug_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                             autocomplete="off" required />
                         <p class="pc-form-help">
-                            <?php esc_html_e('Cette cle est stockee localement et utilisee uniquement pour authentifier ce site aupres de l\'API Pratcom Connect.', 'pratcom-connect'); ?>
+                            <?php esc_html_e('Cette clé est stockée localement et utilisée uniquement pour authentifier ce site auprès de l\'API Pratcom Connect.', 'pratcom-connect'); ?>
                         </p>
                     </div>
 
@@ -152,6 +153,9 @@ class ConnectionTab extends AbstractTab
                         <button type="submit" class="pc-btn pc-btn--primary">
                             <?php esc_html_e('Connecter', 'pratcom-connect'); ?>
                         </button>
+                        <a href="<?php echo esc_url(AdminShell::marketing_url('')); ?>" target="_blank" rel="noopener" class="pc-btn pc-btn--secondary">
+                            <?php esc_html_e('Obtenir votre clé', 'pratcom-connect'); ?>
+                        </a>
                     </div>
                 </form>
             </div>
@@ -166,7 +170,7 @@ class ConnectionTab extends AbstractTab
 
         $raw_key = isset($_POST['pratcom_api_key']) ? trim(sanitize_text_field(wp_unslash($_POST['pratcom_api_key']))) : '';
         if (!preg_match('/^pck_[a-z0-9-]+_[A-Za-z0-9]{32}$/', $raw_key)) {
-            $this->redirect_with_notice(self::PAGE_SLUG, 'error', __('Format de cle invalide.', 'pratcom-connect'));
+            $this->redirect_with_notice(self::PAGE_SLUG, 'error', __('Format de clé invalide.', 'pratcom-connect'));
         }
 
         $domain = wp_parse_url(home_url(), PHP_URL_HOST);
