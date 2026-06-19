@@ -8,6 +8,12 @@ namespace Pratcom\Connect\Bridge\Privacy;
  * « Page de politique de confidentialité » et expose un statut pour le
  * crochet vert des réglages (P4b, spec §6b).
  *
+ * W5 — pages légales bilingues : si WPML ou Polylang est actif, ensure_page()
+ * crée + lie automatiquement une page dans CHAQUE langue active (l'admin ne
+ * fait rien). Repli inchangé : 1 page si aucun plugin multilingue. Toute la
+ * logique multilingue est déléguée à Multilang (défensif, zéro dépendance
+ * dure).
+ *
  * Le rendu du bouton (render_admin_section) est conçu pour être appelé par
  * l'onglet Confidentialité du shell admin (refactor O0, chantier Plugin
  * .org) — cette classe ne touche PAS SettingsPage.php. Le handler
@@ -17,7 +23,11 @@ namespace Pratcom\Connect\Bridge\Privacy;
 class PolicyPage
 {
     public const OPTION_PAGE_ID = 'pratcom_connect_privacy_policy_page_id';
+    // Map code_langue => post_id des pages traduites (WPML / Polylang).
+    // OPTION_PAGE_ID reste la page de la langue par défaut.
+    public const OPTION_PAGE_IDS_BY_LANG = 'pratcom_connect_privacy_policy_page_ids';
     public const ACTION = 'pratcom_privacy_create_page';
+    public const SHORTCODE = 'pratcom_privacy_policy';
 
     public function __construct()
     {
@@ -33,7 +43,7 @@ class PolicyPage
             if ($page instanceof \WP_Post
                 && $page->post_type === 'page'
                 && $page->post_status !== 'trash'
-                && has_shortcode($page->post_content, 'pratcom_privacy_policy')
+                && has_shortcode($page->post_content, self::SHORTCODE)
             ) {
                 return $page;
             }
@@ -41,7 +51,7 @@ class PolicyPage
 
         $pages = get_pages(['number' => 200, 'post_status' => 'publish,draft']);
         foreach ($pages as $page) {
-            if (has_shortcode($page->post_content, 'pratcom_privacy_policy')) {
+            if (has_shortcode($page->post_content, self::SHORTCODE)) {
                 update_option(self::OPTION_PAGE_ID, $page->ID);
                 return $page;
             }
@@ -75,18 +85,29 @@ class PolicyPage
      * Cree (ou publie) la page de politique si nécessaire ET l'enregistre
      * comme page de politique de confidentialité native de WordPress.
      * Idempotent : ne duplique jamais une page contenant déjà le shortcode.
-     * Renvoie l'ID de la page (ou 0). Sert au handler admin-post ET à
-     * l'auto-création à l'activation du plugin.
+     *
+     * Multilingue (WPML / Polylang) : crée + lie une page dans CHAQUE langue
+     * active ; OPTION_PAGE_ID = page de la langue par défaut. Repli mono-page
+     * sinon. Renvoie l'ID de la page (langue par défaut) ou 0. Sert au
+     * handler admin-post ET à l'auto-création à l'activation du plugin.
      */
     public static function ensure_page(): int
     {
+        if (Multilang::is_active()) {
+            $default_id = self::ensure_multilingual();
+            if ($default_id > 0) {
+                update_option('wp_page_for_privacy_policy', $default_id);
+            }
+            return $default_id;
+        }
+
         $page = self::find_page();
         if (!$page) {
             $page_id = wp_insert_post([
                 'post_type'    => 'page',
                 'post_status'  => 'publish',
                 'post_title'   => __('Politique de confidentialité', 'pratcom-connect'),
-                'post_content' => "<!-- wp:shortcode -->[pratcom_privacy_policy]<!-- /wp:shortcode -->",
+                'post_content' => '<!-- wp:shortcode -->[' . self::SHORTCODE . ']<!-- /wp:shortcode -->',
             ]);
             if (!is_wp_error($page_id) && $page_id) {
                 update_option(self::OPTION_PAGE_ID, (int) $page_id);
@@ -103,6 +124,116 @@ class PolicyPage
             return (int) $page->ID;
         }
         return 0;
+    }
+
+    /**
+     * Cree / détecte / lie une page par langue active (WPML ou Polylang).
+     * Idempotent : ne recrée jamais une page déjà présente dans une langue
+     * (détection par traduction puis par shortcode+langue). Renvoie l'ID de
+     * la page de la langue PAR DÉFAUT (ou 0).
+     *
+     * Appelé uniquement quand Multilang::is_active() est vrai.
+     */
+    private static function ensure_multilingual(): int
+    {
+        $languages = Multilang::languages();
+        $default   = Multilang::default_language();
+
+        if (empty($languages)) {
+            return 0;
+        }
+        if ($default === '' || !in_array($default, $languages, true)) {
+            $default = (string) reset($languages);
+        }
+
+        // 1) Page de la langue par défaut d'abord (source des traductions).
+        $ordered = array_merge([$default], array_values(array_diff($languages, [$default])));
+
+        $by_lang   = [];
+        $source_id = 0;
+
+        foreach ($ordered as $lang) {
+            $existing = self::find_page_for_lang($lang, $source_id);
+            if ($existing > 0) {
+                $post = get_post($existing);
+                if ($post instanceof \WP_Post && $post->post_status !== 'publish') {
+                    wp_update_post(['ID' => $existing, 'post_status' => 'publish']);
+                }
+                $page_id = $existing;
+            } else {
+                $page_id = self::insert_lang_page($lang);
+            }
+
+            if ($page_id > 0) {
+                $by_lang[$lang] = $page_id;
+                if ($lang === $default) {
+                    $source_id = $page_id;
+                }
+            }
+        }
+
+        // 2) Assigner langue + lier le groupe de traduction (idempotent).
+        foreach ($by_lang as $lang => $page_id) {
+            Multilang::link_translation($page_id, $lang, $by_lang, $default, $source_id);
+        }
+
+        if (!empty($by_lang)) {
+            update_option(self::OPTION_PAGE_IDS_BY_LANG, array_map('intval', $by_lang));
+        }
+
+        $default_id = isset($by_lang[$default]) ? (int) $by_lang[$default] : 0;
+        if ($default_id > 0) {
+            update_option(self::OPTION_PAGE_ID, $default_id);
+        }
+        return $default_id;
+    }
+
+    /**
+     * Détecte une page existante pour une langue donnée (idempotence).
+     * Ordre : traduction liée à la source (si connue) -> page publiée /
+     * brouillon portant le shortcode ET déjà assignée à cette langue.
+     * 0 si aucune.
+     */
+    private static function find_page_for_lang(string $lang, int $source_id): int
+    {
+        // a) Via le lien de traduction depuis la page source.
+        if ($source_id > 0) {
+            $tid = Multilang::translation_id($source_id, $lang);
+            if ($tid > 0) {
+                $post = get_post($tid);
+                if ($post instanceof \WP_Post
+                    && $post->post_type === 'page'
+                    && $post->post_status !== 'trash'
+                    && has_shortcode($post->post_content, self::SHORTCODE)
+                ) {
+                    return (int) $tid;
+                }
+            }
+        }
+
+        // b) Balayage : page portant le shortcode déjà rattachée à $lang.
+        $pages = get_pages(['number' => 200, 'post_status' => 'publish,draft']);
+        foreach ($pages as $page) {
+            if (!has_shortcode($page->post_content, self::SHORTCODE)) {
+                continue;
+            }
+            if (Multilang::post_language((int) $page->ID) === $lang) {
+                return (int) $page->ID;
+            }
+        }
+        return 0;
+    }
+
+    /** Insère une page (publiée) pour une langue ; shortcode forcé sur $lang. */
+    private static function insert_lang_page(string $lang): int
+    {
+        $page_id = wp_insert_post([
+            'post_type'    => 'page',
+            'post_status'  => 'publish',
+            'post_title'   => Multilang::page_title('privacy', $lang),
+            'post_content' => '<!-- wp:shortcode -->[' . self::SHORTCODE . ' lang="' . esc_attr($lang) . '"]<!-- /wp:shortcode -->',
+        ]);
+        return (!is_wp_error($page_id) && $page_id) ? (int) $page_id : 0;
     }
 
     /** Handler admin-post (cap manage_options + nonce). */
