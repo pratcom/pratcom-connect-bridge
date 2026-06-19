@@ -55,7 +55,7 @@ class LocalPolicy
     private static function interpolate(string $text, array $vars): string
     {
         return preg_replace_callback(
-            '/\{\{(\w+)\}\}/',
+            '/\\{\\{(\\w+)\\}\\}/',
             static function (array $m) use ($vars): string {
                 return isset($vars[$m[1]]) ? (string) $vars[$m[1]] : $m[0];
             },
@@ -226,13 +226,21 @@ class LocalPolicy
         return $out;
     }
 
+    /**
+     * Tableau des témoins intégré à la politique — DYNAMIQUE.
+     *
+     * Source = CookieScan::merged_rows($lang) : fusion dédupliquée des presets
+     * sélectionnés (Presets::cookie_rows) + liste manuelle (OPTION_COOKIES) +
+     * noms détectés par le mini-scan local. Les entrées manuelles sont
+     * conservées (jamais écrasées). 100 % local, zéro appel serveur.
+     */
     private static function render_cookie_table(string $lang): string
     {
-        $cookies = get_option(self::OPTION_COOKIES, []);
-        if (!is_array($cookies) || !count($cookies)) {
+        $cookies = CookieScan::merged_rows($lang);
+        if (!count($cookies)) {
             $msg = $lang === 'en'
-                ? 'The cookie list has not been completed yet. It can be filled in from the Pratcom Connect settings.'
-                : 'La liste des témoins n\'a pas encore été remplie. Elle peut être complétée depuis les réglages Pratcom Connect.';
+                ? 'The cookie list has not been completed yet. It can be filled in from the Pratcom Connect settings (presets, manual list or local scan).'
+                : 'La liste des témoins n\'a pas encore été remplie. Elle peut être complétée depuis les réglages Pratcom Connect (presets, liste manuelle ou scan local).';
             return '<p class="pratcom-policy-cookies-empty"><em>' . esc_html($msg) . '</em></p>';
         }
 
