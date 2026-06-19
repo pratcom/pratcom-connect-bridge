@@ -148,7 +148,7 @@ class ChatTab extends AbstractTab
                class="pc-btn pc-btn--primary">
                 <?php esc_html_e('Connecter mon compte', 'pratcom-connect'); ?>
             </a>
-            <a href="<?php echo esc_url(AdminShell::marketing_url('#chat')); ?>"
+            <a href="<?php echo esc_url(AdminShell::marketing_url('chat/')); ?>"
                target="_blank" rel="noopener" class="pc-btn pc-btn--secondary">
                 <?php esc_html_e('Découvrir Connect Chat', 'pratcom-connect'); ?>
             </a>
