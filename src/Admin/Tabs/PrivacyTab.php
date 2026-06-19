@@ -5,6 +5,8 @@ namespace Pratcom\Connect\Bridge\Admin\Tabs;
 use Pratcom\Connect\Bridge\Plugin;
 use Pratcom\Connect\Bridge\Http\ApiClient;
 use Pratcom\Connect\Bridge\Admin\OrgManagePanel;
+use Pratcom\Connect\Bridge\Admin\AdminShell;
+use Pratcom\Connect\Bridge\Admin\ModuleShowcase;
 use Pratcom\Connect\Bridge\Privacy\FreeBanner;
 use Pratcom\Connect\Bridge\Privacy\LocalRegistry;
 use Pratcom\Connect\Bridge\Privacy\LocalPolicy;
@@ -30,7 +32,8 @@ use Pratcom\Connect\Bridge\Privacy\Presets;
  *   ⑥ Bouton « Créer la page » Politique de confidentialité — PolicyPage.
  *   ⑦ Bouton « Créer la page » Politique relative aux témoins — CookiePolicyPage.
  *   ⑧ Export CSV consentements — LocalRegistry::EXPORT_ACTION.
- *   ⑨ (O5b) Section « Privacy Connect » — iframe scan si pack privacy actif.
+ *   ⑨ (O5b) Section « Privacy Connect » — iframe scan si pack privacy actif,
+ *      sinon vitrine verrouillée animée (W4) en upsell. Privacy Free intacte.
  */
 class PrivacyTab extends AbstractTab
 {
@@ -71,6 +74,20 @@ class PrivacyTab extends AbstractTab
         add_action('admin_post_' . self::ACTION_COMPANY, [$this, 'handle_save_company']);
         add_action('admin_post_' . self::ACTION_COOKIES, [$this, 'handle_save_cookies']);
         add_action('admin_post_' . self::ACTION_SCAN, [$this, 'handle_scan_action']);
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_showcase_assets']);
+    }
+
+    /**
+     * Assets de la vitrine verrouillée Privacy Connect (W4) — enqueue
+     * page-scoped : uniquement sur l'onglet Confidentialité. Aucun
+     * <style>/<script> inline (conformité WordPress.org).
+     */
+    public function enqueue_showcase_assets(string $hook): void
+    {
+        if (strpos($hook, self::PAGE_SLUG) === false) {
+            return;
+        }
+        ModuleShowcase::enqueue();
     }
 
     // ─── Handler admin-post : bannière + presets ───
@@ -630,10 +647,73 @@ class PrivacyTab extends AbstractTab
         </div><!-- /.pc-card (export) -->
 
         <?php
-        // ⑨ O5b : section Privacy Connect (iframe scan) — additif, pack requis.
+        // ⑨ O5b : section Privacy Connect.
+        //   - Pack actif  : iframe scan signée (render_connected_section).
+        //   - Sinon       : vitrine verrouillée animée (W4) en upsell.
+        // Privacy Free (sections ①-⑧) reste intouché dans les deux cas.
         if ($privacy_pack_active) {
             $this->render_connected_section();
+        } else {
+            $this->render_locked_upsell();
         }
+    }
+
+    // ─── W4 : vitrine verrouillée Privacy Connect (upsell animé) ───
+
+    /**
+     * Vitrine verrouillée « Privacy Connect » — affichée sous Privacy Free
+     * quand le module connecté n'est pas actif (non connecté OU pack privacy
+     * inactif). Démo animée de bannière de consentement + fonctions + CTA.
+     * N'altère JAMAIS Privacy Free (sections ①-⑧ ci-dessus).
+     */
+    private function render_locked_upsell(): void
+    {
+        ?>
+        <div style="margin-top:28px;">
+        <?php
+        ModuleShowcase::render([
+            'title'    => __('Privacy Connect', 'pratcom-connect'),
+            'subtitle' => __('La conformité Loi 25 en pilote automatique : consentement, blocage des traceurs, registre et tableau de bord, au-delà de Privacy Free.', 'pratcom-connect'),
+            'demo'     => 'privacy',
+            'tagline'  => __('Bannière de consentement, blocage automatique des traceurs et registre vérifiable, avec dossier self-service et tableau de bord des consentements.', 'pratcom-connect'),
+            'features' => [
+                __('Bannière de consentement Loi 25', 'pratcom-connect'),
+                __('Blocage des traceurs', 'pratcom-connect'),
+                __('Registre de consentements', 'pratcom-connect'),
+                __('Dossier self-service avec PDF', 'pratcom-connect'),
+                __('Tableau de bord des consentements', 'pratcom-connect'),
+                __('Google Consent Mode v2', 'pratcom-connect'),
+                __('Alertes nouveau traceur', 'pratcom-connect'),
+            ],
+            'note'     => __('Module fourni par le service Pratcom Connect (abonnement requis). Privacy Free ci-dessus reste disponible gratuitement.', 'pratcom-connect'),
+            'cta_html' => $this->upsell_cta_html(),
+        ]);
+        ?>
+        </div>
+        <?php
+    }
+
+    /** CTA de la vitrine Privacy Connect (connecté = activer ; sinon = connecter + découvrir). */
+    private function upsell_cta_html(): string
+    {
+        ob_start();
+        if (Plugin::is_connected()) {
+            ?>
+            <a href="https://connect.pratcom.net/?utm_source=wp-plugin&utm_medium=privacy-tab" target="_blank" rel="noopener" class="pc-btn pc-btn--primary">
+                <?php esc_html_e('Activer ce module', 'pratcom-connect'); ?>
+            </a>
+            <?php
+        } else {
+            ?>
+            <a href="<?php echo esc_url(admin_url('admin.php?page=' . ConnectionTab::PAGE_SLUG)); ?>" class="pc-btn pc-btn--primary">
+                <?php esc_html_e('Connecter mon compte', 'pratcom-connect'); ?>
+            </a>
+            <a href="<?php echo esc_url(AdminShell::marketing_url('#privacy')); ?>" target="_blank" rel="noopener" class="pc-btn pc-btn--secondary">
+                <?php esc_html_e('Découvrir Connect Privacy', 'pratcom-connect'); ?>
+            </a>
+            <?php
+        }
+        return (string) ob_get_clean();
     }
 
     // ─── O5b : section Privacy Connect iframe (additif) ───

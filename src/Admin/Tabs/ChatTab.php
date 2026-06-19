@@ -6,12 +6,13 @@ use Pratcom\Connect\Bridge\Plugin;
 use Pratcom\Connect\Bridge\Http\ApiClient;
 use Pratcom\Connect\Bridge\Admin\OrgManagePanel;
 use Pratcom\Connect\Bridge\Admin\AdminShell;
+use Pratcom\Connect\Bridge\Admin\ModuleShowcase;
 
 /**
  * Onglet Chat (O5) : iframe du tableau de bord d'entraînement Chatbot.
  * Contenu = chantier Chatbot. Propriété shell = Plugin .org.
  *
- * Module inactif : vitrine verrouillée (upsell conforme WordPress.org).
+ * Module inactif : vitrine verrouillée animée (W4, upsell conforme WordPress.org).
  * Module actif   : session signée (B1 HMAC) → iframe /embed/chat-training/{ws}.
  *
  * Fichier neuf (leçon #4) — jamais d'édition inline du monolithe.
@@ -35,6 +36,23 @@ class ChatTab extends AbstractTab
     public function icon(): string
     {
         return 'format-chat';
+    }
+
+    public function register(): void
+    {
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_showcase_assets']);
+    }
+
+    /**
+     * Assets de la vitrine verrouillée (W4) — enqueue page-scoped : uniquement
+     * sur l'onglet Chat. Aucun <style>/<script> inline (conformité WordPress.org).
+     */
+    public function enqueue_showcase_assets(string $hook): void
+    {
+        if (strpos($hook, self::PAGE_SLUG) === false) {
+            return;
+        }
+        ModuleShowcase::enqueue();
     }
 
     // ─── Rendu ────────────────────────────────────────
@@ -92,42 +110,51 @@ class ChatTab extends AbstractTab
         return is_array($packs) && !empty($packs['chat']);
     }
 
+    /** Vitrine verrouillée animée (W4) : démo de chat + fonctions + CTA existants. */
     private function render_locked(): void
     {
-        $connected = Plugin::is_connected();
-        ?>
-        <div class="pc-card pc-module-card--locked">
-            <h2 class="pc-card__title">
-                <?php esc_html_e('Connect Chat', 'pratcom-connect'); ?>
-                <span class="pc-module-card__badge pc-module-card__badge--locked">
-                    <?php esc_html_e('Verrouillé', 'pratcom-connect'); ?>
-                </span>
-            </h2>
-            <p style="color: var(--pc-text-muted); margin: 0 0 8px 0;">
-                <?php esc_html_e('Assistant virtuel intelligent entraînable, multi-tenant, avec détection de leads chauds et escalade humaine — sans aucun plugin supplémentaire.', 'pratcom-connect'); ?>
-            </p>
-            <p class="pc-module-card__note">
-                <?php esc_html_e('Module fourni par le service Pratcom Connect (abonnement requis).', 'pratcom-connect'); ?>
-            </p>
-            <div class="pc-actions pc-module-card__cta">
-                <?php if ($connected): ?>
-                    <a href="https://connect.pratcom.net/?utm_source=wp-plugin&utm_medium=chat-tab"
-                       target="_blank" rel="noopener" class="pc-btn pc-btn--primary">
-                        <?php esc_html_e('Activer ce module', 'pratcom-connect'); ?>
-                    </a>
-                <?php else: ?>
-                    <a href="<?php echo esc_url(admin_url('admin.php?page=' . ConnectionTab::PAGE_SLUG)); ?>"
-                       class="pc-btn pc-btn--primary">
-                        <?php esc_html_e('Connecter mon compte', 'pratcom-connect'); ?>
-                    </a>
-                    <a href="<?php echo esc_url(AdminShell::marketing_url('#chat')); ?>"
-                       target="_blank" rel="noopener" class="pc-btn pc-btn--secondary">
-                        <?php esc_html_e('Découvrir Connect Chat', 'pratcom-connect'); ?>
-                    </a>
-                <?php endif; ?>
-            </div>
-        </div>
-        <?php
+        ModuleShowcase::render([
+            'title'    => __('Connect Chat', 'pratcom-connect'),
+            'subtitle' => __('Un assistant qui répond à vos visiteurs, qualifie vos prospects et passe la main à votre équipe au bon moment.', 'pratcom-connect'),
+            'demo'     => 'chat',
+            'tagline'  => __('Assistant virtuel intelligent entraînable, multi-tenant, avec détection de leads chauds et escalade humaine, sans aucun plugin supplémentaire.', 'pratcom-connect'),
+            'features' => [
+                __('Assistant IA multilingue, disponible 24/7', 'pratcom-connect'),
+                __('Base de connaissances par client (RAG)', 'pratcom-connect'),
+                __('Détection et scoring des leads chauds', 'pratcom-connect'),
+                __('Escalade vers un humain', 'pratcom-connect'),
+                __('Entraînement depuis votre site', 'pratcom-connect'),
+                __('Multi-sites', 'pratcom-connect'),
+            ],
+            'note'     => __('Module fourni par le service Pratcom Connect (abonnement requis).', 'pratcom-connect'),
+            'cta_html' => $this->locked_cta_html(),
+        ]);
+    }
+
+    /** CTA de la vitrine (mêmes boutons que la vitrine historique). */
+    private function locked_cta_html(): string
+    {
+        ob_start();
+        if (Plugin::is_connected()) {
+            ?>
+            <a href="https://connect.pratcom.net/?utm_source=wp-plugin&utm_medium=chat-tab"
+               target="_blank" rel="noopener" class="pc-btn pc-btn--primary">
+                <?php esc_html_e('Activer ce module', 'pratcom-connect'); ?>
+            </a>
+            <?php
+        } else {
+            ?>
+            <a href="<?php echo esc_url(admin_url('admin.php?page=' . ConnectionTab::PAGE_SLUG)); ?>"
+               class="pc-btn pc-btn--primary">
+                <?php esc_html_e('Connecter mon compte', 'pratcom-connect'); ?>
+            </a>
+            <a href="<?php echo esc_url(AdminShell::marketing_url('#chat')); ?>"
+               target="_blank" rel="noopener" class="pc-btn pc-btn--secondary">
+                <?php esc_html_e('Découvrir Connect Chat', 'pratcom-connect'); ?>
+            </a>
+            <?php
+        }
+        return (string) ob_get_clean();
     }
 
     private function render_no_key(): void

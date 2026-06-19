@@ -6,6 +6,7 @@ use Pratcom\Connect\Bridge\Plugin;
 use Pratcom\Connect\Bridge\Http\ApiClient;
 use Pratcom\Connect\Bridge\Admin\OrgManagePanel;
 use Pratcom\Connect\Bridge\Admin\AdminShell;
+use Pratcom\Connect\Bridge\Admin\ModuleShowcase;
 
 /**
  * Onglet Formulaires (O2) : liste des formulaires du workspace + shortcode
@@ -13,8 +14,8 @@ use Pratcom\Connect\Bridge\Admin\AdminShell;
  * chantier Forms (API F4 cote serveur, exposee au plugin via la route
  * lecture seule GET /api/bridge/forms — voir demande inter-chantiers).
  *
- * Non connecte ou module inactif : vitrine verrouillee (upsell conforme
- * WordPress.org — dans NOS pages uniquement, jamais de notice globale).
+ * Non connecte ou module inactif : vitrine verrouillee animee (W4, upsell
+ * conforme WordPress.org — dans NOS pages uniquement, jamais de notice globale).
  *
  * O5b : section additive render_builder_section() — iframe builder signe.
  */
@@ -51,6 +52,7 @@ class FormsTab extends AbstractTab
      * JS de l'onglet Formulaires (copie du shortcode, selection au focus) —
      * fichier enqueue page-scoped, remplace le <script> inline historique
      * (revue WordPress.org : pas de balise script brute dans l'admin).
+     * Charge aussi les assets de la vitrine verrouillee (W4), page-scoped.
      */
     public function enqueue_forms_scripts(string $hook): void
     {
@@ -69,6 +71,9 @@ class FormsTab extends AbstractTab
             'pratcomFormsCopy',
             ['copied' => __('Copié !', 'pratcom-connect')]
         );
+
+        // Vitrine verrouillee (W4) : CSS + JS d'animation, meme page uniquement.
+        ModuleShowcase::enqueue();
     }
 
     public function render(): void
@@ -95,40 +100,49 @@ class FormsTab extends AbstractTab
         return is_array($packs) && !empty($packs['forms']['enabled']);
     }
 
-    /** Vitrine verrouillee (module non actif ou site non connecte). */
+    /** Vitrine verrouillee animee (W4) : demo de formulaire + fonctions + CTA. */
     private function render_locked(): void
     {
-        $connected = Plugin::is_connected();
-        ?>
-        <div class="pc-card pc-module-card--locked">
-            <h2 class="pc-card__title">
-                <?php esc_html_e('Connect Forms', 'pratcom-connect'); ?>
-                <span class="pc-module-card__badge pc-module-card__badge--locked">
-                    <?php esc_html_e('Verrouillé', 'pratcom-connect'); ?>
-                </span>
-            </h2>
-            <p style="color: var(--pc-text-muted); margin: 0 0 8px 0;">
-                <?php esc_html_e('Formulaires multi-étapes avec scoring de leads, double opt-in conforme, notifications bilingues et insertion par shortcode — sans aucune extension supplémentaire.', 'pratcom-connect'); ?>
-            </p>
-            <p class="pc-module-card__note">
-                <?php esc_html_e('Module fourni par le service Pratcom Connect (abonnement requis).', 'pratcom-connect'); ?>
-            </p>
-            <div class="pc-actions pc-module-card__cta">
-                <?php if ($connected): ?>
-                    <a href="https://connect.pratcom.net/?utm_source=wp-plugin&utm_medium=forms-tab" target="_blank" rel="noopener" class="pc-btn pc-btn--primary">
-                        <?php esc_html_e('Activer ce module', 'pratcom-connect'); ?>
-                    </a>
-                <?php else: ?>
-                    <a href="<?php echo esc_url(admin_url('admin.php?page=' . ConnectionTab::PAGE_SLUG)); ?>" class="pc-btn pc-btn--primary">
-                        <?php esc_html_e('Connecter mon compte', 'pratcom-connect'); ?>
-                    </a>
-                    <a href="<?php echo esc_url(AdminShell::marketing_url('#forms')); ?>" target="_blank" rel="noopener" class="pc-btn pc-btn--secondary">
-                        <?php esc_html_e('Découvrir Connect Forms', 'pratcom-connect'); ?>
-                    </a>
-                <?php endif; ?>
-            </div>
-        </div>
-        <?php
+        ModuleShowcase::render([
+            'title'    => __('Connect Forms', 'pratcom-connect'),
+            'subtitle' => __('Des formulaires qui se remplissent, se notent et se routent tout seuls, prêts à coller n\'importe où avec un shortcode.', 'pratcom-connect'),
+            'demo'     => 'forms',
+            'tagline'  => __('Formulaires multi-étapes avec scoring de leads, double opt-in conforme, notifications bilingues et insertion par shortcode, sans aucune extension supplémentaire.', 'pratcom-connect'),
+            'features' => [
+                __('Formulaires intelligents', 'pratcom-connect'),
+                __('Constructeur visuel', 'pratcom-connect'),
+                __('Scoring de leads', 'pratcom-connect'),
+                __('Routage automatique', 'pratcom-connect'),
+                __('Anti-pourriel (honeypot, délai, Turnstile)', 'pratcom-connect'),
+                __('Double opt-in (LCAP)', 'pratcom-connect'),
+                __('Multi-étapes', 'pratcom-connect'),
+            ],
+            'note'     => __('Module fourni par le service Pratcom Connect (abonnement requis).', 'pratcom-connect'),
+            'cta_html' => $this->locked_cta_html(),
+        ]);
+    }
+
+    /** CTA de la vitrine (mêmes boutons que la vitrine historique). */
+    private function locked_cta_html(): string
+    {
+        ob_start();
+        if (Plugin::is_connected()) {
+            ?>
+            <a href="https://connect.pratcom.net/?utm_source=wp-plugin&utm_medium=forms-tab" target="_blank" rel="noopener" class="pc-btn pc-btn--primary">
+                <?php esc_html_e('Activer ce module', 'pratcom-connect'); ?>
+            </a>
+            <?php
+        } else {
+            ?>
+            <a href="<?php echo esc_url(admin_url('admin.php?page=' . ConnectionTab::PAGE_SLUG)); ?>" class="pc-btn pc-btn--primary">
+                <?php esc_html_e('Connecter mon compte', 'pratcom-connect'); ?>
+            </a>
+            <a href="<?php echo esc_url(AdminShell::marketing_url('#forms')); ?>" target="_blank" rel="noopener" class="pc-btn pc-btn--secondary">
+                <?php esc_html_e('Découvrir Connect Forms', 'pratcom-connect'); ?>
+            </a>
+            <?php
+        }
+        return (string) ob_get_clean();
     }
 
     /** Liste des formulaires du workspace + shortcodes copiables. */
