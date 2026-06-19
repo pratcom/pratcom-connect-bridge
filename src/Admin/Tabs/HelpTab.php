@@ -30,7 +30,7 @@ class HelpTab extends AbstractTab
         ?>
         <h1 class="pc-content__title"><?php esc_html_e('Aide', 'pratcom-connect'); ?></h1>
         <p class="pc-content__subtitle">
-            <?php esc_html_e('Documentation, support et informations systeme.', 'pratcom-connect'); ?>
+            <?php esc_html_e('Documentation, support et informations système.', 'pratcom-connect'); ?>
         </p>
 
         <div class="pc-card">
@@ -39,7 +39,7 @@ class HelpTab extends AbstractTab
                 <?php esc_html_e('Guide complet d\'installation, de connexion et de gestion des modules.', 'pratcom-connect'); ?>
             </p>
             <div class="pc-actions">
-                <a href="https://docs.pratcom.net/connect/bridge" target="_blank" rel="noopener" class="pc-btn pc-btn--secondary">
+                <a href="<?php echo esc_url('https://connect.pratcom.net/docs'); ?>" target="_blank" rel="noopener" class="pc-btn pc-btn--secondary">
                     <?php esc_html_e('Ouvrir la documentation', 'pratcom-connect'); ?>
                 </a>
             </div>
@@ -48,15 +48,17 @@ class HelpTab extends AbstractTab
         <div class="pc-card">
             <h2 class="pc-card__title"><?php esc_html_e('Support', 'pratcom-connect'); ?></h2>
             <p style="color: var(--pc-text-muted); margin: 0 0 12px 0;">
-                <?php esc_html_e('Pour toute question ou demande de support, contactez Pratcom Media :', 'pratcom-connect'); ?>
+                <?php esc_html_e('Pour toute question ou demande de support, contactez Pratcom Média :', 'pratcom-connect'); ?>
             </p>
             <div class="pc-actions">
-                <a href="mailto:support@pratcom.net" class="pc-btn pc-btn--secondary">support@pratcom.net</a>
+                <a href="<?php echo esc_url('https://connect.pratcom.net/support'); ?>" target="_blank" rel="noopener" class="pc-btn pc-btn--secondary">
+                    <?php esc_html_e('Contacter le support', 'pratcom-connect'); ?>
+                </a>
             </div>
         </div>
 
         <div class="pc-card">
-            <h2 class="pc-card__title"><?php esc_html_e('Systeme', 'pratcom-connect'); ?></h2>
+            <h2 class="pc-card__title"><?php esc_html_e('Système', 'pratcom-connect'); ?></h2>
             <div class="pc-card__row">
                 <span class="pc-card__label"><?php esc_html_e('Version du plugin', 'pratcom-connect'); ?></span>
                 <span class="pc-card__value">v<?php echo esc_html(PRATCOM_CONNECT_BRIDGE_VERSION); ?></span>
@@ -71,7 +73,7 @@ class HelpTab extends AbstractTab
             </div>
             <div class="pc-actions">
                 <a href="<?php echo esc_url(admin_url('plugins.php')); ?>" class="pc-btn pc-btn--secondary">
-                    <?php esc_html_e('Verifier les mises a jour', 'pratcom-connect'); ?>
+                    <?php esc_html_e('Vérifier les mises à jour', 'pratcom-connect'); ?>
                 </a>
             </div>
         </div>

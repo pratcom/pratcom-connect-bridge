@@ -42,7 +42,7 @@ class DashboardTab extends AbstractTab
         ?>
         <h1 class="pc-content__title"><?php esc_html_e('Tableau de bord', 'pratcom-connect'); ?></h1>
         <p class="pc-content__subtitle">
-            <?php esc_html_e('Vue d\'ensemble de votre connexion a Pratcom Connect.', 'pratcom-connect'); ?>
+            <?php esc_html_e('Vue d\'ensemble de votre connexion à Pratcom Connect.', 'pratcom-connect'); ?>
         </p>
 
         <?php if ($connected): ?>
@@ -62,7 +62,7 @@ class DashboardTab extends AbstractTab
                 </div>
                 <div class="pc-actions">
                     <a href="<?php echo esc_url(admin_url('admin.php?page=' . ModulesTab::PAGE_SLUG)); ?>" class="pc-btn pc-btn--primary">
-                        <?php esc_html_e('Gerer les modules', 'pratcom-connect'); ?>
+                        <?php esc_html_e('Gérer les modules', 'pratcom-connect'); ?>
                     </a>
                     <a href="<?php echo esc_url(admin_url('admin.php?page=' . AppearanceTab::PAGE_SLUG)); ?>" class="pc-btn pc-btn--secondary">
                         <?php esc_html_e('Apparence', 'pratcom-connect'); ?>
@@ -73,7 +73,7 @@ class DashboardTab extends AbstractTab
             <div class="pc-card">
                 <h2 class="pc-card__title"><?php esc_html_e('Bienvenue dans Pratcom Connect', 'pratcom-connect'); ?></h2>
                 <p style="color: var(--pc-text-muted); margin: 0 0 16px 0;">
-                    <?php esc_html_e('Connectez ce site a Pratcom Connect pour activer les modules (Chat IA, Forms, Privacy) via une seule cle API fournie par Pratcom Media.', 'pratcom-connect'); ?>
+                    <?php esc_html_e('Connectez ce site à Pratcom Connect pour activer les modules (Chat IA, Forms, Privacy) via une seule clé API fournie par Pratcom Média.', 'pratcom-connect'); ?>
                 </p>
                 <div class="pc-actions">
                     <a href="<?php echo esc_url(admin_url('admin.php?page=' . ConnectionTab::PAGE_SLUG)); ?>" class="pc-btn pc-btn--primary">

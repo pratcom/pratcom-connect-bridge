@@ -54,6 +54,31 @@ class AdminShell
         ];
     }
 
+    /**
+     * Langue de l'interface d'administration : 'en' si la locale admin commence
+     * par 'en', sinon 'fr' (defaut du produit). Utilise pour aiguiller les liens
+     * marketing vers la bonne variante linguistique du site Pratcom.
+     */
+    public static function admin_lang(): string
+    {
+        $locale = function_exists('get_user_locale') ? get_user_locale() : determine_locale();
+        return strpos((string) $locale, 'en') === 0 ? 'en' : 'fr';
+    }
+
+    /**
+     * Construit une URL vers le site marketing Pratcom Connect, dans la langue
+     * de l'admin. FR : https://pratcom.net/connect/<path> — EN :
+     * https://pratcom.net/en/connect/<path>. Le segment $path peut etre vide
+     * (page modules/prix) ou une ancre (ex. '#chat').
+     */
+    public static function marketing_url(string $path = ''): string
+    {
+        $base = self::admin_lang() === 'en'
+            ? 'https://pratcom.net/en/connect/'
+            : 'https://pratcom.net/connect/';
+        return $base . ltrim($path, '/');
+    }
+
     public function register_menu(): void
     {
         add_menu_page(
@@ -139,10 +164,10 @@ class AdminShell
         $logo_url = PRATCOM_CONNECT_BRIDGE_URL . 'assets/img/logo-pratcom-connect.svg';
 
         $status_labels = [
-            'connected' => __('Connecte', 'pratcom-connect'),
-            'disconnected' => __('Non connecte', 'pratcom-connect'),
+            'connected' => __('Connecté', 'pratcom-connect'),
+            'disconnected' => __('Non connecté', 'pratcom-connect'),
             'error' => __('Erreur', 'pratcom-connect'),
-            'revoked' => __('Cle revoquee', 'pratcom-connect'),
+            'revoked' => __('Clé révoquée', 'pratcom-connect'),
         ];
         ?>
         <div class="wrap pc-admin-wrap">
@@ -187,18 +212,18 @@ class AdminShell
         if (!$notice) return;
 
         $map = [
-            'connected'    => ['success', __('Connecte avec succes.', 'pratcom-connect')],
-            'disconnected' => ['info', __('Plugin deconnecte. La cle API a ete retiree localement.', 'pratcom-connect')],
+            'connected'    => ['success', __('Connecté avec succès.', 'pratcom-connect')],
+            'disconnected' => ['info', __('Plugin déconnecté. La clé API a été retirée localement.', 'pratcom-connect')],
             'checked'      => [
                 'success',
                 sprintf(
                     /* translators: %s: connection status returned by the API. */
-                    __('Verification effectuee. Statut : %s', 'pratcom-connect'),
+                    __('Vérification effectuée. Statut : %s', 'pratcom-connect'),
                     $msg
                 ),
             ],
-            'theme_saved'  => ['success', __('Couleurs enregistrees et synchronisees.', 'pratcom-connect')],
-            'forms_refreshed' => ['success', __('Liste des formulaires actualisee.', 'pratcom-connect')],
+            'theme_saved'  => ['success', __('Couleurs enregistrées et synchronisées.', 'pratcom-connect')],
+            'forms_refreshed' => ['success', __('Liste des formulaires actualisée.', 'pratcom-connect')],
             'error'        => [
                 'error',
                 sprintf(
