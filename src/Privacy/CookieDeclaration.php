@@ -9,14 +9,16 @@ use Pratcom\Connect\Bridge\Plugin;
  * [pratcom_cookie_declaration lang=""] (Privacy Free, spec legal pages org).
  *
  * Rend un tableau GROUPE PAR CATEGORIE (necessaires, preferences,
- * fonctionnels, statistiques, marketing, non classes) : chaque categorie a
- * un en-tete + une courte description, puis les colonnes Nom · Fournisseur ·
- * Finalite · Duree, le tout bilingue (fr/en).
+ * fonctionnels, statistiques, marketing) : chaque categorie a un en-tete +
+ * une courte description, puis les colonnes Nom · Fournisseur · Finalite ·
+ * Duree, le tout bilingue (fr/en). La categorie « non classes » n'est JAMAIS
+ * rendue sur la page publique (cf. grouped_rows_public) ; elle reste visible
+ * cote admin pour classement.
  *
- * SOURCE des lignes = CookieScan::grouped_rows() : fusion dedupliquee des
- * presets selectionnes + liste manuelle (LocalPolicy::OPTION_COOKIES) + noms
- * detectes par le mini-scan local. Point unique de fusion partage avec le
- * tableau integre a la politique.
+ * SOURCE des lignes = CookieScan::grouped_rows_public() : fusion dedupliquee
+ * des presets selectionnes + liste manuelle (LocalPolicy::OPTION_COOKIES) +
+ * noms detectes par le mini-scan local, sans la categorie non classee. Point
+ * unique de fusion partage avec le tableau integre a la politique.
  *
  * LOCAL-FIRST (miroir de PolicyShortcode) : si le site est connecte ET que le
  * pack privacy est actif, on PEUT tenter le fragment serveur ; sinon (et par
@@ -68,12 +70,13 @@ class CookieDeclaration
 
     /**
      * Rendu LOCAL de la declaration complete (titre + intro + tableaux par
-     * categorie + note de mise a jour). Aucun appel serveur.
+     * categorie + note de mise a jour). Aucun appel serveur. Seules les
+     * categories CLASSEES sont affichees (pas de « non classes » en public).
      */
     public static function render_local(string $lang): string
     {
         $lang = $lang === 'en' ? 'en' : 'fr';
-        $groups = CookieScan::grouped_rows($lang);
+        $groups = CookieScan::grouped_rows_public($lang);
 
         $title = $lang === 'en' ? 'Cookie Declaration' : 'Déclaration relative aux témoins';
         $intro = $lang === 'en'

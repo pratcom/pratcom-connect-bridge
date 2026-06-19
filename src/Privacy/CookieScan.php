@@ -32,10 +32,157 @@ class CookieScan
     /** Ordre d'affichage fixe des categories (style Cookiebot). */
     public const CATEGORY_ORDER = ['necessary', 'preferences', 'functional', 'statistics', 'marketing', 'unclassified'];
 
+    /**
+     * Categories effectivement classees, montrees sur la page PUBLIQUE.
+     * « unclassified » en est volontairement exclue : un temoin non classe
+     * ne doit jamais paraitre cote visiteur (il reste visible en admin).
+     */
+    public const PUBLIC_CATEGORIES = ['necessary', 'preferences', 'functional', 'statistics', 'marketing'];
+
+    /**
+     * Cookies internes de WordPress (authentification / admin) que les
+     * VISITEURS non connectes n'ont jamais. Le mini-scan tourne dans le
+     * navigateur d'un administrateur connecte : il capterait donc ces cookies,
+     * qui apparaitraient alors « non classes » sur la declaration publique.
+     * On les exclut a la capture ET, defensivement, a la fusion.
+     *
+     * Prefixes (comparaison insensible a la casse, par debut de chaine) :
+     *   - 'wp-settings-'           reglages d'ecran d'admin (wp-settings-1, ...)
+     *   - 'wp-settings-time-'      horodatage des reglages d'admin
+     *   - 'wordpress_logged_in_'   session « connecte »
+     *   - 'wordpress_sec_'         cookie d'authentification securise (admin/https)
+     *   - 'wordpress_'             prefixe d'authentification generique
+     * Exacts :
+     *   - 'wordpress_test_cookie'  test de support des cookies
+     *
+     * NB : ne couvre PAS les cookies de commentaire (comment_author*) ni
+     * 'wp-wpml_*' (preference de langue visiteur), qui restent legitimes.
+     *
+     * @var string[]
+     */
+    private const WP_INTERNAL_PREFIXES = [
+        'wp-settings-time-',
+        'wp-settings-',
+        'wordpress_logged_in_',
+        'wordpress_sec_',
+        'wordpress_',
+    ];
+
+    /** @var string[] */
+    private const WP_INTERNAL_EXACT = [
+        'wordpress_test_cookie',
+    ];
+
+    /**
+     * Temoins « first-party » connus deposes par Pratcom Connect lui-meme (ou
+     * par le coeur de WordPress) qu'on veut DECLARER explicitement plutot que
+     * laisser « non classes » (bonne pratique Loi 25 : divulguer notamment le
+     * temoin de consentement). Quand un nom scanne ou saisi manuellement
+     * correspond a cette table, il ressort CLASSE (donc visible cote public)
+     * avec une description bilingue, au lieu d'« unclassified » (donc masque).
+     *
+     * Cas particulier : 'wordpress_test_cookie' figure aussi dans la liste des
+     * cookies internes WordPress (WP_INTERNAL_EXACT). Etre present ici l'EXEMPTE
+     * du filtre is_wp_internal() — et de lui SEUL — afin qu'il puisse paraitre,
+     * classe « necessaire ». Tous les autres cookies d'authentification/admin
+     * (wp-settings-*, wordpress_logged_in_*, etc.) restent filtres normalement.
+     *
+     * Cle = nom EXACT du temoin (minuscules). 'provider' vide => nom du site.
+     *
+     * @var array<string, array{category: string, provider: string, purpose: array{fr: string, en: string}, expiry: array{fr: string, en: string}}>
+     */
+    private const FIRST_PARTY = [
+        'pratcom_consent' => [
+            'category' => 'necessary',
+            'provider' => '',
+            'purpose'  => [
+                'fr' => 'Mémorise votre choix de consentement aux témoins',
+                'en' => 'Stores your cookie consent choice',
+            ],
+            'expiry'   => [
+                'fr' => '12 mois',
+                'en' => '12 months',
+            ],
+        ],
+        'wordpress_test_cookie' => [
+            'category' => 'necessary',
+            'provider' => 'WordPress',
+            'purpose'  => [
+                'fr' => 'Vérifie que le navigateur accepte les témoins',
+                'en' => 'Checks that the browser accepts cookies',
+            ],
+            'expiry'   => [
+                'fr' => 'Session',
+                'en' => 'Session',
+            ],
+        ],
+    ];
+
+    /** Le nom donne figure-t-il dans la table des temoins first-party connus ? */
+    public static function is_first_party(string $name): bool
+    {
+        return isset(self::FIRST_PARTY[strtolower(trim($name))]);
+    }
+
+    /**
+     * Ligne de declaration prete a fusionner pour un temoin first-party connu,
+     * ou null si le nom n'est pas dans la table. 'provider' vide retombe sur le
+     * nom du site (a defaut « Pratcom Connect »).
+     *
+     * @return array{name: string, provider: string, purpose: string, expiry: string, category: string}|null
+     */
+    public static function first_party_row(string $name, string $lang): ?array
+    {
+        $key = strtolower(trim($name));
+        if (!isset(self::FIRST_PARTY[$key])) {
+            return null;
+        }
+        $lang = $lang === 'en' ? 'en' : 'fr';
+        $def = self::FIRST_PARTY[$key];
+        $provider = (string) ($def['provider'] ?? '');
+        if ($provider === '') {
+            $site = trim((string) get_bloginfo('name'));
+            $provider = $site !== '' ? $site : 'Pratcom Connect';
+        }
+        return [
+            'name'     => trim((string) $name),
+            'provider' => $provider,
+            'purpose'  => (string) ($def['purpose'][$lang] ?? ''),
+            'expiry'   => (string) ($def['expiry'][$lang] ?? ''),
+            'category' => self::normalize_category((string) ($def['category'] ?? 'necessary')),
+        ];
+    }
+
     public function __construct()
     {
         add_action('wp_enqueue_scripts', [$this, 'maybe_enqueue_scan']);
         add_action('wp_ajax_' . self::AJAX_ACTION, [$this, 'handle_scan']);
+    }
+
+    /**
+     * Le nom donne est-il un cookie interne WordPress (auth/admin) ?
+     * Comparaison insensible a la casse. Voir WP_INTERNAL_PREFIXES / _EXACT.
+     */
+    public static function is_wp_internal(string $name): bool
+    {
+        $name = strtolower(trim($name));
+        if ($name === '') {
+            return false;
+        }
+        // Un temoin first-party connu et classe (ex. wordpress_test_cookie) est
+        // legitime a paraitre : il est exempte du filtre interne.
+        if (isset(self::FIRST_PARTY[$name])) {
+            return false;
+        }
+        if (in_array($name, self::WP_INTERNAL_EXACT, true)) {
+            return true;
+        }
+        foreach (self::WP_INTERNAL_PREFIXES as $prefix) {
+            if (strncmp($name, $prefix, strlen($prefix)) === 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -124,6 +271,20 @@ class CookieScan
     }
 
     /**
+     * Variante PUBLIQUE de grouped_rows() : identique mais SANS la categorie
+     * « unclassified ». Un temoin non classe ne doit jamais paraitre cote
+     * visiteur. Utilise par CookieDeclaration et LocalPolicy (rendus publics).
+     *
+     * @return array<string, array<int, array{name:string, provider:string, purpose:string, expiry:string, category:string}>>
+     */
+    public static function grouped_rows_public(string $lang): array
+    {
+        $groups = self::grouped_rows($lang);
+        unset($groups['unclassified']);
+        return $groups;
+    }
+
+    /**
      * Liste fusionnee a plat, dedupliquee par nom (sert au tableau integre a
      * la politique et de base a grouped_rows).
      *
@@ -174,13 +335,23 @@ class CookieScan
         }
 
         // 3) Scan local : noms detectes non encore couverts -> "unclassified".
+        // Defense en profondeur : ignorer tout cookie interne WordPress qui
+        // aurait pu etre stocke avant ce correctif (scanned_names() le filtre
+        // deja, mais on le re-verifie ici).
         $unknown = $lang === 'en' ? 'To be classified' : 'À classer';
         foreach (self::scanned_names() as $name) {
             $name = trim((string) $name);
-            if ($name === '' || isset($seen[$name])) {
+            if ($name === '' || isset($seen[$name]) || self::is_wp_internal($name)) {
                 continue;
             }
             $seen[$name] = true;
+            // Temoin first-party connu (ex. pratcom_consent) : le classer via la
+            // table plutot que de le laisser « non classe » (donc masque).
+            $known = self::first_party_row($name, $lang);
+            if ($known !== null) {
+                $rows[] = $known;
+                continue;
+            }
             $rows[] = [
                 'name'     => $name,
                 'provider' => '',
@@ -202,6 +373,8 @@ class CookieScan
 
     /**
      * Noms de temoins memorises par le scan admin.
+     * Les cookies internes WordPress (auth/admin) sont filtres a la lecture,
+     * meme s'ils ont ete stockes avant l'introduction du filtre.
      *
      * @return string[]
      */
@@ -214,7 +387,7 @@ class CookieScan
         // Stockage = map name => '' (clefs uniques) ; on retourne les clefs.
         $names = array_keys($saved);
         return array_values(array_filter(array_map('strval', $names), static function (string $n): bool {
-            return $n !== '';
+            return $n !== '' && !self::is_wp_internal($n);
         }));
     }
 
@@ -332,7 +505,10 @@ class CookieScan
             // Noms de temoins : alphanum, tirets, underscores, points, etoiles.
             $name = preg_replace('/[^A-Za-z0-9_\-.*]/', '', $name);
             $name = (string) substr((string) $name, 0, 128);
-            if ($name === '' || isset($saved[$name])) {
+            // Ignorer les cookies internes WordPress (auth/admin) : ils ne
+            // concernent que l'admin connecte qui execute le scan et ne
+            // doivent jamais finir dans la declaration publique.
+            if ($name === '' || isset($saved[$name]) || self::is_wp_internal($name)) {
                 continue;
             }
             // Borne de securite : ne pas laisser l'option enfler indefiniment.
