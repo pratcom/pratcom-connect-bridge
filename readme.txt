@@ -82,6 +82,7 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 
 = 2.0.11 =
 * Cookie scan ignores WordPress admin/auth cookies; public cookie declaration only lists classified cookies.
+* The consent cookie (pratcom_consent) is now declared as a necessary cookie instead of unclassified; the "Powered by Pratcom Connect" badge links to pratcom.net/connect.
 
 = 2.0.10 =
 * Local legal pages: standalone cookie declaration (Cookiebot-style, grouped by category) plus dynamic cookie table (presets / local scan / manual entries) in the privacy policy, with both pages auto-created on activation. New shortcode [pratcom_cookie_declaration]. New company-info and manual-cookie editors in the Privacy tab. 100% local, no server calls in the free version.

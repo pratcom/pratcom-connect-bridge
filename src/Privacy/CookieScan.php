@@ -73,6 +73,86 @@ class CookieScan
         'wordpress_test_cookie',
     ];
 
+    /**
+     * Temoins « first-party » connus deposes par Pratcom Connect lui-meme (ou
+     * par le coeur de WordPress) qu'on veut DECLARER explicitement plutot que
+     * laisser « non classes » (bonne pratique Loi 25 : divulguer notamment le
+     * temoin de consentement). Quand un nom scanne ou saisi manuellement
+     * correspond a cette table, il ressort CLASSE (donc visible cote public)
+     * avec une description bilingue, au lieu d'« unclassified » (donc masque).
+     *
+     * Cas particulier : 'wordpress_test_cookie' figure aussi dans la liste des
+     * cookies internes WordPress (WP_INTERNAL_EXACT). Etre present ici l'EXEMPTE
+     * du filtre is_wp_internal() — et de lui SEUL — afin qu'il puisse paraitre,
+     * classe « necessaire ». Tous les autres cookies d'authentification/admin
+     * (wp-settings-*, wordpress_logged_in_*, etc.) restent filtres normalement.
+     *
+     * Cle = nom EXACT du temoin (minuscules). 'provider' vide => nom du site.
+     *
+     * @var array<string, array{category: string, provider: string, purpose: array{fr: string, en: string}, expiry: array{fr: string, en: string}}>
+     */
+    private const FIRST_PARTY = [
+        'pratcom_consent' => [
+            'category' => 'necessary',
+            'provider' => '',
+            'purpose'  => [
+                'fr' => 'Mémorise votre choix de consentement aux témoins',
+                'en' => 'Stores your cookie consent choice',
+            ],
+            'expiry'   => [
+                'fr' => '12 mois',
+                'en' => '12 months',
+            ],
+        ],
+        'wordpress_test_cookie' => [
+            'category' => 'necessary',
+            'provider' => 'WordPress',
+            'purpose'  => [
+                'fr' => 'Vérifie que le navigateur accepte les témoins',
+                'en' => 'Checks that the browser accepts cookies',
+            ],
+            'expiry'   => [
+                'fr' => 'Session',
+                'en' => 'Session',
+            ],
+        ],
+    ];
+
+    /** Le nom donne figure-t-il dans la table des temoins first-party connus ? */
+    public static function is_first_party(string $name): bool
+    {
+        return isset(self::FIRST_PARTY[strtolower(trim($name))]);
+    }
+
+    /**
+     * Ligne de declaration prete a fusionner pour un temoin first-party connu,
+     * ou null si le nom n'est pas dans la table. 'provider' vide retombe sur le
+     * nom du site (a defaut « Pratcom Connect »).
+     *
+     * @return array{name: string, provider: string, purpose: string, expiry: string, category: string}|null
+     */
+    public static function first_party_row(string $name, string $lang): ?array
+    {
+        $key = strtolower(trim($name));
+        if (!isset(self::FIRST_PARTY[$key])) {
+            return null;
+        }
+        $lang = $lang === 'en' ? 'en' : 'fr';
+        $def = self::FIRST_PARTY[$key];
+        $provider = (string) ($def['provider'] ?? '');
+        if ($provider === '') {
+            $site = trim((string) get_bloginfo('name'));
+            $provider = $site !== '' ? $site : 'Pratcom Connect';
+        }
+        return [
+            'name'     => trim((string) $name),
+            'provider' => $provider,
+            'purpose'  => (string) ($def['purpose'][$lang] ?? ''),
+            'expiry'   => (string) ($def['expiry'][$lang] ?? ''),
+            'category' => self::normalize_category((string) ($def['category'] ?? 'necessary')),
+        ];
+    }
+
     public function __construct()
     {
         add_action('wp_enqueue_scripts', [$this, 'maybe_enqueue_scan']);
@@ -87,6 +167,11 @@ class CookieScan
     {
         $name = strtolower(trim($name));
         if ($name === '') {
+            return false;
+        }
+        // Un temoin first-party connu et classe (ex. wordpress_test_cookie) est
+        // legitime a paraitre : il est exempte du filtre interne.
+        if (isset(self::FIRST_PARTY[$name])) {
             return false;
         }
         if (in_array($name, self::WP_INTERNAL_EXACT, true)) {
@@ -260,6 +345,13 @@ class CookieScan
                 continue;
             }
             $seen[$name] = true;
+            // Temoin first-party connu (ex. pratcom_consent) : le classer via la
+            // table plutot que de le laisser « non classe » (donc masque).
+            $known = self::first_party_row($name, $lang);
+            if ($known !== null) {
+                $rows[] = $known;
+                continue;
+            }
             $rows[] = [
                 'name'     => $name,
                 'provider' => '',

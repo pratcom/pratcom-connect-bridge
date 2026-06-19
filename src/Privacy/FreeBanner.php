@@ -80,10 +80,19 @@ class FreeBanner
         // défaut, retirable via la case de l'onglet Confidentialité OU le filtre
         // pratcom_connect_branding (conformité guideline WP.org : retrait
         // documenté, voir readme « Attribution Notice »). privacy.js lit
-        // config.showBadge.privacy (=== false pour masquer).
+        // config.showBadge.privacy (=== false pour masquer) et config.showBadge.url
+        // (cible du lien du badge dans le chemin gratuit).
         $badge_enabled = get_option(self::OPTION_BADGE_ENABLED, '1') === '1';
         $show_badge = (bool) apply_filters('pratcom_connect_branding', $badge_enabled, 'privacy', null);
-        $config['showBadge'] = ['privacy' => $show_badge];
+        // Lien du badge → page produit publique (filtrable, échappé).
+        $badge_url = (string) apply_filters(
+            'pratcom_connect_branding_url',
+            'https://pratcom.net/connect/'
+        );
+        $config['showBadge'] = [
+            'privacy' => $show_badge,
+            'url'     => esc_url_raw($badge_url),
+        ];
 
         $local = [
             'config'          => $config,
