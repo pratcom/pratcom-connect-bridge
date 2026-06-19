@@ -4,7 +4,7 @@ Tags: consent, privacy, cookies, forms, chatbot
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 2.0.9
+Stable tag: 2.0.10
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,6 +20,7 @@ The plugin interface and the consent banner are fully bilingual (French and Engl
 
 * **Law 25 consent banner**: cookie categories (necessary, analytics, marketing), editable FR/EN texts, design adaptable to your brand (primary color + rich palette, WCAG contrast computed automatically).
 * **Presets for popular plugins**: check the tools you use (Google Analytics 4, Meta Pixel, Hotjar, and more) — the cookie declaration and blocking rules configure themselves. Automatic suggestions based on the plugins active on your site (local detection, no data transmitted).
+* **Legal pages**: a privacy policy and a standalone cookie declaration, both bilingual and generated automatically. They are created on activation and kept up to date from your presets, your manual list and a local scan. Shortcodes: [pratcom_privacy_policy] and [pratcom_cookie_declaration].
 * **Local consent registry**: proof of consent stored in your WordPress database, with CSV export.
 
 = Paid modules (require a Pratcom Connect account) =
@@ -32,7 +33,7 @@ Paid modules are provided by the Pratcom Connect service and are enabled by conn
 
 = External service (disclosure) =
 
-In the free version, **no data is sent to any external server**: the banner, presets and registry run entirely on your site.
+In the free version, **no data is sent to any external server**: the banner, presets, legal pages and registry run entirely on your site.
 
 If you connect a Pratcom Connect account (a voluntary action), the plugin communicates with the **api.connect.pratcom.net** service (operated by Pratcom Media, Canada):
 
@@ -44,7 +45,7 @@ If you connect a Pratcom Connect account (a voluntary action), the plugin commun
 
 = Is the plugin really free? =
 
-Yes. The Law 25 consent banner, presets and local registry are free, with no account and no time limit. Paid modules are optional.
+Yes. The Law 25 consent banner, presets, legal pages and local registry are free, with no account and no time limit. Paid modules are optional.
 
 = Does my data leave my site in the free version? =
 
@@ -78,6 +79,9 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 6. Front-end — the consent banner live on a website, in the visitor's language.
 
 == Changelog ==
+
+= 2.0.10 =
+* Local legal pages: standalone cookie declaration (Cookiebot-style, grouped by category) plus dynamic cookie table (presets / local scan / manual entries) in the privacy policy, with both pages auto-created on activation. New shortcode [pratcom_cookie_declaration]. New company-info and manual-cookie editors in the Privacy tab. 100% local, no server calls in the free version.
 
 = 2.0.9 =
 * Renamed two localized JS globals to the pratcom prefix (WP.org review).
@@ -121,6 +125,9 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 * Optional connection to the Pratcom Connect service (paid modules).
 
 == Upgrade Notice ==
+
+= 2.0.10 =
+New local legal pages: a standalone cookie declaration and a dynamic cookie table fed by your presets, a local scan and manual entries. Both pages are created automatically on activation. No change to paid modules.
 
 = 2.0.9 =
 Internal rename of two admin JavaScript globals to satisfy WordPress.org naming guidelines. No functional change.

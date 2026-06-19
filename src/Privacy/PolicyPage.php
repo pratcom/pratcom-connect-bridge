@@ -71,14 +71,15 @@ class PolicyPage
         ];
     }
 
-    /** Handler admin-post (cap manage_options + nonce). */
-    public function handle_create(): void
+    /**
+     * Cree (ou publie) la page de politique si nécessaire ET l'enregistre
+     * comme page de politique de confidentialité native de WordPress.
+     * Idempotent : ne duplique jamais une page contenant déjà le shortcode.
+     * Renvoie l'ID de la page (ou 0). Sert au handler admin-post ET à
+     * l'auto-création à l'activation du plugin.
+     */
+    public static function ensure_page(): int
     {
-        if (!current_user_can('manage_options')) {
-            wp_die(esc_html__('Permission refusée.', 'pratcom-connect'));
-        }
-        check_admin_referer(self::ACTION);
-
         $page = self::find_page();
         if (!$page) {
             $page_id = wp_insert_post([
@@ -96,13 +97,26 @@ class PolicyPage
             $page = get_post($page->ID);
         }
 
-        // Enregistrement dans le réglage WP natif (Réglages > Confidentialité)
         if ($page instanceof \WP_Post) {
+            // Enregistrement dans le réglage WP natif (Réglages > Confidentialité)
             update_option('wp_page_for_privacy_policy', $page->ID);
+            return (int) $page->ID;
         }
+        return 0;
+    }
+
+    /** Handler admin-post (cap manage_options + nonce). */
+    public function handle_create(): void
+    {
+        if (!current_user_can('manage_options')) {
+            wp_die(esc_html__('Permission refusée.', 'pratcom-connect'));
+        }
+        check_admin_referer(self::ACTION);
+
+        $page_id = self::ensure_page();
 
         $redirect = add_query_arg(
-            ['page' => 'pratcom-connect', 'pratcom-policy-created' => $page ? '1' : '0'],
+            ['page' => 'pratcom-connect', 'pratcom-policy-created' => $page_id ? '1' : '0'],
             admin_url('admin.php')
         );
         wp_safe_redirect($redirect);

@@ -27,6 +27,7 @@ class Plugin
             new Admin\AdminShell();
             new Admin\Notices();
             new Privacy\PolicyPage();
+            new Privacy\CookiePolicyPage();
 
             // Lien "Reglages" a cote de "Desactiver" dans la liste des plugins
             $basename = plugin_basename(PRATCOM_CONNECT_BRIDGE_FILE);
@@ -37,6 +38,8 @@ class Plugin
         new HealthCheck();
         new Forms\Shortcode();
         new Privacy\PolicyShortcode();
+        new Privacy\CookieDeclaration();
+        new Privacy\CookieScan();
         new Privacy\LocalRegistry();
         new Privacy\FreeBanner();
         new Http\PagesController();
@@ -58,6 +61,12 @@ class Plugin
             update_option(self::OPTION_STATUS, 'disconnected');
         }
         Privacy\LocalRegistry::maybe_install();
+
+        // Auto-creation des pages legales (idempotent : ne duplique jamais une
+        // page contenant deja le shortcode). L'utilisateur active le plugin :
+        // creation acceptable, conforme au modele Complianz / Cookiebot.
+        Privacy\PolicyPage::ensure_page();
+        Privacy\CookiePolicyPage::ensure_page();
     }
 
     public static function on_uninstall(): void
@@ -74,9 +83,11 @@ class Plugin
             self::OPTION_LAST_ERROR,
             self::OPTION_THEME,
             Privacy\PolicyPage::OPTION_PAGE_ID,
+            Privacy\CookiePolicyPage::OPTION_PAGE_ID,
             Privacy\LocalPolicy::OPTION_VARS,
             Privacy\LocalPolicy::OPTION_COOKIES,
             Privacy\Presets::OPTION_SELECTED,
+            Privacy\CookieScan::OPTION_SCANNED,
             Privacy\LocalRegistry::OPTION_DB_VERSION,
             Privacy\LocalRegistry::OPTION_BANNER_VERSION,
             Privacy\FreeBanner::OPTION_ENABLED,

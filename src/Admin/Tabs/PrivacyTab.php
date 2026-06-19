@@ -7,23 +7,30 @@ use Pratcom\Connect\Bridge\Http\ApiClient;
 use Pratcom\Connect\Bridge\Admin\OrgManagePanel;
 use Pratcom\Connect\Bridge\Privacy\FreeBanner;
 use Pratcom\Connect\Bridge\Privacy\LocalRegistry;
+use Pratcom\Connect\Bridge\Privacy\LocalPolicy;
 use Pratcom\Connect\Bridge\Privacy\PolicyPage;
+use Pratcom\Connect\Bridge\Privacy\CookiePolicyPage;
+use Pratcom\Connect\Bridge\Privacy\CookieScan;
 use Pratcom\Connect\Bridge\Privacy\Presets;
 
 /**
- * Onglet Confidentialité — Privacy Free (spec .org §3-4, O3).
+ * Onglet Confidentialité — Privacy Free (spec .org §3-4, O3 + legal pages org).
  *
  * CONTENU : zone du chantier Privacy / Plugin .org.
- * DÉPENDANCES : FreeBanner, Presets, PolicyPage, LocalRegistry (tous mergés).
+ * DÉPENDANCES : FreeBanner, Presets, PolicyPage, CookiePolicyPage, CookieScan,
+ *               LocalPolicy, LocalRegistry (tous mergés).
  * PATTERN : fichier neuf petit (leçon #4) — jamais d'édition inline du monolithe.
  *
  * Sections :
- *   ① Toggle FreeBanner::OPTION_ENABLED + avertissement module Connect actif.
+ *   ① Toggle FreeBanner::OPTION_ENABLED + badge + avertissement module Connect.
  *   ② Bandeau de suggestions Presets::suggested() (détection passive locale).
  *   ③ Cases à cocher Presets::all() groupées par provenance (kind) puis catégorie.
- *   ④ Bouton « Créer la page » — PolicyPage::render_admin_section().
- *   ⑤ Export CSV consentements — LocalRegistry::EXPORT_ACTION.
- *   ⑥ (O5b) Section « Privacy Connect » — iframe scan si pack privacy actif.
+ *   ④ Informations entreprise (LocalPolicy::OPTION_VARS) — handler dédié.
+ *   ⑤ Liste manuelle de témoins (LocalPolicy::OPTION_COOKIES) + revue du scan local.
+ *   ⑥ Bouton « Créer la page » Politique de confidentialité — PolicyPage.
+ *   ⑦ Bouton « Créer la page » Politique relative aux témoins — CookiePolicyPage.
+ *   ⑧ Export CSV consentements — LocalRegistry::EXPORT_ACTION.
+ *   ⑨ (O5b) Section « Privacy Connect » — iframe scan si pack privacy actif.
  */
 class PrivacyTab extends AbstractTab
 {
@@ -31,6 +38,15 @@ class PrivacyTab extends AbstractTab
 
     private const NONCE_SETTINGS = 'pratcom_privacy_free_save_settings';
     private const ACTION_SAVE    = 'pratcom_connect_bridge_save_privacy_free';
+
+    private const NONCE_COMPANY  = 'pratcom_privacy_save_company';
+    private const ACTION_COMPANY = 'pratcom_connect_bridge_save_privacy_company';
+
+    private const NONCE_COOKIES  = 'pratcom_privacy_save_cookies';
+    private const ACTION_COOKIES = 'pratcom_connect_bridge_save_privacy_cookies';
+
+    private const NONCE_SCAN     = 'pratcom_privacy_scan_admin';
+    private const ACTION_SCAN    = 'pratcom_connect_bridge_privacy_scan_admin';
 
     // ─── AbstractTab ───
 
@@ -52,9 +68,12 @@ class PrivacyTab extends AbstractTab
     public function register(): void
     {
         add_action('admin_post_' . self::ACTION_SAVE, [$this, 'handle_save']);
+        add_action('admin_post_' . self::ACTION_COMPANY, [$this, 'handle_save_company']);
+        add_action('admin_post_' . self::ACTION_COOKIES, [$this, 'handle_save_cookies']);
+        add_action('admin_post_' . self::ACTION_SCAN, [$this, 'handle_scan_action']);
     }
 
-    // ─── Handler admin-post ───
+    // ─── Handler admin-post : bannière + presets ───
 
     public function handle_save(): void
     {
@@ -84,6 +103,131 @@ class PrivacyTab extends AbstractTab
             static fn(string $id): bool => $id !== '' && in_array($id, $valid_ids, true)
         ));
         update_option(Presets::OPTION_SELECTED, $selected);
+
+        $this->redirect_with_notice(self::PAGE_SLUG, 'privacy_saved', '');
+    }
+
+    // ─── Handler admin-post : informations entreprise (OPTION_VARS) ───
+
+    public function handle_save_company(): void
+    {
+        if (!current_user_can('manage_options')) {
+            wp_die(esc_html__('Permission refusée.', 'pratcom-connect'));
+        }
+        check_admin_referer(self::NONCE_COMPANY);
+
+        $in = isset($_POST['company']) && is_array($_POST['company'])
+            ? wp_unslash((array) $_POST['company'])
+            : [];
+
+        $vars = [
+            'legalName'    => sanitize_text_field((string) ($in['legalName'] ?? '')),
+            'websiteUrl'   => esc_url_raw((string) ($in['websiteUrl'] ?? '')),
+            'contactEmail' => sanitize_email((string) ($in['contactEmail'] ?? '')),
+            'contactPhone' => sanitize_text_field((string) ($in['contactPhone'] ?? '')),
+            'address'      => sanitize_text_field((string) ($in['address'] ?? '')),
+            'officerName'  => sanitize_text_field((string) ($in['officerName'] ?? '')),
+            'officerEmail' => sanitize_email((string) ($in['officerEmail'] ?? '')),
+        ];
+        // Ne stocker que les clés réellement renseignées (les vides retombent
+        // sur les défauts calculés par LocalPolicy::variables()).
+        $vars = array_filter($vars, static function (string $v): bool {
+            return trim($v) !== '';
+        });
+
+        update_option(LocalPolicy::OPTION_VARS, $vars);
+        $this->redirect_with_notice(self::PAGE_SLUG, 'privacy_company_saved', '');
+    }
+
+    // ─── Handler admin-post : liste manuelle de témoins (OPTION_COOKIES) ───
+
+    public function handle_save_cookies(): void
+    {
+        if (!current_user_can('manage_options')) {
+            wp_die(esc_html__('Permission refusée.', 'pratcom-connect'));
+        }
+        check_admin_referer(self::NONCE_COOKIES);
+
+        $raw = isset($_POST['cookies_text'])
+            ? sanitize_textarea_field(wp_unslash((string) $_POST['cookies_text']))
+            : '';
+
+        $allowed_cats = CookieScan::CATEGORY_ORDER;
+        $rows = [];
+        foreach (preg_split('/\\r\\n|\\r|\\n/', $raw) as $line) {
+            $line = trim((string) $line);
+            if ($line === '') {
+                continue;
+            }
+            // Format : nom | fournisseur | finalité | durée | catégorie
+            $parts = array_map('trim', explode('|', $line));
+            $name = $parts[0] ?? '';
+            if ($name === '') {
+                continue;
+            }
+            $cat = strtolower($parts[4] ?? 'unclassified');
+            if (!in_array($cat, $allowed_cats, true)) {
+                $cat = 'unclassified';
+            }
+            $rows[] = [
+                'name'     => sanitize_text_field($name),
+                'provider' => sanitize_text_field($parts[1] ?? ''),
+                'purpose'  => sanitize_text_field($parts[2] ?? ''),
+                'expiry'   => sanitize_text_field($parts[3] ?? ''),
+                'category' => $cat,
+            ];
+        }
+
+        update_option(LocalPolicy::OPTION_COOKIES, $rows);
+        $this->redirect_with_notice(self::PAGE_SLUG, 'privacy_cookies_saved', '');
+    }
+
+    // ─── Handler admin-post : actions sur le scan local ───
+
+    public function handle_scan_action(): void
+    {
+        if (!current_user_can('manage_options')) {
+            wp_die(esc_html__('Permission refusée.', 'pratcom-connect'));
+        }
+        check_admin_referer(self::NONCE_SCAN);
+
+        $op = isset($_POST['scan_op']) ? sanitize_key(wp_unslash((string) $_POST['scan_op'])) : '';
+
+        if ($op === 'clear') {
+            CookieScan::clear_scanned();
+            $this->redirect_with_notice(self::PAGE_SLUG, 'privacy_scan_cleared', '');
+            return;
+        }
+
+        if ($op === 'import') {
+            // Ajoute les noms scannés non classés à la liste manuelle (catégorie
+            // « non classés »), pour que l'admin les complète ensuite.
+            $existing = get_option(LocalPolicy::OPTION_COOKIES, []);
+            if (!is_array($existing)) {
+                $existing = [];
+            }
+            $known = [];
+            foreach ($existing as $c) {
+                if (is_array($c) && isset($c['name'])) {
+                    $known[(string) $c['name']] = true;
+                }
+            }
+            foreach (CookieScan::unclassified_scanned() as $name) {
+                if (isset($known[$name])) {
+                    continue;
+                }
+                $existing[] = [
+                    'name'     => sanitize_text_field($name),
+                    'provider' => '',
+                    'purpose'  => '',
+                    'expiry'   => '',
+                    'category' => 'unclassified',
+                ];
+            }
+            update_option(LocalPolicy::OPTION_COOKIES, $existing);
+            $this->redirect_with_notice(self::PAGE_SLUG, 'privacy_scan_imported', '');
+            return;
+        }
 
         $this->redirect_with_notice(self::PAGE_SLUG, 'privacy_saved', '');
     }
@@ -130,7 +274,7 @@ class PrivacyTab extends AbstractTab
         }
 
         // Notice de sauvegarde : AdminShell::render_notices() ne connaît pas
-        // 'privacy_saved' → on la gère ici (il passe silencieusement).
+        // ces notices → on les gère ici (il passe silencieusement).
         // phpcs:disable WordPress.Security.NonceVerification.Recommended -- lecture seule d'un parametre de notice (affichage).
         $notice = isset($_GET['pratcom_notice'])
             ? sanitize_key(wp_unslash($_GET['pratcom_notice']))
@@ -139,12 +283,20 @@ class PrivacyTab extends AbstractTab
         ?>
         <h1 class="pc-content__title"><?php esc_html_e('Confidentialité', 'pratcom-connect'); ?></h1>
         <p class="pc-content__subtitle">
-            <?php esc_html_e('Privacy Free : bannière de consentement locale (Loi 25), presets de plugins populaires, registre de consentements et page de politique.', 'pratcom-connect'); ?>
+            <?php esc_html_e('Privacy Free : bannière de consentement locale (Loi 25), presets de plugins populaires, registre de consentements et pages légales (politique + déclaration de témoins).', 'pratcom-connect'); ?>
         </p>
 
-        <?php if ($notice === 'privacy_saved'): ?>
+        <?php
+        $notice_messages = [
+            'privacy_saved'          => __('Réglages de confidentialité enregistrés.', 'pratcom-connect'),
+            'privacy_company_saved'  => __('Informations de l\'entreprise enregistrées.', 'pratcom-connect'),
+            'privacy_cookies_saved'  => __('Liste des témoins enregistrée.', 'pratcom-connect'),
+            'privacy_scan_cleared'   => __('Témoins détectés effacés.', 'pratcom-connect'),
+            'privacy_scan_imported'  => __('Témoins détectés ajoutés à la liste manuelle (à classer).', 'pratcom-connect'),
+        ];
+        if (isset($notice_messages[$notice])): ?>
         <div class="pc-notice pc-notice--success">
-            <?php esc_html_e('Réglages de confidentialité enregistrés.', 'pratcom-connect'); ?>
+            <?php echo esc_html($notice_messages[$notice]); ?>
         </div>
         <?php endif; ?>
 
@@ -313,12 +465,151 @@ class PrivacyTab extends AbstractTab
             </div>
         </form>
 
-        <!-- ④ Page de politique ───-->
+        <!-- ④ Informations entreprise (OPTION_VARS) ───-->
+        <?php
+        $company = get_option(LocalPolicy::OPTION_VARS, []);
+        if (!is_array($company)) {
+            $company = [];
+        }
+        $cval = static function (string $k) use ($company): string {
+            return isset($company[$k]) && is_string($company[$k]) ? $company[$k] : '';
+        };
+        ?>
         <div class="pc-card" style="margin-top:0;">
+            <h2 class="pc-card__title"><?php esc_html_e('Informations de l\'entreprise (pages légales)', 'pratcom-connect'); ?></h2>
+            <p class="pc-form-help" style="margin-bottom:16px;">
+                <?php esc_html_e('Ces informations remplissent la politique de confidentialité et la déclaration de témoins. Laissez un champ vide pour utiliser la valeur par défaut du site.', 'pratcom-connect'); ?>
+            </p>
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                <input type="hidden" name="action" value="<?php echo esc_attr(self::ACTION_COMPANY); ?>" />
+                <?php wp_nonce_field(self::NONCE_COMPANY); ?>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;">
+                    <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">
+                        <span><?php esc_html_e('Nom légal de l\'entreprise', 'pratcom-connect'); ?></span>
+                        <input type="text" name="company[legalName]" value="<?php echo esc_attr($cval('legalName')); ?>" class="regular-text" />
+                    </label>
+                    <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">
+                        <span><?php esc_html_e('Adresse du site web', 'pratcom-connect'); ?></span>
+                        <input type="url" name="company[websiteUrl]" value="<?php echo esc_attr($cval('websiteUrl')); ?>" class="regular-text" placeholder="https://" />
+                    </label>
+                    <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">
+                        <span><?php esc_html_e('Courriel de contact', 'pratcom-connect'); ?></span>
+                        <input type="email" name="company[contactEmail]" value="<?php echo esc_attr($cval('contactEmail')); ?>" class="regular-text" />
+                    </label>
+                    <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">
+                        <span><?php esc_html_e('Téléphone de contact', 'pratcom-connect'); ?></span>
+                        <input type="text" name="company[contactPhone]" value="<?php echo esc_attr($cval('contactPhone')); ?>" class="regular-text" />
+                    </label>
+                    <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">
+                        <span><?php esc_html_e('Adresse postale', 'pratcom-connect'); ?></span>
+                        <input type="text" name="company[address]" value="<?php echo esc_attr($cval('address')); ?>" class="regular-text" />
+                    </label>
+                    <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">
+                        <span><?php esc_html_e('Responsable de la protection des renseignements', 'pratcom-connect'); ?></span>
+                        <input type="text" name="company[officerName]" value="<?php echo esc_attr($cval('officerName')); ?>" class="regular-text" />
+                    </label>
+                    <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">
+                        <span><?php esc_html_e('Courriel du responsable', 'pratcom-connect'); ?></span>
+                        <input type="email" name="company[officerEmail]" value="<?php echo esc_attr($cval('officerEmail')); ?>" class="regular-text" />
+                    </label>
+                </div>
+                <div class="pc-actions" style="margin-top:16px;">
+                    <button type="submit" class="pc-btn pc-btn--secondary">
+                        <?php esc_html_e('Enregistrer les informations', 'pratcom-connect'); ?>
+                    </button>
+                </div>
+            </form>
+        </div><!-- /.pc-card (entreprise) -->
+
+        <!-- ⑤ Liste manuelle de témoins (OPTION_COOKIES) + revue du scan ───-->
+        <?php
+        $manual_cookies = get_option(LocalPolicy::OPTION_COOKIES, []);
+        if (!is_array($manual_cookies)) {
+            $manual_cookies = [];
+        }
+        $lines = [];
+        foreach ($manual_cookies as $c) {
+            if (!is_array($c)) {
+                continue;
+            }
+            $lines[] = implode(' | ', [
+                (string) ($c['name'] ?? ''),
+                (string) ($c['provider'] ?? ''),
+                (string) ($c['purpose'] ?? ''),
+                (string) ($c['expiry'] ?? ''),
+                (string) ($c['category'] ?? 'unclassified'),
+            ]);
+        }
+        $cookies_text = implode("\n", $lines);
+        $scanned_unclassified = CookieScan::unclassified_scanned();
+        ?>
+        <div class="pc-card" style="margin-top:24px;">
+            <h2 class="pc-card__title"><?php esc_html_e('Témoins supplémentaires (liste manuelle)', 'pratcom-connect'); ?></h2>
+            <p class="pc-form-help" style="margin-bottom:12px;">
+                <?php esc_html_e('Une ligne par témoin, champs séparés par une barre verticale ( | ) :', 'pratcom-connect'); ?>
+                <code>nom | fournisseur | finalité | durée | catégorie</code>.
+                <?php esc_html_e('Catégories acceptées : necessary, preferences, functional, statistics, marketing, unclassified.', 'pratcom-connect'); ?>
+            </p>
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                <input type="hidden" name="action" value="<?php echo esc_attr(self::ACTION_COOKIES); ?>" />
+                <?php wp_nonce_field(self::NONCE_COOKIES); ?>
+                <textarea name="cookies_text" rows="6" class="large-text code" spellcheck="false"
+                    placeholder="my_cookie | Mon outil | Mesure d'audience | 1 an | statistics"><?php echo esc_textarea($cookies_text); ?></textarea>
+                <div class="pc-actions" style="margin-top:12px;">
+                    <button type="submit" class="pc-btn pc-btn--secondary">
+                        <?php esc_html_e('Enregistrer la liste', 'pratcom-connect'); ?>
+                    </button>
+                </div>
+            </form>
+
+            <?php if (!empty($scanned_unclassified)): ?>
+            <hr style="margin:18px 0;border:none;border-top:1px solid #e2e8ec;" />
+            <h3 style="font-size:13px;margin:0 0 8px;"><?php esc_html_e('Témoins détectés sur ce site (scan local)', 'pratcom-connect'); ?></h3>
+            <p class="pc-form-help" style="margin-bottom:10px;">
+                <?php esc_html_e('Détectés dans votre navigateur (administrateur uniquement), non encore couverts par un preset ou la liste manuelle :', 'pratcom-connect'); ?>
+            </p>
+            <p style="display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px;">
+                <?php foreach ($scanned_unclassified as $sn): ?>
+                <code style="background:#f3f5f7;padding:2px 8px;border-radius:10px;font-size:12px;"><?php echo esc_html($sn); ?></code>
+                <?php endforeach; ?>
+            </p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                    <input type="hidden" name="action" value="<?php echo esc_attr(self::ACTION_SCAN); ?>" />
+                    <input type="hidden" name="scan_op" value="import" />
+                    <?php wp_nonce_field(self::NONCE_SCAN); ?>
+                    <button type="submit" class="pc-btn pc-btn--secondary">
+                        <?php esc_html_e('Ajouter à la liste manuelle (à classer)', 'pratcom-connect'); ?>
+                    </button>
+                </form>
+                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                    <input type="hidden" name="action" value="<?php echo esc_attr(self::ACTION_SCAN); ?>" />
+                    <input type="hidden" name="scan_op" value="clear" />
+                    <?php wp_nonce_field(self::NONCE_SCAN); ?>
+                    <button type="submit" class="pc-btn pc-btn--ghost">
+                        <?php esc_html_e('Effacer les témoins détectés', 'pratcom-connect'); ?>
+                    </button>
+                </form>
+            </div>
+            <?php else: ?>
+            <hr style="margin:18px 0;border:none;border-top:1px solid #e2e8ec;" />
+            <p class="pc-form-help" style="margin:0;">
+                <?php esc_html_e('Scan local : aucun témoin non classé détecté pour le moment. Le scan s\'exécute en arrière-plan lorsqu\'un administrateur visite le site public (aucune donnée n\'est transmise).', 'pratcom-connect'); ?>
+            </p>
+            <?php endif; ?>
+        </div><!-- /.pc-card (cookies manuels) -->
+
+        <!-- ⑥ Page de politique de confidentialité ───-->
+        <div class="pc-card" style="margin-top:24px;">
             <?php PolicyPage::render_admin_section(); ?>
         </div>
 
-        <!-- ⑤ Export CSV registre ───-->
+        <!-- ⑦ Page de politique relative aux témoins ───-->
+        <div class="pc-card" style="margin-top:24px;">
+            <?php CookiePolicyPage::render_admin_section(); ?>
+        </div>
+
+        <!-- ⑧ Export CSV registre ───-->
         <div class="pc-card" style="margin-top:24px;">
             <h2 class="pc-card__title">
                 <?php esc_html_e('Registre de consentements', 'pratcom-connect'); ?>
@@ -339,7 +630,7 @@ class PrivacyTab extends AbstractTab
         </div><!-- /.pc-card (export) -->
 
         <?php
-        // ⑥ O5b : section Privacy Connect (iframe scan) — additif, pack requis.
+        // ⑨ O5b : section Privacy Connect (iframe scan) — additif, pack requis.
         if ($privacy_pack_active) {
             $this->render_connected_section();
         }
@@ -350,7 +641,7 @@ class PrivacyTab extends AbstractTab
     /**
      * Section « Privacy Connect » — scan de confidentialité dans une iframe signée.
      * Visible uniquement si le site est connecté ET le pack privacy est actif.
-     * Privacy Free (sections ①-⑤) reste intouché.
+     * Privacy Free (sections ①-⑧) reste intouché.
      */
     private function render_connected_section(): void
     {
@@ -360,9 +651,8 @@ class PrivacyTab extends AbstractTab
         }
 
         // Build .org : pas d'iframe de scan dans le wp-admin (revue WordPress.org).
-        // Privacy Free (sections 1-5) reste 100% local au-dessus ; le scan
-        // Privacy Connect se gere via un lien sortant. Le build premium garde
-        // l'iframe miroir.
+        // Privacy Free reste 100% local au-dessus ; le scan Privacy Connect se
+        // gere via un lien sortant. Le build premium garde l'iframe miroir.
         if (PRATCOM_CONNECT_BRIDGE_CHANNEL === 'org') {
             OrgManagePanel::render(
                 __('Privacy Connect — Scan de confidentialité', 'pratcom-connect'),
