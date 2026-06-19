@@ -4,7 +4,7 @@ Tags: consent, privacy, cookies, forms, chatbot
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 2.0.11
+Stable tag: 2.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,11 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 
 == Changelog ==
 
+= 2.1.0 =
+* Bannière Privacy Free 100 % autonome : le script de la bannière est désormais embarqué dans le plugin (aucun appel externe).
+* Pages légales (politique de confidentialité et déclaration de témoins) créées automatiquement dans les deux langues sur les sites WPML ou Polylang.
+* Interface d'administration revue : orthographe, nouveaux liens (Découvrir un module, Obtenir votre clé, Support, Documentation), et vitrines animées qui présentent chaque module verrouillé.
+
 = 2.0.11 =
 * Cookie scan ignores WordPress admin/auth cookies; public cookie declaration only lists classified cookies.
 * The consent cookie (pratcom_consent) is now declared as a necessary cookie instead of unclassified; the "Powered by Pratcom Connect" badge links to pratcom.net/connect.
@@ -129,6 +134,9 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 * Optional connection to the Pratcom Connect service (paid modules).
 
 == Upgrade Notice ==
+
+= 2.1.0 =
+Bannière Privacy Free entièrement autonome (script embarqué, aucun appel externe), pages légales bilingues créées automatiquement et interface d'administration revue.
 
 = 2.0.11 =
 The local cookie scan now ignores WordPress admin and authentication cookies, and the public cookie declaration lists only classified cookies. Unclassified cookies stay visible in the admin for you to classify. No change to paid modules.
