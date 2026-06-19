@@ -44,12 +44,17 @@ class FreeBanner
         return true;
     }
 
-    /** URL de privacy.js (filtrable — même convention que Forms). */
+    /**
+     * URL de privacy.js — asset LOCAL embarqué par défaut (chemin gratuit
+     * WordPress.org : 0 script externe). Toujours filtrable via
+     * `pratcom_connect_privacy_script_url` pour qu'un site avancé puisse
+     * repasser sur le CDN (https://cdn.pratcom.net/privacy.js).
+     */
     public static function script_url(): string
     {
         return (string) apply_filters(
             'pratcom_connect_privacy_script_url',
-            'https://chatbot.pratcom.net/privacy.js'
+            plugins_url('assets/js/privacy.js', PRATCOM_CONNECT_BRIDGE_FILE)
         );
     }
 
