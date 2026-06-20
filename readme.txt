@@ -4,7 +4,7 @@ Tags: consent, privacy, cookies, forms, chatbot
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 2.1.1
+Stable tag: 2.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -77,8 +77,12 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 4. Appearance — brand palette with automatic WCAG-compliant contrast, shared by all modules.
 5. Modules — Connect Chat, Forms and Privacy at a glance (activate them with your Pratcom Connect account).
 6. Front-end — the consent banner live on a website, in the visitor's language.
+7. Chat tab — train your Connect Chat assistant directly from wp-admin (mirror of the Connect training dashboard).
 
 == Changelog ==
+
+= 2.1.2 =
+* Admin interface fully translatable; bundled FR/EN translations.
 
 = 2.1.1 =
 * Boutons « Découvrir » des modules pointant vers les pages dédiées de chaque module (Chat, Forms, Privacy).
@@ -137,6 +141,9 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 * Optional connection to the Pratcom Connect service (paid modules).
 
 == Upgrade Notice ==
+
+= 2.1.2 =
+Admin interface fully translatable; bundled FR/EN translations.
 
 = 2.1.1 =
 Boutons « Découvrir » des modules pointant désormais vers la page dédiée de chaque module.
