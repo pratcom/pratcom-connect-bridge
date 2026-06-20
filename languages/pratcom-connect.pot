@@ -1,0 +1,822 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Pratcom Connect 2.1.2\n"
+"Report-Msgid-Bugs-To: https://pratcom.net/connect\n"
+"POT-Creation-Date: 2026-06-19 23:58+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Pratcom Media\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Domain: pratcom-connect\n"
+
+msgid "Pratcom Connect"
+msgstr ""
+
+msgid "Traitement…"
+msgstr ""
+
+msgid "Connecté"
+msgstr ""
+
+msgid "Non connecté"
+msgstr ""
+
+msgid "Erreur"
+msgstr ""
+
+msgid "Clé révoquée"
+msgstr ""
+
+msgid "Connecté avec succès."
+msgstr ""
+
+msgid "Plugin déconnecté. La clé API a été retirée localement."
+msgstr ""
+
+msgid "Vérification effectuée. Statut : %s"
+msgstr ""
+
+msgid "Couleurs enregistrées et synchronisées."
+msgstr ""
+
+msgid "Liste des formulaires actualisée."
+msgstr ""
+
+msgid "Erreur : %s"
+msgstr ""
+
+msgid "Pratcom Connect : cle revoquee."
+msgstr ""
+
+msgid ""
+"La cle API n'est plus valide. Le loader Pratcom Connect ne se charge plus "
+"sur le site."
+msgstr ""
+
+msgid "Reglages > Pratcom Connect"
+msgstr ""
+
+msgid "Pratcom Connect : erreur de connexion."
+msgstr ""
+
+msgid "Reverifier la connexion"
+msgstr ""
+
+msgid "Workspace"
+msgstr ""
+
+msgid "Clé API"
+msgstr ""
+
+msgid "Verrouillé"
+msgstr ""
+
+msgid "Couleur principale (foncee)"
+msgstr ""
+
+msgid ""
+"Survol des boutons et bordures actives. Calculee automatiquement si laissee "
+"vide."
+msgstr ""
+
+msgid "Couleur secondaire"
+msgstr ""
+
+msgid "Accent secondaire. Retombe sur la couleur principale si vide."
+msgstr ""
+
+msgid "Couleur du texte"
+msgstr ""
+
+msgid "Texte de base des modules. Calculee pour le contraste si vide."
+msgstr ""
+
+msgid "Palette avancee (optionnel)"
+msgstr ""
+
+msgid ""
+"Affinez la palette de marque. Tous ces champs sont optionnels : laisses "
+"vides, ils sont derives automatiquement de la couleur principale en "
+"respectant le contraste WCAG."
+msgstr ""
+
+msgid "(auto)"
+msgstr ""
+
+msgid "Police (pile CSS)"
+msgstr ""
+
+msgid "Laissez vide pour la police systeme par defaut."
+msgstr ""
+
+msgid "Rayon des coins"
+msgstr ""
+
+msgid "Ex : 10px. Par defaut 10px si vide."
+msgstr ""
+
+msgid "Logo de marque (URL)"
+msgstr ""
+
+msgid "Affiche par certains modules (optionnel)."
+msgstr ""
+
+msgid "Tableau de bord"
+msgstr ""
+
+msgid "Vue d'ensemble de votre connexion à Pratcom Connect."
+msgstr ""
+
+msgid "Connexion active"
+msgstr ""
+
+msgid "Modules actifs"
+msgstr ""
+
+msgid "Dernier handshake"
+msgstr ""
+
+msgid "Gérer les modules"
+msgstr ""
+
+msgid "Apparence"
+msgstr ""
+
+msgid "Bienvenue dans Pratcom Connect"
+msgstr ""
+
+msgid ""
+"Connectez ce site à Pratcom Connect pour activer les modules (Chat IA, "
+"Forms, Privacy) via une seule clé API fournie par Pratcom Média."
+msgstr ""
+
+msgid "Se connecter"
+msgstr ""
+
+msgid "Voir les modules"
+msgstr ""
+
+msgid "Aide"
+msgstr ""
+
+msgid "Documentation, support et informations système."
+msgstr ""
+
+msgid "Documentation"
+msgstr ""
+
+msgid "Guide complet d'installation, de connexion et de gestion des modules."
+msgstr ""
+
+msgid "Ouvrir la documentation"
+msgstr ""
+
+msgid "Support"
+msgstr ""
+
+msgid "Pour toute question ou demande de support, contactez Pratcom Média :"
+msgstr ""
+
+msgid "Contacter le support"
+msgstr ""
+
+msgid "Système"
+msgstr ""
+
+msgid "Version du plugin"
+msgstr ""
+
+msgid "API endpoint"
+msgstr ""
+
+msgid "Loader URL"
+msgstr ""
+
+msgid "Vérifier les mises à jour"
+msgstr ""
+
+msgid "Modules"
+msgstr ""
+
+msgid "Connect Chat"
+msgstr ""
+
+msgid "Chatbot IA multilingue 24/7 avec base de connaissances RAG par client."
+msgstr ""
+
+msgid "Connect Forms"
+msgstr ""
+
+msgid "Formulaires intelligents avec scoring de leads et routage automatique."
+msgstr ""
+
+msgid "Connect Privacy"
+msgstr ""
+
+msgid "Bannière de consentement Loi 25 et catalogue de témoins automatique."
+msgstr ""
+
+msgid "Modules Pratcom Connect disponibles sur ce site WordPress."
+msgstr ""
+
+msgid "Actif"
+msgstr ""
+
+msgid "Géré via votre compte Pratcom Connect."
+msgstr ""
+
+msgid "Disponible avec un abonnement Pratcom Connect."
+msgstr ""
+
+msgid "Connectez votre compte pour activer ce module."
+msgstr ""
+
+msgid "Ouvrir"
+msgstr ""
+
+msgid "Activer ce module"
+msgstr ""
+
+msgid "Connecter mon compte"
+msgstr ""
+
+msgid "C'est quoi %s"
+msgstr ""
+
+msgid "Découvrir %s"
+msgstr ""
+
+msgid ""
+"Couleurs de marque utilisées par les modules Pratcom Connect (bannière "
+"Privacy, et à venir le chat et les formulaires)."
+msgstr ""
+
+msgid "Palette de marque"
+msgstr ""
+
+msgid ""
+"Choisissez la couleur principale de votre marque. Le texte des boutons est "
+"calculé automatiquement pour respecter le contraste (accessibilité WCAG)."
+msgstr ""
+
+msgid "Couleur principale"
+msgstr ""
+
+msgid "Tout accepter"
+msgstr ""
+
+msgid "Format hexadécimal, ex : #99BF38."
+msgstr ""
+
+msgid "Enregistrer les couleurs"
+msgstr ""
+
+msgid "Couleur invalide."
+msgstr ""
+
+msgid "Compte"
+msgstr ""
+
+msgid "Gérez la liaison entre ce site et votre compte Pratcom Connect."
+msgstr ""
+
+msgid "Workspace ID"
+msgstr ""
+
+msgid "Ouvrir mon portail Pratcom Connect"
+msgstr ""
+
+msgid "Vérifier maintenant"
+msgstr ""
+
+msgid "Confirmer la déconnexion ?"
+msgstr ""
+
+msgid "Se déconnecter"
+msgstr ""
+
+msgid "Erreur de connexion"
+msgstr ""
+
+msgid "Réessayer"
+msgstr ""
+
+msgid "Effacer la clé"
+msgstr ""
+
+msgid "Connecter ce site"
+msgstr ""
+
+msgid ""
+"Collez la clé API fournie par Pratcom Média. Format : pck_workspace_xxxx (48"
+" caractères)."
+msgstr ""
+
+msgid ""
+"Cette clé est stockée localement et utilisée uniquement pour authentifier ce"
+" site auprès de l'API Pratcom Connect."
+msgstr ""
+
+msgid "Connecter"
+msgstr ""
+
+msgid "Obtenir votre clé"
+msgstr ""
+
+msgid "Format de clé invalide."
+msgstr ""
+
+msgid "Chat"
+msgstr ""
+
+msgid ""
+"Entraînez votre assistant virtuel, gérez les connaissances et consultez les "
+"conversations depuis votre tableau de bord."
+msgstr ""
+
+msgid "Entraînement géré dans votre tableau de bord"
+msgstr ""
+
+msgid ""
+"L'entraînement de l'assistant (connaissances, directives, conversations) se "
+"gère dans votre tableau de bord Pratcom Connect."
+msgstr ""
+
+msgid "Gérer dans le tableau de bord"
+msgstr ""
+
+msgid ""
+"Un assistant qui répond à vos visiteurs, qualifie vos prospects et passe la "
+"main à votre équipe au bon moment."
+msgstr ""
+
+msgid ""
+"Assistant virtuel intelligent entraînable, multi-tenant, avec détection de "
+"leads chauds et escalade humaine, sans aucun plugin supplémentaire."
+msgstr ""
+
+msgid "Assistant IA multilingue, disponible 24/7"
+msgstr ""
+
+msgid "Base de connaissances par client (RAG)"
+msgstr ""
+
+msgid "Détection et scoring des leads chauds"
+msgstr ""
+
+msgid "Escalade vers un humain"
+msgstr ""
+
+msgid "Entraînement depuis votre site"
+msgstr ""
+
+msgid "Multi-sites"
+msgstr ""
+
+msgid "Module fourni par le service Pratcom Connect (abonnement requis)."
+msgstr ""
+
+msgid "Découvrir Connect Chat"
+msgstr ""
+
+msgid ""
+"Clé API non trouvée. Veuillez reconnecter le plugin depuis l'onglet "
+"Connexion."
+msgstr ""
+
+msgid ""
+"La session de l'interface Chat est momentanément indisponible (%s). Vous "
+"pouvez accéder à votre tableau de bord directement :"
+msgstr ""
+
+msgid "Ouvrir Pratcom Connect"
+msgstr ""
+
+msgid "Connect Chat — Tableau de bord d'entraînement"
+msgstr ""
+
+msgid "Ouvrir en plein écran ↗"
+msgstr ""
+
+msgid "Interface d'entraînement Connect Chat"
+msgstr ""
+
+msgid "Formulaires"
+msgstr ""
+
+msgid "Copié !"
+msgstr ""
+
+msgid ""
+"Formulaires intelligents Connect Forms : insérez-les n'importe où avec un "
+"shortcode."
+msgstr ""
+
+msgid ""
+"Des formulaires qui se remplissent, se notent et se routent tout seuls, "
+"prêts à coller n'importe où avec un shortcode."
+msgstr ""
+
+msgid ""
+"Formulaires multi-étapes avec scoring de leads, double opt-in conforme, "
+"notifications bilingues et insertion par shortcode, sans aucune extension "
+"supplémentaire."
+msgstr ""
+
+msgid "Formulaires intelligents"
+msgstr ""
+
+msgid "Constructeur visuel"
+msgstr ""
+
+msgid "Scoring de leads"
+msgstr ""
+
+msgid "Routage automatique"
+msgstr ""
+
+msgid "Anti-pourriel (honeypot, délai, Turnstile)"
+msgstr ""
+
+msgid "Double opt-in (LCAP)"
+msgstr ""
+
+msgid "Multi-étapes"
+msgstr ""
+
+msgid "Découvrir Connect Forms"
+msgstr ""
+
+msgid ""
+"La liste des formulaires est momentanément indisponible. Vous pouvez tout de"
+" même insérer un formulaire avec son shortcode :"
+msgstr ""
+
+msgid "Aucun formulaire"
+msgstr ""
+
+msgid ""
+"Aucun formulaire n'est défini pour ce workspace. Créez-en un depuis votre "
+"tableau de bord Pratcom Connect."
+msgstr ""
+
+msgid "Formulaires du workspace"
+msgstr ""
+
+msgid "Nom"
+msgstr ""
+
+msgid "Type"
+msgstr ""
+
+msgid "Statut"
+msgstr ""
+
+msgid "Shortcode"
+msgstr ""
+
+msgid "Shortcode du formulaire"
+msgstr ""
+
+msgid "Copier"
+msgstr ""
+
+msgid ""
+"Astuce : ajoutez lang=\"en\" au shortcode pour forcer la version anglaise, "
+"ex. [pratcom_form slug=\"contact\" lang=\"en\"]."
+msgstr ""
+
+msgid "Actualiser la liste"
+msgstr ""
+
+msgid "Modifier dans le builder"
+msgstr ""
+
+msgid ""
+"La création et la modification de formulaires se font dans le builder de "
+"votre tableau de bord Pratcom Connect. Insérez ensuite chaque formulaire "
+"avec son shortcode ci-dessus."
+msgstr ""
+
+msgid "Ouvrir le builder"
+msgstr ""
+
+msgid "Le builder de formulaires est momentanément indisponible. (%s)"
+msgstr ""
+
+msgid "Ouvrir l'interface web"
+msgstr ""
+
+msgid "Builder de formulaires Pratcom Connect"
+msgstr ""
+
+msgid "Confidentialité"
+msgstr ""
+
+msgid "Permission refusée."
+msgstr ""
+
+msgid ""
+"Privacy Free : bannière de consentement locale (Loi 25), presets de plugins "
+"populaires, registre de consentements et pages légales (politique + "
+"déclaration de témoins)."
+msgstr ""
+
+msgid "Réglages de confidentialité enregistrés."
+msgstr ""
+
+msgid "Informations de l'entreprise enregistrées."
+msgstr ""
+
+msgid "Liste des témoins enregistrée."
+msgstr ""
+
+msgid "Témoins détectés effacés."
+msgstr ""
+
+msgid "Témoins détectés ajoutés à la liste manuelle (à classer)."
+msgstr ""
+
+msgid "Bannière de consentement Free"
+msgstr ""
+
+msgid ""
+"Ne pas activer si le module Privacy Connect est déjà actif sur ce site — les"
+" deux bannières ne doivent pas coexister."
+msgstr ""
+
+msgid "Activer la bannière Privacy Free (100 % locale, zéro appel serveur)"
+msgstr ""
+
+msgid ""
+"La bannière utilise les presets cochés ci-dessous pour bloquer les scripts "
+"non essentiels avant le consentement du visiteur."
+msgstr ""
+
+msgid "Afficher le badge « Propulsé par Pratcom Connect » dans la bannière"
+msgstr ""
+
+msgid ""
+"Crédit discret, affiché par défaut. Décochez pour le retirer. Les "
+"développeurs peuvent aussi le retirer par code via le filtre "
+"pratcom_connect_branding."
+msgstr ""
+
+msgid "Presets détectés sur ce site"
+msgstr ""
+
+msgid "Ces plugins sont actifs — leurs presets ne sont pas encore activés :"
+msgstr ""
+
+msgid ""
+"Cochez les presets correspondants dans la section ci-dessous, puis "
+"enregistrez."
+msgstr ""
+
+msgid "Presets de plugins populaires"
+msgstr ""
+
+msgid ""
+"Cochez les outils que vous utilisez. Le plugin configure automatiquement les"
+" catégories de cookies, les règles de blocage et la déclaration des témoins."
+msgstr ""
+
+msgid "Extensions WordPress populaires"
+msgstr ""
+
+msgid "Services et scripts externes"
+msgstr ""
+
+msgid "Statistiques"
+msgstr ""
+
+msgid "Marketing"
+msgstr ""
+
+msgid "Nécessaires (non bloqués par défaut)"
+msgstr ""
+
+msgid "Préférences"
+msgstr ""
+
+msgid "Fonctionnel"
+msgstr ""
+
+msgid "Autre"
+msgstr ""
+
+msgid "Actif ici"
+msgstr ""
+
+msgid "Nécessaire"
+msgstr ""
+
+msgid "Enregistrer les réglages"
+msgstr ""
+
+msgid "Informations de l'entreprise (pages légales)"
+msgstr ""
+
+msgid ""
+"Ces informations remplissent la politique de confidentialité et la "
+"déclaration de témoins. Laissez un champ vide pour utiliser la valeur par "
+"défaut du site."
+msgstr ""
+
+msgid "Nom légal de l'entreprise"
+msgstr ""
+
+msgid "Adresse du site web"
+msgstr ""
+
+msgid "Courriel de contact"
+msgstr ""
+
+msgid "Téléphone de contact"
+msgstr ""
+
+msgid "Adresse postale"
+msgstr ""
+
+msgid "Responsable de la protection des renseignements"
+msgstr ""
+
+msgid "Courriel du responsable"
+msgstr ""
+
+msgid "Enregistrer les informations"
+msgstr ""
+
+msgid "Témoins supplémentaires (liste manuelle)"
+msgstr ""
+
+msgid "Une ligne par témoin, champs séparés par une barre verticale ( | ) :"
+msgstr ""
+
+msgid ""
+"Catégories acceptées : necessary, preferences, functional, statistics, "
+"marketing, unclassified."
+msgstr ""
+
+msgid "Enregistrer la liste"
+msgstr ""
+
+msgid "Témoins détectés sur ce site (scan local)"
+msgstr ""
+
+msgid ""
+"Détectés dans votre navigateur (administrateur uniquement), non encore "
+"couverts par un preset ou la liste manuelle :"
+msgstr ""
+
+msgid "Ajouter à la liste manuelle (à classer)"
+msgstr ""
+
+msgid "Effacer les témoins détectés"
+msgstr ""
+
+msgid ""
+"Scan local : aucun témoin non classé détecté pour le moment. Le scan "
+"s'exécute en arrière-plan lorsqu'un administrateur visite le site public "
+"(aucune donnée n'est transmise)."
+msgstr ""
+
+msgid "Registre de consentements"
+msgstr ""
+
+msgid ""
+"Exportez la preuve d'audit des consentements enregistrés (Loi 25, art. 14). "
+"Le fichier CSV contient tous les enregistrements depuis l'activation de la "
+"bannière."
+msgstr ""
+
+msgid "Exporter CSV"
+msgstr ""
+
+msgid "Privacy Connect"
+msgstr ""
+
+msgid ""
+"La conformité Loi 25 en pilote automatique : consentement, blocage des "
+"traceurs, registre et tableau de bord, au-delà de Privacy Free."
+msgstr ""
+
+msgid ""
+"Bannière de consentement, blocage automatique des traceurs et registre "
+"vérifiable, avec dossier self-service et tableau de bord des consentements."
+msgstr ""
+
+msgid "Bannière de consentement Loi 25"
+msgstr ""
+
+msgid "Blocage des traceurs"
+msgstr ""
+
+msgid "Dossier self-service avec PDF"
+msgstr ""
+
+msgid "Tableau de bord des consentements"
+msgstr ""
+
+msgid "Google Consent Mode v2"
+msgstr ""
+
+msgid "Alertes nouveau traceur"
+msgstr ""
+
+msgid ""
+"Module fourni par le service Pratcom Connect (abonnement requis). Privacy "
+"Free ci-dessus reste disponible gratuitement."
+msgstr ""
+
+msgid "Découvrir Connect Privacy"
+msgstr ""
+
+msgid "Privacy Connect — Scan de confidentialité"
+msgstr ""
+
+msgid ""
+"Le scan automatique des témoins et traceurs se gère dans votre tableau de "
+"bord Pratcom Connect."
+msgstr ""
+
+msgid "Ouvrir Privacy Connect"
+msgstr ""
+
+msgid ""
+"Le tableau de bord Privacy Connect est momentanement indisponible. (%s)"
+msgstr ""
+
+msgid "Ouvrir en plein ecran ↗"
+msgstr ""
+
+msgid "Scan de confidentialité Pratcom Connect"
+msgstr ""
+
+msgid "Politique de confidentialité"
+msgstr ""
+
+msgid "Page de politique de confidentialité"
+msgstr ""
+
+msgid "Page publiée et liée — la bannière y pointe automatiquement."
+msgstr ""
+
+msgid "Voir la page"
+msgstr ""
+
+msgid "Une page contenant le shortcode existe mais n'est pas publiée."
+msgstr ""
+
+msgid ""
+"La page existe mais n'est pas enregistrée comme page de politique de "
+"confidentialité de WordPress."
+msgstr ""
+
+msgid "Aucune page de politique de confidentialité détectée."
+msgstr ""
+
+msgid "Publier et lier la page"
+msgstr ""
+
+msgid "Créer la page"
+msgstr ""
+
+msgid ""
+"La page contient le shortcode [pratcom_privacy_policy] : contenu généré "
+"automatiquement, tableau des témoins inclus, mis à jour sans intervention."
+msgstr ""
+
+msgid "Politique relative aux témoins"
+msgstr ""
+
+msgid "Page de politique relative aux témoins"
+msgstr ""
+
+msgid ""
+"Page publiée — déclaration de témoins autonome (mise à jour "
+"automatiquement)."
+msgstr ""
+
+msgid "Aucune page de politique relative aux témoins détectée."
+msgstr ""
+
+msgid "Publier la page"
+msgstr ""
+
+msgid ""
+"La page contient le shortcode [pratcom_cookie_declaration] : tableau des "
+"témoins groupé par catégorie, bilingue, généré automatiquement à partir de "
+"vos presets, de votre liste manuelle et du scan local."
+msgstr ""
+
+msgid "Reglages"
+msgstr ""
+
+msgid "my_cookie | Mon outil | Mesure d'audience | 1 an | statistics"
+msgstr ""

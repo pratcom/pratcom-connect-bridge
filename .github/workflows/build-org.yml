@@ -39,6 +39,16 @@ jobs:
       - name: Retirer le Plugin Update Checker (interdit .org)
         run: rm -f src/Updater.php
 
+      - name: Compiler les traductions (.po -> .mo) via WP-CLI
+        run: |
+          set -e
+          curl -sSfL -o wp-cli.phar https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+          php wp-cli.phar --info >/dev/null
+          # Genere les .mo (et .l10n.php) a partir des .po committes (FR source,
+          # traductions EN). Outil officiel WordPress, deterministe, sans gettext.
+          php wp-cli.phar i18n make-mo languages languages
+          ls languages/*.mo
+
       - name: Assembler le dossier du plugin (slug pratcom-connect)
         run: |
           mkdir -p build/pratcom-connect
@@ -47,6 +57,7 @@ jobs:
             --exclude='.github' \
             --exclude='build' \
             --exclude='tests' \
+            --exclude='docs' \
             --exclude='.gitignore' \
             --exclude='.distignore' \
             --exclude='composer.json' \
@@ -70,6 +81,9 @@ jobs:
           grep -q "PRATCOM_CONNECT_BRIDGE_CHANNEL === 'org'" build/pratcom-connect/src/Admin/Tabs/PrivacyTab.php
           # Le dossier d'assets WordPress.org ne doit jamais entrer dans le zip.
           test ! -d build/pratcom-connect/.wordpress-org
+          # Les traductions doivent etre embarquees : dossier languages/ avec au
+          # moins un .mo compile (sinon l'admin n'est pas traduit dans le zip).
+          test -d build/pratcom-connect/languages && ls build/pratcom-connect/languages/*.mo
           php -l build/pratcom-connect/pratcom-connect-bridge.php
 
       - name: Zip

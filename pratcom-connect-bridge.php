@@ -3,7 +3,7 @@
  * Plugin Name:       Pratcom Connect
  * Plugin URI:        https://pratcom.net/connect
  * Description:       Connecte un site WordPress a l API Pratcom Connect. Permet d activer les modules Chat, Forms, Privacy via une seule cle API.
- * Version:           2.1.1
+ * Version:           2.1.2
  * Requires at least: 6.5
  * Requires PHP:      8.1
  * Author:            Pratcom Media
@@ -11,13 +11,14 @@
  * License:           GPLv2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       pratcom-connect
+ * Domain Path:       /languages
  */
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-define('PRATCOM_CONNECT_BRIDGE_VERSION', '2.1.1');
+define('PRATCOM_CONNECT_BRIDGE_VERSION', '2.1.2');
 define('PRATCOM_CONNECT_BRIDGE_FILE', __FILE__);
 define('PRATCOM_CONNECT_BRIDGE_DIR', plugin_dir_path(__FILE__));
 define('PRATCOM_CONNECT_BRIDGE_URL', plugin_dir_url(__FILE__));
@@ -50,6 +51,14 @@ spl_autoload_register(function ($class) {
     if (file_exists($file)) {
         require $file;
     }
+});
+
+// Charge les traductions du plugin (FR = langue source ; traductions EN
+// fournies dans /languages). Hook `init` (PAS `plugins_loaded`) pour eviter
+// l'avertissement _doing_it_wrong introduit par WordPress 6.7 sur le
+// chargement anticipe des text domains.
+add_action('init', function () {
+    load_plugin_textdomain('pratcom-connect', false, dirname(plugin_basename(PRATCOM_CONNECT_BRIDGE_FILE)) . '/languages');
 });
 
 add_action('plugins_loaded', function () {

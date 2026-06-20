@@ -571,7 +571,7 @@ class PrivacyTab extends AbstractTab
                 <input type="hidden" name="action" value="<?php echo esc_attr(self::ACTION_COOKIES); ?>" />
                 <?php wp_nonce_field(self::NONCE_COOKIES); ?>
                 <textarea name="cookies_text" rows="6" class="large-text code" spellcheck="false"
-                    placeholder="my_cookie | Mon outil | Mesure d'audience | 1 an | statistics"><?php echo esc_textarea($cookies_text); ?></textarea>
+                    placeholder="<?php /* translators: example row for the manual cookie list (name | provider | purpose | duration | category). */ esc_attr_e('my_cookie | Mon outil | Mesure d\'audience | 1 an | statistics', 'pratcom-connect'); ?>"><?php echo esc_textarea($cookies_text); ?></textarea>
                 <div class="pc-actions" style="margin-top:12px;">
                     <button type="submit" class="pc-btn pc-btn--secondary">
                         <?php esc_html_e('Enregistrer la liste', 'pratcom-connect'); ?>
