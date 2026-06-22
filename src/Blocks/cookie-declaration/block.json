@@ -1,0 +1,32 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "pratcom-connect/cookie-declaration",
+    "version": "1.0.0",
+    "title": "Déclaration de témoins (Pratcom Connect)",
+    "category": "widgets",
+    "icon": "shield",
+    "description": "Déclaration relative aux témoins, générée automatiquement et bilingue (style déclaration de cookies).",
+    "keywords": ["temoins", "cookies", "privacy", "confidentialite", "pratcom", "loi 25"],
+    "textdomain": "pratcom-connect",
+    "supports": {
+        "html": false,
+        "align": ["wide", "full"],
+        "color": {
+            "background": true,
+            "text": true,
+            "link": true
+        },
+        "spacing": {
+            "margin": true,
+            "padding": true
+        }
+    },
+    "attributes": {
+        "lang": {
+            "type": "string",
+            "default": "auto"
+        }
+    },
+    "editorScript": "pratcom-connect-legal-blocks-editor"
+}
