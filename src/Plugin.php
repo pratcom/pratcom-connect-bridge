@@ -43,6 +43,10 @@ class Plugin
         new Privacy\LocalRegistry();
         new Privacy\FreeBanner();
         new Http\PagesController();
+        // Blocs Gutenberg natifs des pages legales (item J) : enregistres
+        // au front ET dans l'editeur (register sur 'init'). Rendu dynamique
+        // 100 % cote serveur, delegue aux shortcodes Privacy existants.
+        new Blocks\LegalBlocks();
     }
 
     public static function add_settings_link(array $links): array
