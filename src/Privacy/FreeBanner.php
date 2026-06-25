@@ -81,6 +81,14 @@ class FreeBanner
             'trackers' => Presets::trackers_for_banner(),
         ];
 
+        // Google Consent Mode v2 (Privacy v2) — couplage local. Si activé, la
+        // config locale porte consentModeV2 pour que privacy.js émette les
+        // `consent update` ; le snippet inline ConsentMode pose le `default`
+        // (avant GTM). Sans ce couplage, privacy.js n'émettrait aucun update.
+        if (ConsentMode::is_enabled()) {
+            $config['settings']['consentModeV2'] = true;
+        }
+
         // Badge « Propulsé par Pratcom Connect » (spec Badge §5.4) — affiché par
         // défaut, retirable via la case de l'onglet Confidentialité OU le filtre
         // pratcom_connect_branding (conformité guideline WP.org : retrait
