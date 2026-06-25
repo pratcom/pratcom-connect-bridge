@@ -4,7 +4,7 @@ Tags: consent, privacy, cookies, forms, chatbot
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 2.1.2
+Stable tag: 2.1.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,6 +20,7 @@ The plugin interface and the consent banner are fully bilingual (French and Engl
 
 * **Law 25 consent banner**: cookie categories (necessary, analytics, marketing), editable FR/EN texts, design adaptable to your brand (primary color + rich palette, WCAG contrast computed automatically).
 * **Presets for popular plugins**: check the tools you use (Google Analytics 4, Meta Pixel, Hotjar, and more) — the cookie declaration and blocking rules configure themselves. Automatic suggestions based on the plugins active on your site (local detection, no data transmitted).
+* **Google Consent Mode v2 (optional)**: when enabled, the banner emits Google's consent signals (analytics_storage, ad_storage, ad_user_data, ad_personalization) so Google Analytics 4 and Google Ads respect the visitor's choice — denied by default until consent. Off by default; no effect unless you use Google tags.
 * **Legal pages**: a privacy policy and a standalone cookie declaration, both bilingual and generated automatically. They are created on activation and kept up to date from your presets, your manual list and a local scan. Shortcodes: [pratcom_privacy_policy] and [pratcom_cookie_declaration].
 * **Local consent registry**: proof of consent stored in your WordPress database, with CSV export.
 
@@ -81,6 +82,9 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 
 == Changelog ==
 
+= 2.1.3 =
+* Google Consent Mode v2 (optional, off by default): the consent banner can now emit Google's consent signals so GA4 and Google Ads respect the visitor's choice (denied by default until consent, Law 25 opt-in). The default signal is printed inline before Google Tag Manager; privacy.js sends the update on each choice. Enable with the `pratcom_connect_consent_mode` filter/option.
+
 = 2.1.2 =
 * Admin interface fully translatable; bundled FR/EN translations.
 
@@ -141,6 +145,9 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 * Optional connection to the Pratcom Connect service (paid modules).
 
 == Upgrade Notice ==
+
+= 2.1.3 =
+Optional Google Consent Mode v2 for GA4 and Google Ads (off by default, Law 25 opt-in). No change unless you enable it.
 
 = 2.1.2 =
 Admin interface fully translatable; bundled FR/EN translations.
