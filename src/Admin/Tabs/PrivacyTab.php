@@ -14,6 +14,7 @@ use Pratcom\Connect\Bridge\Privacy\PolicyPage;
 use Pratcom\Connect\Bridge\Privacy\CookiePolicyPage;
 use Pratcom\Connect\Bridge\Privacy\CookieScan;
 use Pratcom\Connect\Bridge\Privacy\Presets;
+use Pratcom\Connect\Bridge\Privacy\ConsentMode;
 
 /**
  * Onglet Confidentialité — Privacy Free (spec .org §3-4, O3 + legal pages org).
@@ -106,6 +107,11 @@ class PrivacyTab extends AbstractTab
         // ①b Badge « Propulsé par Pratcom Connect » — défaut ON ; case décochée = retrait.
         $badge = !empty($_POST['privacy_free_badge']) ? '1' : '0';
         update_option(FreeBanner::OPTION_BADGE_ENABLED, $badge);
+
+        // ①c Google Consent Mode v2 (Privacy v2) — emet le `consent default`
+        // inline avant GTM. OFF par defaut.
+        $consent_mode = !empty($_POST['privacy_consent_mode']) ? '1' : '0';
+        update_option(ConsentMode::OPTION_ENABLED, $consent_mode);
 
         // ② Presets sélectionnés : valider contre la liste connue.
         $valid_ids = array_map(
@@ -259,6 +265,7 @@ class PrivacyTab extends AbstractTab
 
         $banner_enabled = (bool) get_option(FreeBanner::OPTION_ENABLED);
         $badge_enabled  = get_option(FreeBanner::OPTION_BADGE_ENABLED, '1') === '1';
+        $consent_mode_enabled = get_option(ConsentMode::OPTION_ENABLED, '0') === '1';
         $selected_ids   = (array) get_option(Presets::OPTION_SELECTED, []);
         $all_presets    = Presets::all();
         $suggestions    = Presets::suggested();   // string[] — ids détectés passivement
@@ -354,6 +361,22 @@ class PrivacyTab extends AbstractTab
                 </label>
                 <p class="pc-form-help">
                     <?php esc_html_e('Crédit discret, affiché par défaut. Décochez pour le retirer. Les développeurs peuvent aussi le retirer par code via le filtre pratcom_connect_branding.', 'pratcom-connect'); ?>
+                </p>
+            </div><!-- /.pc-card -->
+
+            <!-- ①bis Google Consent Mode v2 ---------------------------------->
+            <div class="pc-card">
+                <h2 class="pc-card__title">
+                    <?php esc_html_e('Google Consent Mode v2', 'pratcom-connect'); ?>
+                </h2>
+                <label class="pc-form-toggle" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                    <input type="checkbox" name="privacy_consent_mode" value="1"
+                           <?php checked($consent_mode_enabled); ?>
+                           style="width:18px;height:18px;cursor:pointer;" />
+                    <span><?php esc_html_e('Activer Google Consent Mode v2 (signaux de consentement pour Google Ads et Google Analytics)', 'pratcom-connect'); ?></span>
+                </label>
+                <p class="pc-form-help">
+                    <?php esc_html_e('Émet le signal « consent default » (refusé par défaut, Loi 25) en ligne avant Google Tag Manager, puis met à jour le consentement selon le choix du visiteur. À activer seulement si votre site utilise des balises Google. Sur un compte Connect, activez aussi le Consent Mode dans les réglages Privacy de votre tableau de bord.', 'pratcom-connect'); ?>
                 </p>
             </div><!-- /.pc-card -->
 
