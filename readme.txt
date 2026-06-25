@@ -4,7 +4,7 @@ Tags: consent, privacy, cookies, forms, chatbot
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 2.1.3
+Stable tag: 2.1.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,7 +82,7 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 
 == Changelog ==
 
-= 2.1.3 =
+= 2.1.4 =
 * Google Consent Mode v2 (optional, off by default): the consent banner can now emit Google's consent signals so GA4 and Google Ads respect the visitor's choice (denied by default until consent, Law 25 opt-in). The default signal is printed inline before Google Tag Manager; privacy.js sends the update on each choice. Enable with the `pratcom_connect_consent_mode` filter/option.
 
 = 2.1.2 =
@@ -146,7 +146,7 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 
 == Upgrade Notice ==
 
-= 2.1.3 =
+= 2.1.4 =
 Optional Google Consent Mode v2 for GA4 and Google Ads (off by default, Law 25 opt-in). No change unless you enable it.
 
 = 2.1.2 =
