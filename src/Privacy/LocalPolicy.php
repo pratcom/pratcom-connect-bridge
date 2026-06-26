@@ -209,7 +209,14 @@ class LocalPolicy
         $out .= '<p class="pratcom-policy-updated"><em>' . esc_html($updated) . '</em></p>';
 
         $cookie_section_index = 3; // section « Témoins »
-        foreach (self::sections() as $i => $section) {
+        $sections = self::sections();
+        // Contenu personnalise insere AVANT les 2 sections de cloture
+        // (Modifications de la politique + Nous joindre), c.-a-d. juste apres Securite.
+        $custom_before_index = count($sections) - 2;
+        foreach ($sections as $i => $section) {
+            if ($i === $custom_before_index) {
+                $out .= CustomContent::render_section($lang);
+            }
             $out .= '<section><h2>' . esc_html($section['title'][$lang]) . '</h2>';
             foreach ($section['paragraphs'] as $p) {
                 $out .= '<p>' . esc_html(self::interpolate($p[$lang], $vars)) . '</p>';
@@ -219,10 +226,6 @@ class LocalPolicy
             }
             $out .= '</section>';
         }
-
-        // Contenu personnalise (Privacy v2) : sections supplementaires saisies
-        // par l'admin, ajoutees A LA FIN de la politique, avant le disclaimer.
-        $out .= CustomContent::render_section($lang);
 
         $out .= '<hr class="pratcom-policy-sep" /><p class="pratcom-policy-disclaimer"><small>'
             . esc_html($disclaimer) . '</small></p>';
