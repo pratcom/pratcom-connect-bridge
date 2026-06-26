@@ -345,29 +345,35 @@ class CustomContent
         ?>
         <div class="pratcom-custom-block" data-block-id="<?php echo esc_attr($id); ?>"
              style="border:1px solid #d0d7dc;border-radius:8px;padding:14px;margin-bottom:14px;background:#fff;">
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;">
-                <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">
-                    <span><?php esc_html_e('Sous-titre (français)', 'pratcom-connect'); ?></span>
-                    <input type="text" class="regular-text pratcom-custom-subtitle-fr"
-                           maxlength="<?php echo (int) self::MAX_SUBTITLE_LEN; ?>"
-                           value="<?php echo esc_attr($sub_fr); ?>" />
-                </label>
-                <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">
-                    <span><?php esc_html_e('Sous-titre (anglais)', 'pratcom-connect'); ?></span>
-                    <input type="text" class="regular-text pratcom-custom-subtitle-en"
-                           maxlength="<?php echo (int) self::MAX_SUBTITLE_LEN; ?>"
-                           value="<?php echo esc_attr($sub_en); ?>" />
-                </label>
-                <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">
-                    <span><?php esc_html_e('Contenu (français)', 'pratcom-connect'); ?></span>
-                    <textarea rows="4" class="large-text pratcom-custom-content-fr"
-                              maxlength="<?php echo (int) self::MAX_CONTENT_LEN; ?>"><?php echo esc_textarea($con_fr); ?></textarea>
-                </label>
-                <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">
-                    <span><?php esc_html_e('Contenu (anglais)', 'pratcom-connect'); ?></span>
-                    <textarea rows="4" class="large-text pratcom-custom-content-en"
-                              maxlength="<?php echo (int) self::MAX_CONTENT_LEN; ?>"><?php echo esc_textarea($con_en); ?></textarea>
-                </label>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;">
+                <div style="display:flex;flex-direction:column;gap:14px;">
+                    <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">
+                        <span><?php esc_html_e('Sous-titre (français)', 'pratcom-connect'); ?></span>
+                        <input type="text" class="regular-text pratcom-custom-subtitle-fr"
+                               maxlength="<?php echo (int) self::MAX_SUBTITLE_LEN; ?>"
+                               style="width:100%;box-sizing:border-box;"
+                               value="<?php echo esc_attr($sub_fr); ?>" />
+                    </label>
+                    <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">
+                        <span><?php esc_html_e('Contenu (français)', 'pratcom-connect'); ?></span>
+                        <textarea rows="5" class="large-text pratcom-custom-content-fr"
+                                  maxlength="<?php echo (int) self::MAX_CONTENT_LEN; ?>"><?php echo esc_textarea($con_fr); ?></textarea>
+                    </label>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:14px;">
+                    <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">
+                        <span><?php esc_html_e('Sous-titre (anglais)', 'pratcom-connect'); ?></span>
+                        <input type="text" class="regular-text pratcom-custom-subtitle-en"
+                               maxlength="<?php echo (int) self::MAX_SUBTITLE_LEN; ?>"
+                               style="width:100%;box-sizing:border-box;"
+                               value="<?php echo esc_attr($sub_en); ?>" />
+                    </label>
+                    <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">
+                        <span><?php esc_html_e('Contenu (anglais)', 'pratcom-connect'); ?></span>
+                        <textarea rows="5" class="large-text pratcom-custom-content-en"
+                                  maxlength="<?php echo (int) self::MAX_CONTENT_LEN; ?>"><?php echo esc_textarea($con_en); ?></textarea>
+                    </label>
+                </div>
             </div>
             <div class="pc-actions" style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                 <button type="button" class="pc-btn pc-btn--primary pratcom-custom-save">
