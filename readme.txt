@@ -4,7 +4,7 @@ Tags: consent, privacy, cookies, forms, chatbot
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 2.1.7
+Stable tag: 2.1.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,9 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 
 == Changelog ==
 
+= 2.1.8 =
+* Privacy custom content: the custom sections now appear within the policy body (just before the closing "Changes to this policy" / "Contact us" sections) instead of at the very end. The admin editor is reorganized into two columns (French on the left, English on the right).
+
 = 2.1.7 =
 * Published build of the 2.1.6 "Custom content" feature (the 2.1.6 build did not ship the premium package). No functional change versus 2.1.6.
 
@@ -154,6 +157,9 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 * Optional connection to the Pratcom Connect service (paid modules).
 
 == Upgrade Notice ==
+
+= 2.1.8 =
+Custom policy sections now appear within the policy body, and the admin editor is reorganized into two columns. No change unless you use custom content.
 
 = 2.1.7 =
 Published build of the 2.1.6 custom-content feature. No functional change versus 2.1.6.
