@@ -220,6 +220,10 @@ class LocalPolicy
             $out .= '</section>';
         }
 
+        // Contenu personnalise (Privacy v2) : sections supplementaires saisies
+        // par l'admin, ajoutees A LA FIN de la politique, avant le disclaimer.
+        $out .= CustomContent::render_section($lang);
+
         $out .= '<hr class="pratcom-policy-sep" /><p class="pratcom-policy-disclaimer"><small>'
             . esc_html($disclaimer) . '</small></p>';
         $out .= '</article>';
