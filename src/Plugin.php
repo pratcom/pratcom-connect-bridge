@@ -43,6 +43,7 @@ class Plugin
         new Privacy\LocalRegistry();
         new Privacy\FreeBanner();
         new Privacy\ConsentMode();
+        new Privacy\CustomContent();
         new Http\PagesController();
         // Blocs Gutenberg natifs des pages legales (item J) : enregistres
         // au front ET dans l'editeur (register sur 'init'). Rendu dynamique
@@ -97,6 +98,8 @@ class Plugin
             Privacy\LocalRegistry::OPTION_BANNER_VERSION,
             Privacy\FreeBanner::OPTION_ENABLED,
             Privacy\ConsentMode::OPTION_ENABLED,
+            Privacy\CustomContent::OPTION_ENABLED,
+            Privacy\CustomContent::OPTION_BLOCKS,
         ];
         foreach ($options as $opt) {
             delete_option($opt);
