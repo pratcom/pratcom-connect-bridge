@@ -45,6 +45,7 @@ class Plugin
         new Privacy\ConsentMode();
         new Privacy\CustomContent();
         new Http\PagesController();
+        new Jobs\OfferSync();
         // Blocs Gutenberg natifs des pages legales (item J) : enregistres
         // au front ET dans l'editeur (register sur 'init'). Rendu dynamique
         // 100 % cote serveur, delegue aux shortcodes Privacy existants.
