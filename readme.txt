@@ -4,7 +4,7 @@ Tags: consent, privacy, cookies, forms, chatbot
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 2.1.5
+Stable tag: 2.1.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,9 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 
 == Changelog ==
 
+= 2.1.6 =
+* Privacy tab: new "Custom content" card to add your own bilingual sections (subtitle + paragraph, plain text) at the end of the generated privacy policy. Saved per block; works in both the free and connected versions.
+
 = 2.1.5 =
 * Privacy tab: new "Enable Google Consent Mode v2" checkbox to turn the Consent Mode feature (added in 2.1.4) on or off without code.
 
@@ -148,6 +151,9 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 * Optional connection to the Pratcom Connect service (paid modules).
 
 == Upgrade Notice ==
+
+= 2.1.6 =
+Optionally add your own sections to the end of the privacy policy from the Privacy tab. No change unless you use it.
 
 = 2.1.5 =
 New checkbox in the Privacy tab to enable Google Consent Mode v2 without code. No change unless you enable it.
