@@ -4,7 +4,7 @@ Tags: consent, privacy, cookies, forms, chatbot
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 2.1.6
+Stable tag: 2.1.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,9 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 
 == Changelog ==
 
+= 2.1.7 =
+* Published build of the 2.1.6 "Custom content" feature (the 2.1.6 build did not ship the premium package). No functional change versus 2.1.6.
+
 = 2.1.6 =
 * Privacy tab: new "Custom content" card to add your own bilingual sections (subtitle + paragraph, plain text) at the end of the generated privacy policy. Saved per block; works in both the free and connected versions.
 
@@ -151,6 +154,9 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 * Optional connection to the Pratcom Connect service (paid modules).
 
 == Upgrade Notice ==
+
+= 2.1.7 =
+Published build of the 2.1.6 custom-content feature. No functional change versus 2.1.6.
 
 = 2.1.6 =
 Optionally add your own sections to the end of the privacy policy from the Privacy tab. No change unless you use it.
