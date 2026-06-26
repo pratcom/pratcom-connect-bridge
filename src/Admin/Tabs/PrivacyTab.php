@@ -15,6 +15,7 @@ use Pratcom\Connect\Bridge\Privacy\CookiePolicyPage;
 use Pratcom\Connect\Bridge\Privacy\CookieScan;
 use Pratcom\Connect\Bridge\Privacy\Presets;
 use Pratcom\Connect\Bridge\Privacy\ConsentMode;
+use Pratcom\Connect\Bridge\Privacy\CustomContent;
 
 /**
  * Onglet Confidentialité — Privacy Free (spec .org §3-4, O3 + legal pages org).
@@ -638,6 +639,9 @@ class PrivacyTab extends AbstractTab
             </p>
             <?php endif; ?>
         </div><!-- /.pc-card (cookies manuels) -->
+
+        <!-- ⑤bis Contenu personnalisé de la politique (CustomContent) ───-->
+        <?php CustomContent::render_admin_card(); ?>
 
         <!-- ⑥ Page de politique de confidentialité ───-->
         <div class="pc-card" style="margin-top:24px;">
