@@ -62,7 +62,9 @@ class PolicyShortcode
         if (Plugin::is_connected() && $this->privacy_pack_active()) {
             $html = $this->fetch_remote($lang);
             if ($html !== null) {
-                return $html;
+                // Le serveur ignore le contenu personnalise LOCAL : on l'ajoute
+                // ici pour que le tier connecte (pro) en beneficie aussi.
+                return $html . CustomContent::render_section($lang);
             }
         }
 
