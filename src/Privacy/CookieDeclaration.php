@@ -6,7 +6,7 @@ use Pratcom\Connect\Bridge\Plugin;
 
 /**
  * Declaration de temoins autonome, style Cookiebot — shortcode
- * [pratcom_cookie_declaration lang=""] (Privacy Free, spec legal pages org).
+ * [pratcom_cookie_declaration lang="" heading="none"] (Privacy Free, spec legal pages org).
  *
  * Rend un tableau GROUPE PAR CATEGORIE (necessaires, preferences,
  * fonctionnels, statistiques, marketing) : chaque categorie a un en-tete +
@@ -23,6 +23,12 @@ use Pratcom\Connect\Bridge\Plugin;
  * LOCAL-FIRST (miroir de PolicyShortcode) : si le site est connecte ET que le
  * pack privacy est actif, on PEUT tenter le fragment serveur ; sinon (et par
  * defaut en gratuit) rendu 100 % local, zero appel serveur (exigence WP.org).
+ *
+ * Attribut heading="none|h1|h2" (defaut « none ») : aligne sur PolicyShortcode
+ * — normalise le premier <h1> du fragment pour eviter un double <h1> avec le
+ * titre de page du theme (cf. PolicyHeading). Le rendu LOCAL utilise deja un
+ * <h2> pour son titre ; l'attribut agit surtout sur un fragment serveur qui
+ * emettrait un <h1>.
  *
  * Zone chantier Privacy. Ne touche pas le shell admin ni le canal connecte.
  */
@@ -50,7 +56,7 @@ class CookieDeclaration
      */
     public function render($atts): string
     {
-        $atts = shortcode_atts(['lang' => ''], $atts, 'pratcom_cookie_declaration');
+        $atts = shortcode_atts(['lang' => '', 'heading' => PolicyHeading::DEFAULT_MODE], $atts, 'pratcom_cookie_declaration');
 
         $lang = strtolower((string) $atts['lang']);
         if (!in_array($lang, ['fr', 'en'], true)) {
@@ -58,14 +64,16 @@ class CookieDeclaration
             $lang = (strpos(determine_locale(), 'en') === 0) ? 'en' : 'fr';
         }
 
+        $heading = PolicyHeading::sanitize_mode($atts['heading']);
+
         if (Plugin::is_connected() && $this->privacy_pack_active()) {
             $html = $this->fetch_remote($lang);
             if ($html !== null) {
-                return $html;
+                return PolicyHeading::apply($html, $heading);
             }
         }
 
-        return self::render_local($lang);
+        return PolicyHeading::apply(self::render_local($lang), $heading);
     }
 
     /**

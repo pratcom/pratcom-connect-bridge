@@ -5,7 +5,7 @@ namespace Pratcom\Connect\Bridge\Privacy;
 use Pratcom\Connect\Bridge\Plugin;
 
 /**
- * Shortcode [pratcom_privacy_policy lang="fr"] — politique de
+ * Shortcode [pratcom_privacy_policy lang="fr" heading="none"] — politique de
  * confidentialité dynamique (P4b, spec Privacy §6b, modèle Complianz).
  *
  * - Tier Connect (connecté + pack privacy) : contenu rendu côté serveur
@@ -16,6 +16,11 @@ use Pratcom\Connect\Bridge\Plugin;
  * - Tier Free / non connecté : template embarqué (LocalPolicy), variables
  *   saisies localement, liste de témoins manuelle. Zéro appel serveur
  *   (exigence WP.org : aucun appel sans action utilisateur en gratuit).
+ *
+ * Attribut heading="none|h1|h2" (défaut « none ») : contrôle le <h1> du
+ * module pour éviter un double <h1> quand le thème rend déjà le titre de page
+ * en <h1> (cf. PolicyHeading). « none » = le titre du thème reste le H1
+ * unique ; « h1 » = comportement historique (gabarits sans titre de page).
  *
  * Zone chantier Privacy (contenu Confidentialité). Shell admin non touché.
  */
@@ -52,23 +57,25 @@ class PolicyShortcode
      */
     public function render($atts): string
     {
-        $atts = shortcode_atts(['lang' => ''], $atts, 'pratcom_privacy_policy');
+        $atts = shortcode_atts(['lang' => '', 'heading' => PolicyHeading::DEFAULT_MODE], $atts, 'pratcom_privacy_policy');
 
         $lang = strtolower((string) $atts['lang']);
         if (!in_array($lang, ['fr', 'en'], true)) {
             $lang = (strpos(get_locale(), 'en') === 0) ? 'en' : 'fr';
         }
 
+        $heading = PolicyHeading::sanitize_mode($atts['heading']);
+
         if (Plugin::is_connected() && $this->privacy_pack_active()) {
             $html = $this->fetch_remote($lang);
             if ($html !== null) {
                 // Le serveur ignore le contenu personnalise LOCAL : on l'ajoute
                 // ici pour que le tier connecte (pro) en beneficie aussi.
-                return $html . CustomContent::render_section($lang);
+                return PolicyHeading::apply($html . CustomContent::render_section($lang), $heading);
             }
         }
 
-        return LocalPolicy::render($lang);
+        return PolicyHeading::apply(LocalPolicy::render($lang), $heading);
     }
 
     /** Fragment HTML du serveur, cache transient 1 h. null = indisponible. */
