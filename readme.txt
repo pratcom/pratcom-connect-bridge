@@ -4,7 +4,7 @@ Tags: consent, privacy, cookies, forms, chatbot
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 2.1.8
+Stable tag: 2.1.10
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -81,6 +81,12 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 7. Chat tab — train your Connect Chat assistant directly from wp-admin (mirror of the Connect training dashboard).
 
 == Changelog ==
+
+= 2.1.10 =
+* Privacy policy on connected sites: the [pratcom_privacy_policy] shortcode now uses the company information you entered locally (contact person, emails, address, phone) and the enriched cookie table when they are filled in, instead of showing "to be completed" placeholders. Sites that have not entered company information locally keep the server-rendered policy (unchanged).
+
+= 2.1.9 =
+* Privacy legal pages: the module <h1> title is now optional (heading attribute) to avoid a duplicate <h1> when the theme already renders the page title.
 
 = 2.1.8 =
 * Privacy custom content: the custom sections now appear within the policy body (just before the closing "Changes to this policy" / "Contact us" sections) instead of at the very end. The admin editor is reorganized into two columns (French on the left, English on the right).
