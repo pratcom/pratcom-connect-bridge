@@ -219,7 +219,7 @@ class LocalPolicy
         ];
     }
 
-    public static function render(string $lang): string
+    public static function render(string $lang, string $appearance = 'auto'): string
     {
         $lang = $lang === 'en' ? 'en' : 'fr';
         $vars = self::variables($lang);
@@ -250,7 +250,7 @@ class LocalPolicy
                 $out .= '<p>' . esc_html(self::interpolate($p[$lang], $vars)) . '</p>';
             }
             if ($i === $cookie_section_index) {
-                $out .= self::render_cookie_table($lang);
+                $out .= self::render_cookie_table($lang, $appearance);
             }
             $out .= '</section>';
         }
@@ -262,7 +262,7 @@ class LocalPolicy
     }
 
     /**
-     * Tableau des témoins intégré à la politique — DYNAMIQUE.
+     * Témoins intégrés à la politique — DYNAMIQUE, rendu en cartes (CookieCards).
      *
      * Source = CookieScan::merged_rows($lang) : fusion dédupliquée des presets
      * sélectionnés (Presets::cookie_rows) + liste manuelle (OPTION_COOKIES) +
@@ -273,7 +273,7 @@ class LocalPolicy
      * de ce tableau — ils ne doivent jamais paraître côté visiteur. Ils restent
      * visibles dans l'onglet d'administration pour être classés.
      */
-    private static function render_cookie_table(string $lang): string
+    private static function render_cookie_table(string $lang, string $appearance = 'auto'): string
     {
         $cookies = array_values(array_filter(
             CookieScan::merged_rows($lang),
@@ -288,24 +288,6 @@ class LocalPolicy
             return '<p class="pratcom-policy-cookies-empty"><em>' . esc_html($msg) . '</em></p>';
         }
 
-        $head = $lang === 'en'
-            ? ['Name', 'Provider', 'Purpose', 'Expiry']
-            : ['Nom', 'Fournisseur', 'Finalité', 'Durée'];
-        $out  = '<table class="pratcom-policy-table"><thead><tr>';
-        foreach ($head as $h) {
-            $out .= '<th>' . esc_html($h) . '</th>';
-        }
-        $out .= '</tr></thead><tbody>';
-        foreach ($cookies as $c) {
-            if (!is_array($c)) {
-                continue;
-            }
-            $out .= '<tr><td><code>' . esc_html((string) ($c['name'] ?? '')) . '</code></td>'
-                . '<td>' . esc_html((string) ($c['provider'] ?? '')) . '</td>'
-                . '<td>' . esc_html((string) ($c['purpose'] ?? '')) . '</td>'
-                . '<td>' . esc_html((string) ($c['expiry'] ?? '')) . '</td></tr>';
-        }
-        $out .= '</tbody></table>';
-        return $out;
+        return CookieCards::render($cookies, $lang, $appearance, true);
     }
 }

@@ -76,6 +76,7 @@ class PolicyShortcode
             . '.pratcom-policy p,.pratcom-policy li,.pratcom-policy td,.pratcom-policy th,'
             . '.pratcom-cookie-declaration p,.pratcom-cookie-declaration li,.pratcom-cookie-declaration td,.pratcom-cookie-declaration th'
             . '{font-size:' . $fontSize . 'px;line-height:1.6}';
+        $css .= CookieCards::css();
         wp_add_inline_style($handle, $css);
     }
 
@@ -102,7 +103,7 @@ class PolicyShortcode
      */
     public function render($atts): string
     {
-        $atts = shortcode_atts(['lang' => '', 'heading' => PolicyHeading::DEFAULT_MODE], $atts, 'pratcom_privacy_policy');
+        $atts = shortcode_atts(['lang' => '', 'heading' => PolicyHeading::DEFAULT_MODE, 'appearance' => 'auto'], $atts, 'pratcom_privacy_policy');
 
         $lang = strtolower((string) $atts['lang']);
         if (!in_array($lang, ['fr', 'en'], true)) {
@@ -110,6 +111,7 @@ class PolicyShortcode
         }
 
         $heading = PolicyHeading::sanitize_mode($atts['heading']);
+        $appearance = CookieCards::sanitize_mode($atts['appearance']);
 
         if (Plugin::is_connected() && $this->privacy_pack_active()) {
             // Option B (fix tier connecte, 2026-06-30) : si l'admin a saisi les
@@ -119,7 +121,7 @@ class PolicyShortcode
             // presets/scan locaux. LocalPolicy::render() inclut DEJA CustomContent
             // -> ne PAS re-appender (contrairement au chemin serveur ci-dessous).
             if (LocalPolicy::has_company_info()) {
-                return PolicyHeading::apply(LocalPolicy::render($lang), $heading);
+                return PolicyHeading::apply(LocalPolicy::render($lang, $appearance), $heading);
             }
 
             $html = $this->fetch_remote($lang);
@@ -130,7 +132,7 @@ class PolicyShortcode
             }
         }
 
-        return PolicyHeading::apply(LocalPolicy::render($lang), $heading);
+        return PolicyHeading::apply(LocalPolicy::render($lang, $appearance), $heading);
     }
 
     /** Fragment HTML du serveur, cache transient 1 h. null = indisponible. */
