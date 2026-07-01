@@ -25,6 +25,34 @@ class LocalPolicy
     public const OPTION_VARS = 'pratcom_connect_privacy_policy_vars';
     public const OPTION_COOKIES = 'pratcom_connect_privacy_cookies';
 
+    /**
+     * Les informations d'entreprise locales (option OPTION_VARS) ont-elles été
+     * saisies par l'administrateur ?
+     *
+     * Sert au tier CONNECTÉ (pro) : quand l'admin a rempli l'éditeur
+     * « Informations de l'entreprise » de l'onglet Confidentialité, le rendu
+     * LOCAL (champs remplis + tableau des témoins enrichi par les presets/scan)
+     * est plus complet que le rendu serveur, qui n'interpole que legalName.
+     * PolicyShortcode::render() bascule alors sur LocalPolicy::render().
+     *
+     * On lit l'option BRUTE : le handler admin ne stocke que les clés vraiment
+     * renseignées (cf. PrivacyTab::handle_save_company → array_filter), donc
+     * sans les valeurs de repli calculées par variables(). Signal = les trois
+     * champs identitaires clés (responsable, courriel, adresse) présents et non
+     * vides.
+     */
+    public static function has_company_info(): bool
+    {
+        $saved = get_option(self::OPTION_VARS, []);
+        if (!is_array($saved)) {
+            return false;
+        }
+        $filled = static function (string $key) use ($saved): bool {
+            return isset($saved[$key]) && is_string($saved[$key]) && trim($saved[$key]) !== '';
+        };
+        return $filled('officerName') && $filled('contactEmail') && $filled('address');
+    }
+
     /** @return array<string, string> */
     private static function variables(string $lang): array
     {
