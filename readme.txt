@@ -4,7 +4,7 @@ Tags: consent, privacy, cookies, forms, chatbot
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 2.1.11
+Stable tag: 2.1.12
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -81,6 +81,9 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 7. Chat tab — train your Connect Chat assistant directly from wp-admin (mirror of the Connect training dashboard).
 
 == Changelog ==
+
+= 2.1.12 =
+* Legal pages typography: the privacy policy and cookie declaration body text now uses a comfortable reading size (17px, adjustable via the `pratcom_connect_legal_font_size` filter) instead of inheriting an oversized theme font. Headings keep the theme hierarchy. No change to the content.
 
 = 2.1.11 =
 * Legal pages layout: the privacy policy and cookie declaration now render in a centered, readable column (max width 1020px, adjustable via the `pratcom_connect_legal_max_width` filter) with side padding, instead of inheriting the theme's content width (which could be full-bleed edge to edge on some themes). No change to the content itself.

@@ -67,8 +67,15 @@ class PolicyShortcode
         wp_enqueue_style($handle);
 
         $max = (int) apply_filters('pratcom_connect_legal_max_width', 1020);
+        $fontSize = (int) apply_filters('pratcom_connect_legal_font_size', 17);
         $css = '.pratcom-policy,.pratcom-cookie-declaration{max-width:' . $max . 'px;margin-inline:auto;padding-inline:clamp(16px,4vw,28px);box-sizing:border-box}'
-            . '.pratcom-policy .pratcom-policy-table,.pratcom-cookie-declaration .pratcom-policy-table{width:100%}';
+            . '.pratcom-policy .pratcom-policy-table,.pratcom-cookie-declaration .pratcom-policy-table{width:100%}'
+            // Taille du corps de texte : certains themes rendent le texte legal
+            // tres gros (ex. 22px). On fixe une taille de lecture confortable ;
+            // les titres gardent la hierarchie du theme. Filtrable.
+            . '.pratcom-policy p,.pratcom-policy li,.pratcom-policy td,.pratcom-policy th,'
+            . '.pratcom-cookie-declaration p,.pratcom-cookie-declaration li,.pratcom-cookie-declaration td,.pratcom-cookie-declaration th'
+            . '{font-size:' . $fontSize . 'px;line-height:1.6}';
         wp_add_inline_style($handle, $css);
     }
 
