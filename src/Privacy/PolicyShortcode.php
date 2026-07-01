@@ -32,6 +32,44 @@ class PolicyShortcode
     public function __construct()
     {
         add_shortcode('pratcom_privacy_policy', [$this, 'render']);
+        add_action('wp_enqueue_scripts', [$this, 'maybe_enqueue_style']);
+    }
+
+    /**
+     * Style de mise en page des pages legales (politique de confidentialite +
+     * declaration de temoins), charge UNIQUEMENT sur une page qui contient l'un
+     * des deux shortcodes Privacy.
+     *
+     * Sans ce style, la largeur du texte depend entierement de la largeur de
+     * contenu du theme : certains themes n'imposent aucune contrainte (texte
+     * pleine largeur, bord a bord), d'autres une colonne etroite. On rend donc
+     * une colonne de lecture centree, coherente d'un site a l'autre. Largeur
+     * filtrable via `pratcom_connect_legal_max_width`.
+     */
+    public function maybe_enqueue_style(): void
+    {
+        if (!is_singular()) {
+            return;
+        }
+        $post = get_post();
+        if (!$post instanceof \WP_Post) {
+            return;
+        }
+        if (
+            !has_shortcode($post->post_content, 'pratcom_privacy_policy')
+            && !has_shortcode($post->post_content, 'pratcom_cookie_declaration')
+        ) {
+            return;
+        }
+
+        $handle = 'pratcom-connect-legal';
+        wp_register_style($handle, false, [], PRATCOM_CONNECT_BRIDGE_VERSION);
+        wp_enqueue_style($handle);
+
+        $max = (int) apply_filters('pratcom_connect_legal_max_width', 1020);
+        $css = '.pratcom-policy,.pratcom-cookie-declaration{max-width:' . $max . 'px;margin-inline:auto;padding-inline:clamp(16px,4vw,28px);box-sizing:border-box}'
+            . '.pratcom-policy .pratcom-policy-table,.pratcom-cookie-declaration .pratcom-policy-table{width:100%}';
+        wp_add_inline_style($handle, $css);
     }
 
     /** Base des endpoints publics Privacy (filtrable pour staging). */
