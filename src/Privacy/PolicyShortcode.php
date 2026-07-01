@@ -67,6 +67,16 @@ class PolicyShortcode
         $heading = PolicyHeading::sanitize_mode($atts['heading']);
 
         if (Plugin::is_connected() && $this->privacy_pack_active()) {
+            // Option B (fix tier connecte, 2026-06-30) : si l'admin a saisi les
+            // informations d'entreprise EN LOCAL, le rendu local est plus complet
+            // que le serveur (qui n'a que legalName -> les autres champs affichent
+            // "a completer") et son tableau de temoins est enrichi par les
+            // presets/scan locaux. LocalPolicy::render() inclut DEJA CustomContent
+            // -> ne PAS re-appender (contrairement au chemin serveur ci-dessous).
+            if (LocalPolicy::has_company_info()) {
+                return PolicyHeading::apply(LocalPolicy::render($lang), $heading);
+            }
+
             $html = $this->fetch_remote($lang);
             if ($html !== null) {
                 // Le serveur ignore le contenu personnalise LOCAL : on l'ajoute
