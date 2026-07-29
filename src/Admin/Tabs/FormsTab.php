@@ -362,7 +362,7 @@ class FormsTab extends AbstractTab
         <?php
     }
 
-    // ─── Helpers ────────────────────────────────
+    // ─── Helpers ────────────────────────────────────
 
     /** @return array{ok?: bool, forms?: array} */
     private function get_forms_cached(): array
