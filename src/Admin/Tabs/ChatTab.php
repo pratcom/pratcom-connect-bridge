@@ -107,7 +107,7 @@ class ChatTab extends AbstractTab
     private function chat_enabled(): bool
     {
         $packs = get_option(Plugin::OPTION_FEATURE_PACKS, []);
-        return is_array($packs) && !empty($packs['chat']);
+        return is_array($packs) && !empty($packs['chat']['enabled']);
     }
 
     /** Vitrine verrouillée animée (W4) : démo de chat + fonctions + CTA existants. */
