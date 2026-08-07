@@ -6,12 +6,12 @@ use Pratcom\Connect\Bridge\Plugin;
 
 /**
  * Declaration de temoins autonome, style Cookiebot — shortcode
- * [pratcom_cookie_declaration lang=""] (Privacy Free, spec legal pages org).
+ * [pratcom_cookie_declaration lang="" heading="none"] (Privacy Free, spec legal pages org).
  *
- * Rend un tableau GROUPE PAR CATEGORIE (necessaires, preferences,
+ * Rend des CARTES GROUPEES PAR CATEGORIE (necessaires, preferences,
  * fonctionnels, statistiques, marketing) : chaque categorie a un en-tete +
- * une courte description, puis les colonnes Nom · Fournisseur · Finalite ·
- * Duree, le tout bilingue (fr/en). La categorie « non classes » n'est JAMAIS
+ * une courte description, puis une grille de cartes (CookieCards) Nom ·
+ * Fournisseur · Finalite · Duree, le tout bilingue (fr/en). La categorie « non classes » n'est JAMAIS
  * rendue sur la page publique (cf. grouped_rows_public) ; elle reste visible
  * cote admin pour classement.
  *
@@ -23,6 +23,12 @@ use Pratcom\Connect\Bridge\Plugin;
  * LOCAL-FIRST (miroir de PolicyShortcode) : si le site est connecte ET que le
  * pack privacy est actif, on PEUT tenter le fragment serveur ; sinon (et par
  * defaut en gratuit) rendu 100 % local, zero appel serveur (exigence WP.org).
+ *
+ * Attribut heading="none|h1|h2" (defaut « none ») : aligne sur PolicyShortcode
+ * — normalise le premier <h1> du fragment pour eviter un double <h1> avec le
+ * titre de page du theme (cf. PolicyHeading). Le rendu LOCAL utilise deja un
+ * <h2> pour son titre ; l'attribut agit surtout sur un fragment serveur qui
+ * emettrait un <h1>.
  *
  * Zone chantier Privacy. Ne touche pas le shell admin ni le canal connecte.
  */
@@ -50,7 +56,7 @@ class CookieDeclaration
      */
     public function render($atts): string
     {
-        $atts = shortcode_atts(['lang' => ''], $atts, 'pratcom_cookie_declaration');
+        $atts = shortcode_atts(['lang' => '', 'heading' => PolicyHeading::DEFAULT_MODE, 'appearance' => 'auto'], $atts, 'pratcom_cookie_declaration');
 
         $lang = strtolower((string) $atts['lang']);
         if (!in_array($lang, ['fr', 'en'], true)) {
@@ -58,14 +64,17 @@ class CookieDeclaration
             $lang = (strpos(determine_locale(), 'en') === 0) ? 'en' : 'fr';
         }
 
+        $heading = PolicyHeading::sanitize_mode($atts['heading']);
+        $appearance = CookieCards::sanitize_mode($atts['appearance']);
+
         if (Plugin::is_connected() && $this->privacy_pack_active()) {
             $html = $this->fetch_remote($lang);
             if ($html !== null) {
-                return $html;
+                return PolicyHeading::apply($html, $heading);
             }
         }
 
-        return self::render_local($lang);
+        return PolicyHeading::apply(self::render_local($lang, $appearance), $heading);
     }
 
     /**
@@ -73,7 +82,7 @@ class CookieDeclaration
      * categorie + note de mise a jour). Aucun appel serveur. Seules les
      * categories CLASSEES sont affichees (pas de « non classes » en public).
      */
-    public static function render_local(string $lang): string
+    public static function render_local(string $lang, string $appearance = 'auto'): string
     {
         $lang = $lang === 'en' ? 'en' : 'fr';
         $groups = CookieScan::grouped_rows_public($lang);
@@ -99,7 +108,7 @@ class CookieDeclaration
             return $out;
         }
 
-        $out .= self::render_groups($groups, $lang);
+        $out .= self::render_groups($groups, $lang, $appearance);
         $out .= '<p class="pratcom-cookiedecl-updated"><small><em>' . esc_html($updated) . '</em></small></p>';
         $out .= '</div>';
         return $out;
@@ -111,14 +120,11 @@ class CookieDeclaration
      *
      * @param array<string, array<int, array{name:string, provider:string, purpose:string, expiry:string, category:string}>> $groups
      */
-    public static function render_groups(array $groups, string $lang): string
+    public static function render_groups(array $groups, string $lang, string $appearance = 'auto'): string
     {
         $lang = $lang === 'en' ? 'en' : 'fr';
         $labels = CookieScan::category_label($lang);
         $descs  = CookieScan::category_description($lang);
-        $head = $lang === 'en'
-            ? ['Name', 'Provider', 'Purpose', 'Expiry']
-            : ['Nom', 'Fournisseur', 'Finalité', 'Durée'];
 
         $out = '';
         foreach ($groups as $cat => $list) {
@@ -133,21 +139,7 @@ class CookieDeclaration
             if ($desc !== '') {
                 $out .= '<p class="pratcom-cookiedecl-catdesc">' . esc_html($desc) . '</p>';
             }
-            $out .= '<table class="pratcom-policy-table pratcom-cookiedecl-table"><thead><tr>';
-            foreach ($head as $h) {
-                $out .= '<th>' . esc_html($h) . '</th>';
-            }
-            $out .= '</tr></thead><tbody>';
-            foreach ($list as $c) {
-                if (!is_array($c)) {
-                    continue;
-                }
-                $out .= '<tr><td><code>' . esc_html((string) ($c['name'] ?? '')) . '</code></td>'
-                    . '<td>' . esc_html((string) ($c['provider'] ?? '')) . '</td>'
-                    . '<td>' . esc_html((string) ($c['purpose'] ?? '')) . '</td>'
-                    . '<td>' . esc_html((string) ($c['expiry'] ?? '')) . '</td></tr>';
-            }
-            $out .= '</tbody></table>';
+            $out .= CookieCards::render($list, $lang, $appearance, false);
             $out .= '</section>';
         }
         return $out;

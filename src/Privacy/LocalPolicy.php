@@ -25,6 +25,34 @@ class LocalPolicy
     public const OPTION_VARS = 'pratcom_connect_privacy_policy_vars';
     public const OPTION_COOKIES = 'pratcom_connect_privacy_cookies';
 
+    /**
+     * Les informations d'entreprise locales (option OPTION_VARS) ont-elles été
+     * saisies par l'administrateur ?
+     *
+     * Sert au tier CONNECTÉ (pro) : quand l'admin a rempli l'éditeur
+     * « Informations de l'entreprise » de l'onglet Confidentialité, le rendu
+     * LOCAL (champs remplis + tableau des témoins enrichi par les presets/scan)
+     * est plus complet que le rendu serveur, qui n'interpole que legalName.
+     * PolicyShortcode::render() bascule alors sur LocalPolicy::render().
+     *
+     * On lit l'option BRUTE : le handler admin ne stocke que les clés vraiment
+     * renseignées (cf. PrivacyTab::handle_save_company → array_filter), donc
+     * sans les valeurs de repli calculées par variables(). Signal = les trois
+     * champs identitaires clés (responsable, courriel, adresse) présents et non
+     * vides.
+     */
+    public static function has_company_info(): bool
+    {
+        $saved = get_option(self::OPTION_VARS, []);
+        if (!is_array($saved)) {
+            return false;
+        }
+        $filled = static function (string $key) use ($saved): bool {
+            return isset($saved[$key]) && is_string($saved[$key]) && trim($saved[$key]) !== '';
+        };
+        return $filled('officerName') && $filled('contactEmail') && $filled('address');
+    }
+
     /** @return array<string, string> */
     private static function variables(string $lang): array
     {
@@ -191,7 +219,7 @@ class LocalPolicy
         ];
     }
 
-    public static function render(string $lang): string
+    public static function render(string $lang, string $appearance = 'auto'): string
     {
         $lang = $lang === 'en' ? 'en' : 'fr';
         $vars = self::variables($lang);
@@ -222,7 +250,7 @@ class LocalPolicy
                 $out .= '<p>' . esc_html(self::interpolate($p[$lang], $vars)) . '</p>';
             }
             if ($i === $cookie_section_index) {
-                $out .= self::render_cookie_table($lang);
+                $out .= self::render_cookie_table($lang, $appearance);
             }
             $out .= '</section>';
         }
@@ -234,7 +262,7 @@ class LocalPolicy
     }
 
     /**
-     * Tableau des témoins intégré à la politique — DYNAMIQUE.
+     * Témoins intégrés à la politique — DYNAMIQUE, rendu en cartes (CookieCards).
      *
      * Source = CookieScan::merged_rows($lang) : fusion dédupliquée des presets
      * sélectionnés (Presets::cookie_rows) + liste manuelle (OPTION_COOKIES) +
@@ -245,7 +273,7 @@ class LocalPolicy
      * de ce tableau — ils ne doivent jamais paraître côté visiteur. Ils restent
      * visibles dans l'onglet d'administration pour être classés.
      */
-    private static function render_cookie_table(string $lang): string
+    private static function render_cookie_table(string $lang, string $appearance = 'auto'): string
     {
         $cookies = array_values(array_filter(
             CookieScan::merged_rows($lang),
@@ -260,24 +288,6 @@ class LocalPolicy
             return '<p class="pratcom-policy-cookies-empty"><em>' . esc_html($msg) . '</em></p>';
         }
 
-        $head = $lang === 'en'
-            ? ['Name', 'Provider', 'Purpose', 'Expiry']
-            : ['Nom', 'Fournisseur', 'Finalité', 'Durée'];
-        $out  = '<table class="pratcom-policy-table"><thead><tr>';
-        foreach ($head as $h) {
-            $out .= '<th>' . esc_html($h) . '</th>';
-        }
-        $out .= '</tr></thead><tbody>';
-        foreach ($cookies as $c) {
-            if (!is_array($c)) {
-                continue;
-            }
-            $out .= '<tr><td><code>' . esc_html((string) ($c['name'] ?? '')) . '</code></td>'
-                . '<td>' . esc_html((string) ($c['provider'] ?? '')) . '</td>'
-                . '<td>' . esc_html((string) ($c['purpose'] ?? '')) . '</td>'
-                . '<td>' . esc_html((string) ($c['expiry'] ?? '')) . '</td></tr>';
-        }
-        $out .= '</tbody></table>';
-        return $out;
+        return CookieCards::render($cookies, $lang, $appearance, true);
     }
 }
