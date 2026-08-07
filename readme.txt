@@ -4,7 +4,7 @@ Tags: consent, privacy, cookies, forms, chatbot
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 2.1.12
+Stable tag: 2.1.14
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -81,6 +81,10 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 7. Chat tab — train your Connect Chat assistant directly from wp-admin (mirror of the Connect training dashboard).
 
 == Changelog ==
+
+= 2.1.14 =
+* New "Jobs" tab: when the Jobs feature pack is active on your account, published job offers and received applications from the free Connect Jobs plugin are synced to your Pratcom Connect workspace (chatbot answers and CRM). No resume file ever leaves your site: metadata only. When the pack is not active, the tab shows a locked module preview and nothing is sent.
+* Job offer sync now reads the structured location (city, region, country), the salary block and the Ontario posting disclosures emitted by Connect Jobs 0.7.0 and later, and falls back to the previous behaviour on earlier versions.
 
 = 2.1.12 =
 * Legal pages typography: the privacy policy and cookie declaration body text now uses a comfortable reading size (17px, adjustable via the `pratcom_connect_legal_font_size` filter) instead of inheriting an oversized theme font. Headings keep the theme hierarchy. No change to the content.
@@ -169,6 +173,9 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 * Optional connection to the Pratcom Connect service (paid modules).
 
 == Upgrade Notice ==
+
+= 2.1.14 =
+New "Jobs" tab for the Connect Jobs feature pack. No change unless the Jobs pack is active on your account.
 
 = 2.1.8 =
 Custom policy sections now appear within the policy body, and the admin editor is reorganized into two columns. No change unless you use custom content.
