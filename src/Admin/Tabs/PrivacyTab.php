@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Admin\Tabs;
 
+use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Plugin;
 use Pratcom\Connect\Bridge\Http\ApiClient;
 use Pratcom\Connect\Bridge\Admin\OrgManagePanel;
@@ -273,8 +274,7 @@ class PrivacyTab extends AbstractTab
         $is_connected   = Plugin::is_connected();
 
         // O5b : vérifier si le pack privacy est actif.
-        $packs               = get_option(Plugin::OPTION_FEATURE_PACKS, []);
-        $privacy_pack_active = $is_connected && is_array($packs) && !empty($packs['privacy']['enabled']);
+        $privacy_pack_active = $is_connected && FeaturePacks::is_active('privacy');
 
         // Grouper par provenance (kind) puis catégorie.
         // kind absent = 'service' (rétrocompatible).
