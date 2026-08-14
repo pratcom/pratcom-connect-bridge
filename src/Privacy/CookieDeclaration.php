@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Privacy;
 
+use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Plugin;
 
 /**
@@ -44,11 +45,7 @@ class CookieDeclaration
 
     private function privacy_pack_active(): bool
     {
-        $packs = get_option(Plugin::OPTION_FEATURE_PACKS, []);
-        if (!is_array($packs)) {
-            return false;
-        }
-        return array_key_exists('privacy', $packs) || in_array('privacy', $packs, true);
+        return FeaturePacks::is_active('privacy');
     }
 
     /**

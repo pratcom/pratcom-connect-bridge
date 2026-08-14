@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Admin\Tabs;
 
+use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Plugin;
 use Pratcom\Connect\Bridge\Http\ApiClient;
 use Pratcom\Connect\Bridge\Admin\OrgManagePanel;
@@ -106,8 +107,7 @@ class ChatTab extends AbstractTab
 
     private function chat_enabled(): bool
     {
-        $packs = get_option(Plugin::OPTION_FEATURE_PACKS, []);
-        return is_array($packs) && !empty($packs['chat']);
+        return FeaturePacks::is_active('chat');
     }
 
     /** Vitrine verrouillée animée (W4) : démo de chat + fonctions + CTA existants. */

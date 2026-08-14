@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Privacy;
 
+use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Plugin;
 
 /**
@@ -56,13 +57,8 @@ class ConsentMode
     /** Le module Privacy est-il actif (tier Connect OU banniere Free) ? */
     private static function privacy_active(): bool
     {
-        if (Plugin::is_connected()) {
-            $packs = get_option(Plugin::OPTION_FEATURE_PACKS, []);
-            if (is_array($packs)
-                && (array_key_exists('privacy', $packs) || in_array('privacy', $packs, true))
-            ) {
-                return true;
-            }
+        if (Plugin::is_connected() && FeaturePacks::is_active('privacy')) {
+            return true;
         }
         return FreeBanner::is_active();
     }

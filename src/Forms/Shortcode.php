@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Forms;
 
+use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Plugin;
 
 /**
@@ -42,12 +43,9 @@ class Shortcode
     /** Le feature pack `forms` est-il actif pour ce workspace ? */
     private function forms_pack_active(): bool
     {
-        $packs = get_option(Plugin::OPTION_FEATURE_PACKS, []);
-        if (!is_array($packs)) {
-            return false;
-        }
-        // feature_packs peut etre une map { forms: {...} } ou une liste [ "forms" ].
-        return array_key_exists('forms', $packs) || in_array('forms', $packs, true);
+        // Map { forms: {...} } ou liste [ "forms" ] : les deux formes sont
+        // gerees par FeaturePacks, qui honore en plus le drapeau `enabled`.
+        return FeaturePacks::is_active('forms');
     }
 
     /**
