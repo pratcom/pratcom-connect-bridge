@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Admin\Tabs;
 
+use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Plugin;
 use Pratcom\Connect\Bridge\Http\ApiClient;
 use Pratcom\Connect\Bridge\Admin\OrgManagePanel;
@@ -102,8 +103,7 @@ class FormsTab extends AbstractTab
 
     private function forms_enabled(): bool
     {
-        $packs = get_option(Plugin::OPTION_FEATURE_PACKS, []);
-        return is_array($packs) && !empty($packs['forms']['enabled']);
+        return FeaturePacks::is_active('forms');
     }
 
     /** Vitrine verrouillee animee (W4) : demo de formulaire + fonctions + CTA. */
