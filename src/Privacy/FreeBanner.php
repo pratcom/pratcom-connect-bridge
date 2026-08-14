@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Privacy;
 
+use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Plugin;
 
 /**
@@ -33,13 +34,10 @@ class FreeBanner
             return false;
         }
         // Tier Connect : la bannière vient du loader connecté, pas du mode Free.
-        if (Plugin::is_connected()) {
-            $packs = get_option(Plugin::OPTION_FEATURE_PACKS, []);
-            if (is_array($packs)
-                && (array_key_exists('privacy', $packs) || in_array('privacy', $packs, true))
-            ) {
-                return false;
-            }
+        // Si l'abonnement privacy est coupé, on RETOMBE sur la bannière Free —
+        // sinon un site désabonné n'afficherait plus aucune bannière témoins.
+        if (Plugin::is_connected() && FeaturePacks::is_active('privacy')) {
+            return false;
         }
         return true;
     }
