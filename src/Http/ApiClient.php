@@ -58,6 +58,28 @@ class ApiClient
     }
 
     /**
+     * Upsert d'un lot d'offres d'emploi (feature pack Jobs).
+     * POST /api/bridge/offers (Bearer pck_).
+     *
+     * @param array<int, array<string, mixed>> $offers
+     */
+    public function upsert_offers(string $api_key, array $offers): array
+    {
+        return $this->request('POST', '/api/bridge/offers', ['offers' => $offers], $api_key);
+    }
+
+    /**
+     * Suppression d'un lot d'offres par external_id (= ID du post WordPress).
+     * DELETE /api/bridge/offers (Bearer pck_).
+     *
+     * @param array<int, string> $external_ids
+     */
+    public function delete_offers(string $api_key, array $external_ids): array
+    {
+        return $this->request('DELETE', '/api/bridge/offers', ['external_ids' => $external_ids], $api_key);
+    }
+
+    /**
      * Liste les formulaires du workspace (onglet Formulaires, O2).
      * Endpoint attendu : GET /api/bridge/forms (Bearer pck_, lecture seule)
      * -> { ok: true, forms: [{ slug, name, type, status, updated_at }] }
