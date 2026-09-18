@@ -31,10 +31,14 @@ final class Fiche
 {
     public const QUERY_VAR = 'pratcom_emploi';
 
+    /** Case de l'onglet Emplois : rendre le titre de l'offre dans la fiche. */
+    public const OPTION_TITRE_FICHE = 'pratcom_connect_jobs_titre_fiche';
+
     private static ?array $offre = null;
     private static string $lang = '';
     private static bool $indisponible = false;
     private static bool $formulaire = false;
+    private static bool $pont_pose = false;
 
     public function __construct()
     {
@@ -98,6 +102,7 @@ final class Fiche
         self::$lang = '';
         self::$indisponible = false;
         self::$formulaire = false;
+        self::$pont_pose = false;
     }
 
     public function query_vars(array $vars): array
@@ -235,7 +240,9 @@ final class Fiche
 
     /**
      * Le conteneur du formulaire systeme `candidature`, hydrate par le loader
-     * Forms. `data-poste` porte le titre de l'offre ; le rattachement au CRM,
+     * Forms. `data-valeur-poste` porte le titre de l'offre : c'est l'attribut
+     * que le loader v0.6.0 lit pour un champ `hidden` de cle `poste`
+     * (`data-valeur-<cle>`, trim, 255 caracteres). Le rattachement au CRM,
      * lui, passe par l'URL de la page (`source_url`), qui contient le slug.
      */
     private static function formulaire_candidature(array $o, string $lang): string
@@ -247,12 +254,65 @@ final class Fiche
             PRATCOM_CONNECT_BRIDGE_VERSION,
             ['strategy' => 'defer', 'in_footer' => true]
         );
+        if (!self::$pont_pose) {
+            // Une seule fois par page : `the_content` et le filtre Elementor
+            // peuvent rendre la fiche tous les deux.
+            wp_add_inline_script(FormsShortcode::HANDLE, self::PONT_POSTE, 'after');
+            self::$pont_pose = true;
+        }
         return sprintf(
-            '<div data-pratcom-form="candidature" data-lang="%s" data-poste="%s"></div>',
+            '<div data-pratcom-form="candidature" data-lang="%s" data-valeur-poste="%s"></div>',
             esc_attr($lang),
             esc_attr((string) ($o['title'] ?? ''))
         );
     }
+
+    /**
+     * PONT TRANSITOIRE, dette a retirer : quand le loader >= v0.6.0 est en
+     * prod ET que le formulaire `candidature` de l'espace est en V3 (`poste`
+     * de type `hidden`), ce script ne trouve plus rien a faire et doit partir.
+     *
+     * Un formulaire V2 rend `poste` comme un champ texte visible et requis.
+     * Le script attend son bloc (`.pcf-field[data-key="poste"]`), y pose la
+     * valeur de `data-valeur-poste`, le passe en lecture seule et le cache :
+     * le loader v0.5.0 lit `input.value` a l'envoi, le titre part donc dans
+     * `data.poste`. En V3 le bloc n'existe pas : l'observateur expire sans
+     * rien toucher. Aucune donnee d'offre dans le script, aucun `innerHTML`.
+     * Valeur vide : le champ reste visible (requis, il doit rester saisissable).
+     */
+    private const PONT_POSTE = <<<'JS'
+(function () {
+  'use strict';
+  var MAX = 255;
+  var conteneurs = document.querySelectorAll('[data-pratcom-form="candidature"][data-valeur-poste]');
+  Array.prototype.forEach.call(conteneurs, function (c) {
+    var valeur = (c.getAttribute('data-valeur-poste') || '').trim().slice(0, MAX);
+    if (valeur === '') return;
+    function poser() {
+      var bloc = c.querySelector('.pcf-field[data-key="poste"]');
+      if (!bloc) return false;
+      var champ = bloc.querySelector('input[name="poste"]');
+      if (champ) {
+        champ.value = valeur;
+        champ.readOnly = true;
+      }
+      bloc.hidden = true;
+      bloc.style.display = 'none';
+      return true;
+    }
+    if (poser() || typeof MutationObserver !== 'function') return;
+    var garde;
+    var obs = new MutationObserver(function () {
+      if (poser()) {
+        obs.disconnect();
+        clearTimeout(garde);
+      }
+    });
+    obs.observe(c, { childList: true, subtree: true });
+    garde = setTimeout(function () { obs.disconnect(); }, 10000);
+  });
+})();
+JS;
 
     /**
      * Description en paragraphes HTML. Le CRM peut livrer du texte brut :
@@ -378,14 +438,26 @@ final class Fiche
     }
 
     /**
-     * Le theme affiche-t-il deja le titre de la page ? Il le fait par defaut
-     * (et `the_title` y met alors celui de l'offre). Elementor peut le
-     * masquer (`hide_title`) : la fiche porte alors son propre `<h1>`.
+     * Le `<h1>` de l'offre est-il rendu dans la fiche ? Par defaut non : le
+     * theme affiche le titre de la page, que `titre()` remplace par celui de
+     * l'offre. Il l'est si Elementor masque le titre de la page hote
+     * (`hide_title`) ou si la case de l'onglet Emplois est cochee (gabarit
+     * qui n'imprime pas le titre). Le filtre a le dernier mot.
      */
     private function titre_dans_le_contenu(): bool
     {
         $reglages = get_post_meta((int) get_queried_object_id(), '_elementor_page_settings', true);
         $masque = is_array($reglages) && ($reglages['hide_title'] ?? '') === 'yes';
-        return (bool) apply_filters('pratcom_connect_jobs_titre_dans_fiche', $masque, self::$offre);
+        return (bool) apply_filters(
+            'pratcom_connect_jobs_titre_dans_fiche',
+            self::titre_rendu($masque, (bool) get_option(self::OPTION_TITRE_FICHE, false)),
+            self::$offre
+        );
+    }
+
+    /** Table de verite du `<h1>` (sans WordPress : le banc l'appelle). */
+    public static function titre_rendu(bool $elementor_masque, bool $option_cochee): bool
+    {
+        return $elementor_masque || $option_cochee;
     }
 }
