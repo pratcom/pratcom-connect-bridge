@@ -37,6 +37,7 @@ class Plugin
         new Loader();
         new HealthCheck();
         new Forms\Shortcode();
+        Jobs\Module::boot(); // Emplois (liste, fiches, JobPosting) : barriere `jobs` dans Module.
         new Privacy\PolicyShortcode();
         new Privacy\CookieDeclaration();
         new Privacy\CookieScan();

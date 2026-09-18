@@ -10,6 +10,7 @@ use Pratcom\Connect\Bridge\Admin\Tabs\ConnectionTab;
 use Pratcom\Connect\Bridge\Admin\Tabs\DashboardTab;
 use Pratcom\Connect\Bridge\Admin\Tabs\FormsTab;
 use Pratcom\Connect\Bridge\Admin\Tabs\HelpTab;
+use Pratcom\Connect\Bridge\Admin\Tabs\JobsTab;
 use Pratcom\Connect\Bridge\Admin\Tabs\ModulesTab;
 use Pratcom\Connect\Bridge\Admin\Tabs\PrivacyTab;
 
@@ -48,6 +49,7 @@ class AdminShell
             new ModulesTab(),
             new AppearanceTab(),
             new FormsTab(),
+            new JobsTab(),
             new ChatTab(),
             new ConnectionTab(),
             new HelpTab(),

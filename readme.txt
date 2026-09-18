@@ -4,7 +4,7 @@ Tags: consent, privacy, cookies, forms, chatbot
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 2.1.14
+Stable tag: 2.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -81,6 +81,9 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 7. Chat tab — train your Connect Chat assistant directly from wp-admin (mirror of the Connect training dashboard).
 
 == Changelog ==
+
+= 2.2.0 =
+* New Jobs module: [pratcom_emplois] shortcode (filterable job list rendered server-side, no JavaScript required), one page per job with JobPosting structured data, FR/EN hreflang between paired jobs, optional 301 takeover of legacy /jobs/ URLs, and a new Jobs tab. Jobs are read from Pratcom Connect (read-only) and require the Jobs feature pack.
 
 = 2.1.14 =
 * Privacy policy on connected sites: the policy fragment served by the server is now cleaned of content injected by a CDN (anti-bot script, email address obfuscation) before sanitization. Email addresses display in clear as mailto links, and no script text appears at the bottom of the page. Policies cached by previous versions are refreshed automatically.
