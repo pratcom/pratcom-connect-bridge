@@ -149,7 +149,11 @@ class PolicyShortcode
         $url = self::endpoint_base()
             . '/api/privacy/' . rawurlencode($slug)
             . '/policy?lang=' . rawurlencode($lang) . '&format=html';
-        $response = wp_remote_get($url, ['timeout' => 8]);
+        $response = wp_remote_get($url, [
+            'timeout'    => 8,
+            'headers'    => ['Accept' => 'text/html'],
+            'user-agent' => 'PratcomConnectBridge/' . PRATCOM_CONNECT_BRIDGE_VERSION . ' (+https://connect.pratcom.net)',
+        ]);
         if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
             return null;
         }
@@ -159,8 +163,14 @@ class PolicyShortcode
             return null;
         }
 
-        // Le serveur est de confiance, mais on assainit quand même (défense
-        // en profondeur) — wp_kses_post conserve sections/titres/tableaux.
+        // Un CDN devant le serveur peut injecter un script anti-bot et masquer
+        // les courriels : wp_kses_post en garderait le texte. On nettoie
+        // d'abord (FragmentDistant), puis on assainit (défense en profondeur ;
+        // wp_kses_post conserve sections/titres/tableaux).
+        $body = FragmentDistant::nettoyer($body);
+        if ($body === '') {
+            return null;
+        }
         $html = wp_kses_post($body);
         set_transient($key, $html, self::CACHE_TTL);
         return $html;
