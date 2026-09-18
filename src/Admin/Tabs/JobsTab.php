@@ -4,6 +4,7 @@ namespace Pratcom\Connect\Bridge\Admin\Tabs;
 
 use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Jobs\Catalogue;
+use Pratcom\Connect\Bridge\Jobs\Fiche;
 use Pratcom\Connect\Bridge\Jobs\Module;
 use Pratcom\Connect\Bridge\Jobs\Shortcode;
 use Pratcom\Connect\Bridge\Jobs\Vocabulaire;
@@ -216,6 +217,16 @@ class JobsTab extends AbstractTab
                     </p>
                 </div>
 
+                <div class="pc-form-field">
+                    <label class="pc-form-label">
+                        <input type="checkbox" name="pce_titre_theme" value="1" <?php checked((bool) get_option(Fiche::OPTION_TITRE_THEME, false)); ?> />
+                        <?php esc_html_e('Le thème affiche déjà le titre de la page (ne pas répéter le titre de l\'offre dans la fiche)', 'pratcom-connect'); ?>
+                    </label>
+                    <p class="pc-form-help">
+                        <?php esc_html_e('Laissez décochée si la fiche s\'affiche sans titre.', 'pratcom-connect'); ?>
+                    </p>
+                </div>
+
                 <div class="pc-actions">
                     <button type="submit" class="pc-btn pc-btn--primary"><?php esc_html_e('Enregistrer', 'pratcom-connect'); ?></button>
                 </div>
@@ -283,6 +294,7 @@ class JobsTab extends AbstractTab
             update_option(Module::OPTION_PAGE_PREFIXE . $lang, $id, true);
         }
         update_option(Module::OPTION_REPRENDRE_JOBS, !empty($_POST['pce_reprendre_jobs']) ? 1 : 0, true);
+        update_option(Fiche::OPTION_TITRE_THEME, !empty($_POST['pce_titre_theme']) ? 1 : 0, true);
 
         // Pas de flush ICI : cette requete a deja pose les regles des ANCIENS
         // reglages sur `init`, et un flush les graverait avec les nouvelles.

@@ -16,6 +16,14 @@ namespace Pratcom\Connect\Bridge\Jobs;
  * Categorie disparait tant que le CRM ne sert pas de categories). Une valeur
  * recue qui n'est pas dans la liste proposee est ignoree.
  *
+ * ─── FILTRES INSTANTANES (2.2.1) ────────────────────────────────────────────
+ * Le serveur rend TOUTES les offres de la langue (jusqu'a `limite`, dans
+ * l'ordre editorial) ; celles que les choix GET ecartent portent `hidden`.
+ * Chaque carte porte ses cles (`data-lieu`, `data-type`, …) : un petit script
+ * filtre dans la page, sans rechargement ni appel reseau, et tient l'URL a
+ * jour. Sans JavaScript, le formulaire GET et son bouton restent le repli.
+ * `limite` borne donc l'ensemble rendu, pas les offres retenues.
+ *
  * ─── L'ORDRE ────────────────────────────────────────────────────────────────
  * La route transporte en `id ASC`, ce qui n'est pas un ordre editorial.
  * L'affichage : en vedette d'abord, puis la plus recente, puis le titre.
@@ -29,6 +37,9 @@ final class Shortcode
 
     /** Cle de lieu reservee au travail a distance. */
     private const LIEU_DISTANCE = 'a-distance';
+
+    /** Handle vide qui porte le script des filtres instantanes. */
+    public const HANDLE_FILTRES = 'pratcom-connect-jobs-filtres';
 
     private static bool $style_requis = false;
 
@@ -82,26 +93,37 @@ final class Shortcode
         $options = self::options_filtres($offres, $lang);
         $choix = self::choix_filtres($options, $demandes);
 
-        $retenues = self::trier(self::filtrer($offres, $choix));
         $limite = max(1, min(500, (int) $atts['limite']));
-        $affichees = array_slice($retenues, 0, $limite);
+        $affichees = array_slice(self::trier($offres), 0, $limite);
+        $retenues = self::filtrer($affichees, $choix);
+
+        $formulaire = self::formulaire($options, $demandes, $choix, $lang);
+        if ($formulaire !== '') {
+            self::enfiler_script_filtres();
+        }
 
         $html = '<div class="pce pce-liste-bloc" lang="' . esc_attr($lang) . '">';
-        $html .= self::formulaire($options, $demandes, $choix, $lang);
-        $html .= '<p class="pce-compte" role="status">' . esc_html(Vocabulaire::nombre(count($retenues), $lang)) . '</p>';
+        $html .= $formulaire;
+        // Les trois gabarits du compte : le script recompose le texte dans la
+        // langue de la liste sans dictionnaire JS.
+        $html .= '<p class="pce-compte" role="status"'
+            . ' data-zero="' . esc_attr(Vocabulaire::texte('nombre_plusieurs', $lang)) . '"'
+            . ' data-un="' . esc_attr(Vocabulaire::texte('nombre_un', $lang)) . '"'
+            . ' data-plusieurs="' . esc_attr(Vocabulaire::texte('nombre_plusieurs', $lang)) . '">'
+            . esc_html(Vocabulaire::nombre(count($retenues), $lang)) . '</p>';
 
-        if ($affichees === []) {
-            $html .= '<p class="pce-message">' . esc_html(Vocabulaire::texte('aucun_resultat', $lang)) . '</p>';
-        } else {
-            if (Module::page_hote($lang) === 0) {
-                $html .= Module::note_editeur('aucune page hote configuree pour la langue ' . $lang . ' : les cartes ne sont pas cliquables');
-            }
-            $html .= '<ul class="pce-cartes">';
-            foreach ($affichees as $offre) {
-                $html .= self::carte($offre, $lang);
-            }
-            $html .= '</ul>';
+        // Toujours rendu, cache tant qu'une offre au moins est retenue.
+        $html .= '<p class="pce-message pce-aucun"' . ($retenues === [] ? '' : ' hidden') . '>'
+            . esc_html(Vocabulaire::texte('aucun_resultat', $lang)) . '</p>';
+
+        if (Module::page_hote($lang) === 0) {
+            $html .= Module::note_editeur('aucune page hote configuree pour la langue ' . $lang . ' : les cartes ne sont pas cliquables');
         }
+        $html .= '<ul class="pce-cartes">';
+        foreach ($affichees as $offre) {
+            $html .= self::carte($offre, $lang, self::filtrer([$offre], $choix) === []);
+        }
+        $html .= '</ul>';
 
         return $html . '</div>';
     }
@@ -352,21 +374,44 @@ final class Shortcode
             $html .= '</select></div>';
         }
 
+        // « Reinitialiser » est toujours rendu (le script le montre ou le
+        // cache), cache tant qu'aucun choix n'est actif.
         $html .= '<div class="pce-filtre pce-filtre--actions">'
-            . '<button type="submit" class="pce-bouton wp-element-button">' . esc_html(Vocabulaire::texte('filtrer', $lang)) . '</button>';
-        if ($choix !== []) {
-            $html .= ' <a class="pce-reinitialiser" href="' . esc_url($action) . '">' . esc_html(Vocabulaire::texte('reinitialiser', $lang)) . '</a>';
-        }
+            . '<button type="submit" class="pce-bouton wp-element-button">' . esc_html(Vocabulaire::texte('filtrer', $lang)) . '</button>'
+            . ' <a class="pce-reinitialiser" href="' . esc_url($action) . '"' . ($choix === [] ? ' hidden' : '') . '>'
+            . esc_html(Vocabulaire::texte('reinitialiser', $lang)) . '</a>';
         return $html . '</div></form>';
     }
 
-    private static function carte(array $o, string $lang): string
+    /**
+     * Les cles de filtre d'une carte, jetons separes par des espaces. Une
+     * categorie porte toute sa chaine (parent et feuille) : choisir le parent
+     * retient ainsi ses feuilles, comme `filtrer()` cote serveur.
+     *
+     * @return array<string, string> filtre => jetons
+     */
+    public static function cles_carte(array $o): array
+    {
+        return [
+            'lieu'      => implode(' ', array_keys(self::lieux($o, 'fr'))),
+            'type'      => Vocabulaire::dans('employment_type', $o['employment_type'] ?? null) ? (string) $o['employment_type'] : '',
+            'horaire'   => Vocabulaire::dans('schedule', $o['schedule'] ?? null) ? (string) $o['schedule'] : '',
+            'categorie' => implode(' ', array_column(self::categories($o), 'slug')),
+            'etiquette' => implode(' ', array_column(self::etiquettes($o), 'slug')),
+        ];
+    }
+
+    private static function carte(array $o, string $lang, bool $cachee = false): string
     {
         $titre = (string) ($o['title'] ?? '');
         $slug = is_string($o['slug'] ?? null) ? $o['slug'] : '';
         $url = Module::url_fiche($lang, $slug);
 
-        $html = '<li class="pce-carte' . (!empty($o['featured']) ? ' pce-carte--vedette' : '') . '">';
+        $html = '<li class="pce-carte' . (!empty($o['featured']) ? ' pce-carte--vedette' : '') . '"';
+        foreach (self::cles_carte($o) as $f => $jetons) {
+            $html .= ' data-' . $f . '="' . esc_attr($jetons) . '"';
+        }
+        $html .= ($cachee ? ' hidden' : '') . '>';
         if (!empty($o['featured'])) {
             $html .= '<span class="pce-pastille pce-pastille--vedette">' . esc_html(Vocabulaire::texte('vedette', $lang)) . '</span>';
         }
@@ -418,6 +463,79 @@ final class Shortcode
         $url = $id ? get_permalink($id) : '';
         return is_string($url) && $url !== '' ? $url : home_url('/');
     }
+
+    // ─── Filtres instantanes ────────────────────────────────────────────────
+
+    /**
+     * Le script des filtres, une seule fois par page meme avec plusieurs
+     * listes (il traite chaque `.pce-liste-bloc`). Handle sans source, en
+     * pied de page : il s'execute apres le rendu des listes.
+     */
+    private static function enfiler_script_filtres(): void
+    {
+        if (wp_script_is(self::HANDLE_FILTRES, 'enqueued')) {
+            return;
+        }
+        wp_register_script(self::HANDLE_FILTRES, false, [], PRATCOM_CONNECT_BRIDGE_VERSION, ['in_footer' => true]);
+        wp_enqueue_script(self::HANDLE_FILTRES);
+        wp_add_inline_script(self::HANDLE_FILTRES, self::SCRIPT_FILTRES);
+    }
+
+    /**
+     * Filtrage dans la page. Une carte reste visible si, pour chaque filtre
+     * choisi, la valeur figure parmi les jetons de son attribut. Aucun appel
+     * reseau, aucun `innerHTML` : le compte se recompose avec les gabarits
+     * portes par `.pce-compte`.
+     */
+    private const SCRIPT_FILTRES = <<<'JS'
+(function () {
+  'use strict';
+  var each = function (liste, fn) { Array.prototype.forEach.call(liste, fn); };
+  each(document.querySelectorAll('.pce-liste-bloc'), function (bloc) {
+    var form = bloc.querySelector('form.pce-filtres');
+    if (!form || form.classList.contains('pce-filtres--js')) return;
+    form.classList.add('pce-filtres--js');
+    var selects = form.querySelectorAll('select[name^="pce_"]');
+    var cartes = bloc.querySelectorAll('.pce-carte');
+    var compte = bloc.querySelector('.pce-compte');
+    var aucun = bloc.querySelector('.pce-aucun');
+    var reinit = form.querySelector('.pce-reinitialiser');
+    function appliquer() {
+      var choix = {};
+      each(selects, function (s) { if (s.value !== '') choix[s.name.slice(4)] = s.value; });
+      var cles = Object.keys(choix);
+      var n = 0;
+      each(cartes, function (c) {
+        var ok = cles.every(function (f) {
+          return (c.getAttribute('data-' + f) || '').split(/\s+/).indexOf(choix[f]) !== -1;
+        });
+        c.hidden = !ok;
+        if (ok) n++;
+      });
+      if (compte) {
+        var g = compte.getAttribute(n === 0 ? 'data-zero' : (n === 1 ? 'data-un' : 'data-plusieurs'));
+        if (g) compte.textContent = g.replace('%d', String(n));
+      }
+      if (aucun) aucun.hidden = n !== 0;
+      if (reinit) reinit.hidden = cles.length === 0;
+      var url = new URL(window.location.href);
+      each(selects, function (s) { if (s.value !== '') url.searchParams.set(s.name, s.value); else url.searchParams.delete(s.name); });
+      window.history.replaceState(window.history.state, '', url.toString());
+    }
+    form.addEventListener('change', function (e) { if (e.target && e.target.tagName === 'SELECT') appliquer(); });
+    form.addEventListener('submit', function (e) { e.preventDefault(); appliquer(); });
+    if (reinit) {
+      reinit.addEventListener('click', function (e) {
+        e.preventDefault();
+        each(selects, function (s) { s.value = ''; });
+        appliquer();
+      });
+    }
+    // Retour arriere : le navigateur peut restaurer les listes deroulantes.
+    window.addEventListener('pageshow', function (e) { if (e.persisted) appliquer(); });
+  });
+})();
+JS;
 
     // ─── Style ──────────────────────────────────────────────────────────────
 
@@ -489,6 +607,9 @@ final class Shortcode
             . '.pce-filtre label{font-size:.875em;font-weight:600}'
             . '.pce-filtre select{width:100%;max-width:100%;min-height:44px}'
             . '.pce-filtre--actions{flex:0 0 auto;flex-direction:row;align-items:center;gap:12px}'
+            // `hidden` doit gagner sur `display:flex` des cartes (filtres 2.2.1).
+            . '.pce [hidden]{display:none!important}'
+            . '.pce-filtres--js .pce-filtre--actions button{display:none}'
             . '.pce-bouton{display:inline-block;min-height:44px;padding:10px 20px;cursor:pointer;text-decoration:none}'
             . '.pce-compte{margin:0 0 12px;font-size:.9em;opacity:.8}'
             . '.pce-cartes{list-style:none;margin:0;padding:0;display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr))}'
