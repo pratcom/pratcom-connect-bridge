@@ -39,6 +39,19 @@ final class Catalogue
     public const OPTION = 'pratcom_connect_jobs_catalogue';
     public const OPTION_ERREUR = 'pratcom_connect_jobs_catalogue_derniere_erreur';
     public const TRANSIENT_FRAIS = 'pratcom_connect_jobs_catalogue_frais';
+
+    /**
+     * Instant de la derniere lecture reussie (200 ou 304). Petite option a
+     * part : un 304 ne reecrit pas tout le catalogue pour dater la lecture.
+     */
+    public const OPTION_LU = 'pratcom_connect_jobs_catalogue_lu';
+
+    /**
+     * Plafond du catalogue serialise. Au-dela, `max_allowed_packet` de MySQL
+     * (souvent 4 Mo sur les hebergements mutualises) peut refuser
+     * l'ecriture ; on le dit au lieu d'echouer en silence.
+     */
+    private const TAILLE_MAX = 4 * 1024 * 1024;
     private const TRANSIENT_VERROU = 'pratcom_connect_jobs_catalogue_verrou';
 
     /** Duree de fraicheur (contrat de la mission : 5 min). */
@@ -154,7 +167,7 @@ final class Catalogue
             'charge'       => $garde !== null,
             'sain'         => $garde !== null && !$en_panne,
             'generated_at' => (string) ($garde['generated_at'] ?? ''),
-            'fetched_at'   => (int) ($garde['fetched_at'] ?? 0),
+            'fetched_at'   => $garde === null ? 0 : max((int) ($garde['fetched_at'] ?? 0), (int) get_option(self::OPTION_LU, 0)),
             'etag'         => (string) ($garde['etag'] ?? ''),
             'erreur'       => $erreur,
         ];
@@ -199,9 +212,9 @@ final class Catalogue
             $code = (int) wp_remote_retrieve_response_code($rep);
 
             if ($code === 304 && $page === 0 && $garde !== null) {
-                // Rien n'a bouge : on prolonge la fraicheur, les donnees restent.
-                $garde['fetched_at'] = time();
-                update_option(self::OPTION, $garde, false);
+                // Rien n'a bouge : on prolonge la fraicheur, les donnees restent
+                // telles quelles (le catalogue n'est PAS reecrit).
+                update_option(self::OPTION_LU, time(), false);
                 self::resoudre_erreur();
                 set_transient(self::TRANSIENT_FRAIS, $espace, self::TTL);
                 return;
@@ -209,7 +222,9 @@ final class Catalogue
 
             if ($code !== 200) {
                 $corps = json_decode((string) wp_remote_retrieve_body($rep), true);
-                $nom = (is_array($corps) && is_string($corps['error'] ?? null)) ? $corps['error'] : '';
+                // Le code d'erreur vient du reseau : borne et assaini avant
+                // d'etre garde (il est affiche dans l'onglet).
+                $nom = (is_array($corps) && is_string($corps['error'] ?? null)) ? sanitize_key(substr($corps['error'], 0, 64)) : '';
                 self::noter_erreur($nom !== '' ? $nom : 'http_' . $code, $code);
                 $pause = self::PAUSE_ERREUR;
                 if ($code === 429) {
@@ -240,14 +255,26 @@ final class Catalogue
 
             $suivant = $corps['next_cursor'] ?? null;
             if (!is_string($suivant) || $suivant === '') {
-                update_option(self::OPTION, [
+                $valeur = [
                     'workspace'    => $espace,
                     'generated_at' => $generated_at,
                     'etag'         => $premier_etag,
                     'fetched_at'   => time(),
                     'count'        => count($offres),
                     'offres'       => $offres,
-                ], false);
+                ];
+                // Une ecriture refusee laisserait l'ancien catalogue en place
+                // tout en se disant « sain » : on verifie, et on le dit.
+                // (`update_option` rend aussi false quand la valeur est
+                // identique : ce cas-la n'est pas un echec.)
+                $serialise = (string) maybe_serialize($valeur);
+                $trop_gros = strlen($serialise) > self::TAILLE_MAX;
+                if ($trop_gros || (!update_option(self::OPTION, $valeur, false) && maybe_serialize(get_option(self::OPTION)) !== $serialise)) {
+                    self::noter_erreur('catalogue_trop_gros', 200);
+                    self::pause(self::PAUSE_ERREUR, $espace);
+                    return;
+                }
+                update_option(self::OPTION_LU, $valeur['fetched_at'], false);
                 self::resoudre_erreur();
                 set_transient(self::TRANSIENT_FRAIS, $espace, self::TTL);
                 return;

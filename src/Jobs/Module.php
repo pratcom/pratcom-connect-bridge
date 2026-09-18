@@ -117,6 +117,11 @@ final class Module
         if ($base === '' || $slug === '') {
             return '';
         }
+        // Permaliens « simples » : aucune regle de reecriture ne s'applique,
+        // la fiche passe par la variable de requete publique.
+        if ((string) get_option('permalink_structure', '') === '') {
+            return add_query_arg(Fiche::QUERY_VAR, rawurlencode($slug), $base);
+        }
         return trailingslashit($base) . rawurlencode($slug) . '/';
     }
 
@@ -146,7 +151,11 @@ final class Module
             if ($chemin === '') {
                 continue;
             }
-            $regles['^' . preg_quote($chemin, '#') . '/([^/]+)/?$'] =
+            // Les segments que WordPress sert lui-meme sous une page (pagination,
+            // flux, embed, trackback, pages de commentaires, fichier joint)
+            // ne sont jamais pris pour un slug d'offre.
+            $regles['^' . preg_quote($chemin, '#')
+                . '/(?!(?:page|embed|feed|trackback|attachment|comment-page-\d+|\d+)/?$)([^/]+)/?$'] =
                 'index.php?pagename=' . $chemin . '&' . Fiche::QUERY_VAR . '=$matches[1]';
         }
         if (self::reprendre_jobs()) {
@@ -204,14 +213,21 @@ final class Module
         ));
     }
 
-    /** Une offre par langue et slug, ou `null`. */
+    /**
+     * Une offre par langue et slug, ou `null`.
+     *
+     * Normalisee DES DEUX COTES : l'URL arrive assainie (`sanitize_title`),
+     * le slug du CRM peut porter une majuscule ou un accent. Comparer le brut
+     * a l'assaini rendrait 301 vers la liste pour une offre qui existe.
+     */
     public static function offre(string $lang, string $slug): ?array
     {
+        $slug = sanitize_title($slug);
         if ($slug === '') {
             return null;
         }
         foreach (self::offres_de($lang) as $o) {
-            if (($o['slug'] ?? null) === $slug) {
+            if (sanitize_title((string) ($o['slug'] ?? '')) === $slug) {
                 return $o;
             }
         }
@@ -226,7 +242,12 @@ final class Module
             return null;
         }
         foreach (Catalogue::offres() as $o) {
-            if (is_array($o) && ($o['group_key'] ?? null) === $cle && ($o['lang'] ?? '') !== ($offre['lang'] ?? '')) {
+            if (
+                is_array($o)
+                && ($o['group_key'] ?? null) === $cle
+                && in_array($o['lang'] ?? '', Vocabulaire::LANGUES, true)
+                && ($o['lang'] ?? '') !== ($offre['lang'] ?? '')
+            ) {
                 return $o;
             }
         }

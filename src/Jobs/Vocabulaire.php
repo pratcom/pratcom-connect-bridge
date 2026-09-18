@@ -194,7 +194,17 @@ final class Vocabulaire
         $lang = self::langue($lang);
         $brut = self::TEXTES[$cle][$lang] ?? $cle;
         $txt = self::filtrer($cle, $brut, $lang);
-        return $args === [] ? $txt : vsprintf($txt, $args);
+        if ($args === []) {
+            return $txt;
+        }
+        // Un texte reformule par filtre peut perdre ou doubler un `%s` :
+        // PHP 8 leve alors une exception. On rend le texte tel quel plutot
+        // que de casser la page.
+        try {
+            return vsprintf($txt, $args);
+        } catch (\ValueError | \ArgumentCountError $e) {
+            return $txt;
+        }
     }
 
     /** « 3 offres » / « 1 offre ». */
@@ -204,7 +214,7 @@ final class Vocabulaire
     }
 
     /** Date longue dans la langue de l'offre, fuseau du site. Vide si illisible. */
-    public static function date(?string $iso, string $lang): string
+    public static function date($iso, string $lang): string
     {
         $ts = self::horodatage($iso);
         if ($ts === null) {
@@ -220,8 +230,14 @@ final class Vocabulaire
         return ($jour === 1 ? '1er' : (string) $jour) . ' ' . $mois . ' ' . $d->format('Y');
     }
 
-    /** Horodatage Unix d'une date ISO 8601, `null` si illisible. */
-    public static function horodatage(?string $iso): ?int
+    /**
+     * Horodatage Unix d'une date ISO 8601, `null` si illisible. Parametre
+     * non type : la charge utile est distante, un `posted_at` non chaine ne
+     * doit pas lever un TypeError fatal.
+     *
+     * @param mixed $iso
+     */
+    public static function horodatage($iso): ?int
     {
         if (!is_string($iso) || trim($iso) === '') {
             return null;

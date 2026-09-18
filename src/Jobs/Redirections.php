@@ -56,7 +56,7 @@ final class Redirections
         if ($slug !== '' && $slug !== sanitize_title(self::LISTE)) {
             $offre = Module::offre($lang, $slug);
             if ($offre !== null) {
-                $url = Module::url_fiche($lang, $slug);
+                $url = Module::url_fiche($lang, (string) $offre['slug']);
                 if ($url !== '') {
                     return $url;
                 }

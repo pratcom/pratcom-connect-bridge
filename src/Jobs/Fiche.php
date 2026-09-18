@@ -44,6 +44,9 @@ final class Fiche
         add_action('template_redirect', [$this, 'resoudre'], 1);
 
         add_filter('the_content', [$this, 'contenu'], 9999);
+        // Elementor Theme Builder : le widget « Contenu de la publication »
+        // passe par ce filtre-ci. Meme garde (page hote, boucle principale).
+        add_filter('elementor/frontend/the_content', [$this, 'contenu'], 9999);
         add_filter('the_title', [$this, 'titre'], 10, 2);
         add_filter('document_title_parts', [$this, 'titre_document']);
         add_filter('get_canonical_url', [$this, 'canonique'], 10, 2);

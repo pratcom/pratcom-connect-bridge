@@ -9,7 +9,9 @@ namespace Pratcom\Connect\Bridge\Jobs;
  * 0.7.2), architecture Jobs HTML §3.6 :
  *
  *  - obligatoires : `datePosted`, `description`, `hiringOrganization`,
- *    `jobLocation`, `title` (`jobLocation` peut manquer : voir lieu partiel) ;
+ *    `jobLocation`, `title` (`jobLocation` peut manquer : voir lieu partiel ;
+ *    `datePosted` aussi, sans date reelle : jamais une valeur vide) ;
+ *  - `baseSalary` : montant, periode ET devise du vocabulaire, sinon omis ;
  *  - `employmentType` ferme a 8 valeurs, `seasonal` => TEMPORARY, valeur non
  *    mappable => propriete OMISE ;
  *  - lieu : ville ET pays ISO-2, sinon AUCUN `jobLocation` (une adresse
@@ -84,7 +86,6 @@ final class JsonLd
             '@type'              => 'JobPosting',
             'title'              => (string) ($o['title'] ?? ''),
             'description'        => Fiche::description_html((string) ($o['description'] ?? '')),
-            'datePosted'         => self::date_publication($o),
             'hiringOrganization' => self::employeur($o),
             'identifier'         => [
                 '@type' => 'PropertyValue',
@@ -92,6 +93,12 @@ final class JsonLd
                 'value' => (string) ($o['id'] ?? ''),
             ],
         ];
+
+        // Jamais un `datePosted` vide : sans date reelle, la propriete est omise.
+        $publiee = self::date_publication($o);
+        if ($publiee !== '') {
+            $schema['datePosted'] = $publiee;
+        }
 
         if (($ctx['url'] ?? '') !== '') {
             $schema['url'] = (string) $ctx['url'];
@@ -197,10 +204,12 @@ final class JsonLd
         $min = Vocabulaire::montant($o['salary_min'] ?? null);
         $max = Vocabulaire::montant($o['salary_max'] ?? null);
         $unite = Vocabulaire::google_unite_salaire($o['salary_period'] ?? null);
-        if (($min === null && $max === null) || $unite === '') {
+        $devise = strtoupper(trim((string) ($o['salary_currency'] ?? '')));
+        // Comme `Vocabulaire::salaire()` : montant, periode ET devise du
+        // vocabulaire, sinon rien. La devise n'est jamais inventee.
+        if (($min === null && $max === null) || $unite === '' || !Vocabulaire::dans('salary_currency', $devise)) {
             return [];
         }
-        $devise = strtoupper(trim((string) ($o['salary_currency'] ?? '')));
         $valeur = ['@type' => 'QuantitativeValue', 'unitText' => $unite];
         if ($min !== null && $max !== null) {
             $valeur['minValue'] = $min;
@@ -210,7 +219,7 @@ final class JsonLd
         }
         return [
             '@type'    => 'MonetaryAmount',
-            'currency' => preg_match('/^[A-Z]{3}$/', $devise) ? $devise : 'CAD',
+            'currency' => $devise,
             'value'    => $valeur,
         ];
     }

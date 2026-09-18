@@ -293,7 +293,10 @@ final class Shortcode
         if ($ville !== '') {
             $region = trim((string) ($o['location_region'] ?? ''));
             $cle = sanitize_title($ville . ($region !== '' ? '-' . $region : ''));
-            $out[$cle] = $ville . ($region !== '' ? ' (' . strtoupper($region) . ')' : '');
+            // Code court (`QC`, `NS` pour « Nouvelle-Écosse ») quand il se
+            // deduit, sinon la valeur telle quelle, jamais mise en majuscules.
+            $code = Vocabulaire::google_region($region);
+            $out[$cle] = $ville . ($region !== '' ? ' (' . ($code !== '' ? $code : $region) . ')' : '');
         }
         if (!empty($o['is_remote'])) {
             $out[self::LIEU_DISTANCE] = Vocabulaire::texte('a_distance', $lang);
