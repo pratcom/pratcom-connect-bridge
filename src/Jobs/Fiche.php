@@ -31,8 +31,8 @@ final class Fiche
 {
     public const QUERY_VAR = 'pratcom_emploi';
 
-    /** Case de l'onglet Emplois : le theme imprime deja le titre de la page. */
-    public const OPTION_TITRE_THEME = 'pratcom_connect_jobs_titre_theme';
+    /** Case de l'onglet Emplois : rendre le titre de l'offre dans la fiche. */
+    public const OPTION_TITRE_FICHE = 'pratcom_connect_jobs_titre_fiche';
 
     private static ?array $offre = null;
     private static string $lang = '';
@@ -438,11 +438,11 @@ JS;
     }
 
     /**
-     * Le `<h1>` de l'offre est-il rendu dans la fiche ? Oui par defaut : bien
-     * des gabarits de page n'impriment pas le titre. La case de l'onglet
-     * Emplois (« le theme affiche deja le titre ») le retire, sauf si
-     * Elementor masque le titre de la page hote (`hide_title`) : la fiche
-     * porte alors son propre `<h1>`. Le filtre a le dernier mot.
+     * Le `<h1>` de l'offre est-il rendu dans la fiche ? Par defaut non : le
+     * theme affiche le titre de la page, que `titre()` remplace par celui de
+     * l'offre. Il l'est si Elementor masque le titre de la page hote
+     * (`hide_title`) ou si la case de l'onglet Emplois est cochee (gabarit
+     * qui n'imprime pas le titre). Le filtre a le dernier mot.
      */
     private function titre_dans_le_contenu(): bool
     {
@@ -450,14 +450,14 @@ JS;
         $masque = is_array($reglages) && ($reglages['hide_title'] ?? '') === 'yes';
         return (bool) apply_filters(
             'pratcom_connect_jobs_titre_dans_fiche',
-            self::titre_rendu($masque, (bool) get_option(self::OPTION_TITRE_THEME, false)),
+            self::titre_rendu($masque, (bool) get_option(self::OPTION_TITRE_FICHE, false)),
             self::$offre
         );
     }
 
     /** Table de verite du `<h1>` (sans WordPress : le banc l'appelle). */
-    public static function titre_rendu(bool $elementor_masque, bool $theme_affiche_titre): bool
+    public static function titre_rendu(bool $elementor_masque, bool $option_cochee): bool
     {
-        return $elementor_masque || !$theme_affiche_titre;
+        return $elementor_masque || $option_cochee;
     }
 }

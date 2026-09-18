@@ -600,7 +600,11 @@ JS;
     public static function css(): string
     {
         $max = (int) apply_filters('pratcom_connect_jobs_max_width', 1020);
+        // Padding et non marge : une marge s'effondrerait avec celle du
+        // conteneur du constructeur de page.
+        $bloc = max(0, (int) apply_filters('pratcom_connect_jobs_padding_block', 40));
         return '.pce{max-width:' . $max . 'px;margin-inline:auto;padding-inline:clamp(0px,2vw,16px);box-sizing:border-box}'
+            . '.pce-liste-bloc,.pce-fiche{padding-block:' . $bloc . 'px}'
             . '.pce *,.pce *::before,.pce *::after{box-sizing:border-box}'
             . '.pce-filtres{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin:0 0 16px}'
             . '.pce-filtre{display:flex;flex-direction:column;gap:4px;flex:1 1 150px;min-width:0}'

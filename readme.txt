@@ -83,8 +83,9 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 == Changelog ==
 
 = 2.2.1 =
-* Job page: the job title is now rendered in the page content by default (new Jobs tab option for themes that already display the page title). The application form receives the job title without asking the candidate. The form container now carries the data-valeur-poste attribute (forms loader 0.6.0).
+* Job page: new Jobs tab option to render the job title in the page content when the theme does not display it (off by default: no change for existing sites). The application form receives the job title without asking the candidate. The form container now carries the data-valeur-poste attribute (forms loader 0.6.0).
 * Job list: instant filters, without reloading the page; the GET form remains the fallback without JavaScript. The limite attribute of [pratcom_emplois] now caps the whole list rendered on the page: a site with more jobs than limite filters among the first limite jobs in editorial order.
+* Job list and job page: vertical padding (40px by default, pratcom_connect_jobs_padding_block filter) so the blocks no longer touch the page header and footer.
 
 = 2.2.0 =
 * New Jobs module: [pratcom_emplois] shortcode (filterable job list rendered server-side, no JavaScript required), one page per job with JobPosting structured data, FR/EN hreflang between paired jobs, optional 301 takeover of legacy /jobs/ URLs, and a new Jobs tab. Jobs are read from Pratcom Connect (read-only) and require the Jobs feature pack.

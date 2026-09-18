@@ -209,21 +209,21 @@ class JobsTab extends AbstractTab
 
                 <div class="pc-form-field">
                     <label class="pc-form-label">
-                        <input type="checkbox" name="pce_reprendre_jobs" value="1" <?php checked(Module::reprendre_jobs()); ?> />
-                        <?php esc_html_e('Reprendre les anciennes adresses /jobs/', 'pratcom-connect'); ?>
+                        <input type="checkbox" name="pce_titre_fiche" value="1" <?php checked((bool) get_option(Fiche::OPTION_TITRE_FICHE, false)); ?> />
+                        <?php esc_html_e('Rendre le titre de l\'offre dans la fiche (le thème ne l\'affiche pas)', 'pratcom-connect'); ?>
                     </label>
                     <p class="pc-form-help">
-                        <?php esc_html_e('Redirige (301) /jobs/{slug}/ vers la fiche correspondante, ou vers la liste si l\'offre n\'existe plus. À cocher seulement après avoir désactivé l\'ancienne extension d\'offres d\'emploi : tant qu\'elle tourne, ses adresses gardent la main.', 'pratcom-connect'); ?>
+                        <?php esc_html_e('Cochez si la fiche d\'une offre s\'affiche sans titre en haut. Laissez décochée si le thème affiche déjà le titre de la page.', 'pratcom-connect'); ?>
                     </p>
                 </div>
 
                 <div class="pc-form-field">
                     <label class="pc-form-label">
-                        <input type="checkbox" name="pce_titre_theme" value="1" <?php checked((bool) get_option(Fiche::OPTION_TITRE_THEME, false)); ?> />
-                        <?php esc_html_e('Le thème affiche déjà le titre de la page (ne pas répéter le titre de l\'offre dans la fiche)', 'pratcom-connect'); ?>
+                        <input type="checkbox" name="pce_reprendre_jobs" value="1" <?php checked(Module::reprendre_jobs()); ?> />
+                        <?php esc_html_e('Reprendre les anciennes adresses /jobs/', 'pratcom-connect'); ?>
                     </label>
                     <p class="pc-form-help">
-                        <?php esc_html_e('Laissez décochée si la fiche s\'affiche sans titre.', 'pratcom-connect'); ?>
+                        <?php esc_html_e('Redirige (301) /jobs/{slug}/ vers la fiche correspondante, ou vers la liste si l\'offre n\'existe plus. À cocher seulement après avoir désactivé l\'ancienne extension d\'offres d\'emploi : tant qu\'elle tourne, ses adresses gardent la main.', 'pratcom-connect'); ?>
                     </p>
                 </div>
 
@@ -294,7 +294,7 @@ class JobsTab extends AbstractTab
             update_option(Module::OPTION_PAGE_PREFIXE . $lang, $id, true);
         }
         update_option(Module::OPTION_REPRENDRE_JOBS, !empty($_POST['pce_reprendre_jobs']) ? 1 : 0, true);
-        update_option(Fiche::OPTION_TITRE_THEME, !empty($_POST['pce_titre_theme']) ? 1 : 0, true);
+        update_option(Fiche::OPTION_TITRE_FICHE, !empty($_POST['pce_titre_fiche']) ? 1 : 0, true);
 
         // Pas de flush ICI : cette requete a deja pose les regles des ANCIENS
         // reglages sur `init`, et un flush les graverait avec les nouvelles.
