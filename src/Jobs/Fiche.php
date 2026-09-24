@@ -16,6 +16,8 @@ use Pratcom\Connect\Bridge\Forms\Shortcode as FormsShortcode;
  *
  * ─── LES TROIS ISSUES D'UN SLUG ─────────────────────────────────────────────
  *  1. connu au catalogue de la langue : la fiche ;
+ *  1b. ancien slug d'une offre renommee (`anciens_slugs`), catalogue SAIN :
+ *     301 vers la fiche actuelle de cette offre, dans la meme langue ;
  *  2. inconnu, catalogue SAIN : 301 vers la liste de la langue (architecture
  *     §3.5 : un lien partage apres la fermeture mene aux autres offres, pas a
  *     une impasse) ;
@@ -152,6 +154,19 @@ final class Fiche
         }
 
         if ($etat['sain']) {
+            // Ancienne adresse d'une offre renommee : 301 vers sa fiche
+            // actuelle, AVANT la liste, pour que les liens deja partages
+            // menent encore a l'offre. Sous la meme garde que la liste :
+            // jamais une redirection sur une panne.
+            $renommee = Module::offre_par_ancien_slug($lang, $slug);
+            if ($renommee !== null) {
+                $fiche = Module::url_fiche($lang, (string) ($renommee['slug'] ?? ''));
+                if ($fiche !== '') {
+                    wp_safe_redirect($fiche, 301, 'Pratcom Connect');
+                    exit;
+                }
+            }
+
             $liste = Module::url_liste($lang);
             if ($liste !== '') {
                 wp_safe_redirect($liste, 301, 'Pratcom Connect');

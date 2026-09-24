@@ -5,7 +5,8 @@ namespace Pratcom\Connect\Bridge\Jobs;
 /**
  * Reprise des anciennes adresses `/jobs/{slug}/` (extension d'offres
  * precedente) : 301 vers la fiche si le slug existe au catalogue de la
- * langue, sinon 301 vers la liste.
+ * langue (slug actuel, puis ancien slug d'une offre renommee), sinon 301
+ * vers la liste.
  *
  * ─── ACTIVE SEULEMENT PAR LA CASE « REPRENDRE /jobs/ » ──────────────────────
  * Tant que l'ancienne extension tourne, SA reecriture `/jobs/` garde la main :
@@ -57,6 +58,15 @@ final class Redirections
             $offre = Module::offre($lang, $slug);
             if ($offre !== null) {
                 $url = Module::url_fiche($lang, (string) $offre['slug']);
+                if ($url !== '') {
+                    return $url;
+                }
+            }
+            // Offre renommee depuis : droit a sa fiche actuelle, en UN saut
+            // (pas /jobs/ -> ancienne fiche -> nouvelle fiche).
+            $renommee = Module::offre_par_ancien_slug($lang, $slug);
+            if ($renommee !== null) {
+                $url = Module::url_fiche($lang, (string) ($renommee['slug'] ?? ''));
                 if ($url !== '') {
                     return $url;
                 }
