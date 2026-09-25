@@ -234,6 +234,91 @@ final class Module
         return null;
     }
 
+    /**
+     * L'offre dont un ANCIEN slug (champ `anciens_slugs` du catalogue) est
+     * `$slug`, dans la MEME langue, ou `null`.
+     *
+     * Un meme ancien slug peut exister dans les deux langues : chaque langue
+     * mene a sa propre offre, jamais a celle de l'autre.
+     *
+     * Un catalogue qui ne porte pas encore le champ, ou un champ qui n'est pas
+     * un tableau, vaut `[]` : rien ne change pour lui.
+     *
+     * Une offre dont l'ancien slug est aussi son slug actuel est ignoree :
+     * `offre()` la trouve deja, et la rediriger vers elle-meme bouclerait.
+     *
+     * Deux offres pour le meme ancien slug (l'api le refuse, on ne s'y fie
+     * pas) : la plus recente par `updated_at` gagne, et un avertissement est
+     * journalise une fois par version du catalogue.
+     */
+    public static function offre_par_ancien_slug(string $lang, string $slug): ?array
+    {
+        $slug = sanitize_title($slug);
+        if ($slug === '') {
+            return null;
+        }
+        $trouvees = [];
+        foreach (self::offres_de($lang) as $o) {
+            $anciens = $o['anciens_slugs'] ?? [];
+            if (!is_array($anciens)) {
+                continue;
+            }
+            $actuel = sanitize_title((string) ($o['slug'] ?? ''));
+            if ($actuel === '' || $actuel === $slug) {
+                continue;
+            }
+            foreach ($anciens as $ancien) {
+                if (is_string($ancien) && sanitize_title($ancien) === $slug) {
+                    $trouvees[] = $o;
+                    break;
+                }
+            }
+        }
+        if ($trouvees === []) {
+            return null;
+        }
+        if (count($trouvees) === 1) {
+            return $trouvees[0];
+        }
+
+        $gagnante = $trouvees[0];
+        foreach ($trouvees as $o) {
+            if (self::horodatage($o) > self::horodatage($gagnante)) {
+                $gagnante = $o;
+            }
+        }
+        self::avertir_doublon($lang, $slug, $trouvees);
+        return $gagnante;
+    }
+
+    /** `updated_at` d'une offre en secondes, 0 si absent ou illisible. */
+    private static function horodatage(array $offre): int
+    {
+        $t = strtotime((string) ($offre['updated_at'] ?? ''));
+        return $t === false ? 0 : $t;
+    }
+
+    /**
+     * Journalise un ancien slug porte par plusieurs offres. Une fois par
+     * langue, slug et version du catalogue (etag), pas a chaque visite.
+     */
+    private static function avertir_doublon(string $lang, string $slug, array $offres): void
+    {
+        $cle = 'pratcom_connect_jobs_doublon_' . md5($lang . '|' . $slug . '|' . Catalogue::etat()['etag']);
+        if (get_transient($cle) !== false) {
+            return;
+        }
+        set_transient($cle, 1, DAY_IN_SECONDS);
+        $ids = array_map(static fn($o) => (string) ($o['id'] ?? '?'), $offres);
+        error_log(sprintf(
+            '[Pratcom Connect] Emplois : ancien slug "%s" (%s) porte par %d offres (%s) ; la plus recente est retenue.',
+            $slug,
+            $lang,
+            count($offres),
+            implode(', ', $ids)
+        ));
+    }
+
     /** L'offre soeur (meme `group_key`) dans l'autre langue, ou `null`. */
     public static function offre_soeur(array $offre): ?array
     {

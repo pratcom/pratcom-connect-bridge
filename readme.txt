@@ -4,7 +4,7 @@ Tags: consent, privacy, cookies, forms, chatbot
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 2.2.1
+Stable tag: 2.2.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -81,6 +81,9 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 7. Chat tab — train your Connect Chat assistant directly from wp-admin (mirror of the Connect training dashboard).
 
 == Changelog ==
+
+= 2.2.2 =
+* Job page: when a job's address changes, its previous addresses (listed by Pratcom Connect in the anciens_slugs field) now redirect with a 301 to the job's current page, in the same language, instead of to the job list. Legacy /jobs/{slug}/ URLs reach the renamed job in a single redirect. No change while the catalogue does not provide the field; a job page still answers 503 while the catalogue is unavailable.
 
 = 2.2.1 =
 * Job page: new Jobs tab option to render the job title in the page content when the theme does not display it (off by default: no change for existing sites). The application form receives the job title without asking the candidate. The form container now carries the data-valeur-poste attribute (forms loader 0.6.0).
