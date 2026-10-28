@@ -53,6 +53,7 @@ class HealthCheck
 
         if ($res['ok'] ?? false) {
             update_option(Plugin::OPTION_FEATURE_PACKS, $res['feature_packs'] ?? []);
+            Suspension::enregistrer($res['suspension'] ?? null); // M4 : absent = actif.
             update_option(Plugin::OPTION_LAST_HANDSHAKE, current_time('mysql'));
             update_option(Plugin::OPTION_STATUS, 'connected');
             delete_option(Plugin::OPTION_LAST_ERROR);
