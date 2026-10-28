@@ -36,6 +36,7 @@ class Plugin
 
         new Loader();
         new HealthCheck();
+        new Suspension(); // M4 : page « Service suspendu » quand Connect le demande.
         new Forms\Shortcode();
         Jobs\Module::boot(); // Emplois (liste, fiches, JobPosting) : barriere `jobs` dans Module.
         new Privacy\PolicyShortcode();
