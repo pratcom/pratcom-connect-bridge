@@ -6,7 +6,7 @@ namespace Pratcom\Connect\Bridge\Privacy;
  * Mini-scan local des temoins + agregation des lignes de la declaration
  * (Privacy Free, spec legal pages org §1/§5, chantier feat/org-legal-pages).
  *
- * 100 % LOCAL — zero appel serveur Pratcom :
+ * 100 % LOCAL, zero appel serveur Pratcom :
  *   - Un petit script front (privacy-scan.js) est enqueue UNIQUEMENT pour les
  *     administrateurs connectes (current_user_can manage_options). Il lit les
  *     NOMS de document.cookie et les POST a une action admin-ajax protegee par
@@ -83,7 +83,7 @@ class CookieScan
      *
      * Cas particulier : 'wordpress_test_cookie' figure aussi dans la liste des
      * cookies internes WordPress (WP_INTERNAL_EXACT). Etre present ici l'EXEMPTE
-     * du filtre is_wp_internal() — et de lui SEUL — afin qu'il puisse paraitre,
+     * du filtre is_wp_internal(), et de lui SEUL, afin qu'il puisse paraitre,
      * classe « necessaire ». Tous les autres cookies d'authentification/admin
      * (wp-settings-*, wordpress_logged_in_*, etc.) restent filtres normalement.
      *
@@ -312,7 +312,7 @@ class CookieScan
             ];
         }
 
-        // 2) Liste manuelle (OPTION_COOKIES) — lignes {name,provider,purpose,expiry,category}.
+        // 2) Liste manuelle (OPTION_COOKIES), lignes {name,provider,purpose,expiry,category}.
         $manual = get_option(LocalPolicy::OPTION_COOKIES, []);
         if (is_array($manual)) {
             foreach ($manual as $c) {
@@ -393,7 +393,7 @@ class CookieScan
 
     /**
      * Noms detectes par le scan qui ne sont couverts NI par un preset
-     * selectionne NI par la liste manuelle — ce sont ceux a classer.
+     * selectionne NI par la liste manuelle, ce sont ceux a classer.
      *
      * @return string[]
      */

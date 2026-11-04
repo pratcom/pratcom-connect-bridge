@@ -125,7 +125,7 @@ class Plugin
         delete_transient(Jobs\Catalogue::TRANSIENT_FRAIS);
         delete_transient('pratcom_connect_jobs_catalogue_verrou');
         // NB : la table {prefix}pratcom_consents est volontairement CONSERVÉE
-        // (preuve légale Loi 25 du client — même modèle que Complianz).
+        // (preuve légale Loi 25 du client, même modèle que Complianz).
         HealthCheck::unschedule();
         Suspension::deprogrammer();
     }
@@ -150,7 +150,7 @@ class Plugin
 
     /**
      * Retourne la palette de marque stockee localement (BrandTheme).
-     * Toutes les cles sont optionnelles — seul `primary` est requis pour
+     * Toutes les cles sont optionnelles, seul `primary` est requis pour
      * que le handshake pousse le theme au serveur.
      *
      * @return array{primary?: string, onPrimary?: string, primaryDark?: string, secondary?: string, text?: string, font?: string, radius?: string, logoUrl?: string}

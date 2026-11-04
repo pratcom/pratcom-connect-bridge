@@ -12,7 +12,7 @@ namespace Pratcom\Connect\Bridge;
  * Le loader.js cote serveur lit window.__pratcomConnect au boot et charge
  * dynamiquement les bundles selon les feature_packs actifs (chat, privacy, etc.).
  * `theme` (palette de marque) est lu par privacy.js (+ futurs modules) pour
- * harmoniser les couleurs avec celles du client — presentation uniquement.
+ * harmoniser les couleurs avec celles du client, presentation uniquement.
  */
 class Loader
 {

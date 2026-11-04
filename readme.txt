@@ -12,15 +12,15 @@ Free, 100% local cookie consent banner compliant with Quebec's Law 25. Optional 
 
 == Description ==
 
-**Pratcom Connect** adds a cookie consent banner to your WordPress site, designed for compliance with Quebec's Law 25 — free, with no account required and no calls to any external server.
+**Pratcom Connect** adds a cookie consent banner to your WordPress site, designed for compliance with Quebec's Law 25, free, with no account required and no calls to any external server.
 
 The plugin interface and the consent banner are fully bilingual (French and English).
 
 = Free (no account required) =
 
 * **Law 25 consent banner**: cookie categories (necessary, analytics, marketing), editable FR/EN texts, design adaptable to your brand (primary color + rich palette, WCAG contrast computed automatically).
-* **Presets for popular plugins**: check the tools you use (Google Analytics 4, Meta Pixel, Hotjar, and more) — the cookie declaration and blocking rules configure themselves. Automatic suggestions based on the plugins active on your site (local detection, no data transmitted).
-* **Google Consent Mode v2 (optional)**: when enabled, the banner emits Google's consent signals (analytics_storage, ad_storage, ad_user_data, ad_personalization) so Google Analytics 4 and Google Ads respect the visitor's choice — denied by default until consent. Off by default; no effect unless you use Google tags.
+* **Presets for popular plugins**: check the tools you use (Google Analytics 4, Meta Pixel, Hotjar, and more), the cookie declaration and blocking rules configure themselves. Automatic suggestions based on the plugins active on your site (local detection, no data transmitted).
+* **Google Consent Mode v2 (optional)**: when enabled, the banner emits Google's consent signals (analytics_storage, ad_storage, ad_user_data, ad_personalization) so Google Analytics 4 and Google Ads respect the visitor's choice, denied by default until consent. Off by default; no effect unless you use Google tags.
 * **Legal pages**: a privacy policy and a standalone cookie declaration, both bilingual and generated automatically. They are created on activation and kept up to date from your presets, your manual list and a local scan. Shortcodes: [pratcom_privacy_policy] and [pratcom_cookie_declaration].
 * **Local consent registry**: proof of consent stored in your WordPress database, with CSV export.
 
@@ -73,13 +73,13 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 
 == Screenshots ==
 
-1. Dashboard — connection overview: workspace, active modules and last handshake.
-2. Privacy tab — free Law 25 consent banner with popular plugin presets (GA4, Meta Pixel, WooCommerce and more), local consent registry and CSV export.
-3. Forms tab — your Connect Forms with copyable shortcodes.
-4. Appearance — brand palette with automatic WCAG-compliant contrast, shared by all modules.
+1. Dashboard: connection overview (workspace, active modules and last handshake).
+2. Privacy tab: free Law 25 consent banner with popular plugin presets (GA4, Meta Pixel, WooCommerce and more), local consent registry and CSV export.
+3. Forms tab: your Connect Forms with copyable shortcodes.
+4. Appearance: brand palette with automatic WCAG-compliant contrast, shared by all modules.
 5. Modules: Connect Chat, Forms, Privacy and Jobs at a glance (activate them with your Pratcom Connect account).
-6. Front-end — the consent banner live on a website, in the visitor's language.
-7. Chat tab — train your Connect Chat assistant directly from wp-admin (mirror of the Connect training dashboard).
+6. Front-end: the consent banner live on a website, in the visitor's language.
+7. Chat tab: train your Connect Chat assistant directly from wp-admin (mirror of the Connect training dashboard).
 
 == Changelog ==
 
@@ -157,18 +157,18 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 * Build: the .wordpress-org assets directory is no longer bundled in the distributed plugin zip.
 
 = 2.0.6 =
-* Documented phpcs annotation on the core 'the_content' filter call in the site-scan REST controller (Plugin Check false positive — no functional change).
+* Documented phpcs annotation on the core 'the_content' filter call in the site-scan REST controller (Plugin Check false positive, no functional change).
 
 = 2.0.5 =
-* All admin JavaScript now loads through wp_enqueue_script / wp_localize_script — no more inline script tags or inline event attributes (WordPress.org review feedback).
+* All admin JavaScript now loads through wp_enqueue_script / wp_localize_script, no more inline script tags or inline event attributes (WordPress.org review feedback).
 
 = 2.0.4 =
-* "Powered by Pratcom Connect" badge in the free consent banner — enabled by default, can be turned off with a checkbox in the Privacy tab or the documented `pratcom_connect_branding` filter (see FAQ).
+* "Powered by Pratcom Connect" badge in the free consent banner, enabled by default, can be turned off with a checkbox in the Privacy tab or the documented `pratcom_connect_branding` filter (see FAQ).
 * New "Attribution Notice" FAQ entry documenting badge removal options.
 
 = 2.0.3 =
-* Privacy: 14 new documented presets (Wordfence, Polylang, WordPress comments, Smash Balloon, wpDiscuz, TranslatePress, Stripe, PayPal, LiveChat, Tawk.to, Crisp, OptinMonster, Spotify, Pinterest pixel) — 34 total.
-* Privacy: presets now grouped by origin — "Popular WordPress plugins" vs "External services and scripts".
+* Privacy: 14 new documented presets (Wordfence, Polylang, WordPress comments, Smash Balloon, wpDiscuz, TranslatePress, Stripe, PayPal, LiveChat, Tawk.to, Crisp, OptinMonster, Spotify, Pinterest pixel), 34 total.
+* Privacy: presets now grouped by origin, "Popular WordPress plugins" vs "External services and scripts".
 * Modules tab: "Open" button on every active module.
 * New read-only REST route exposing published pages to the Connect Chat site-scan training feature (pck_ key required).
 

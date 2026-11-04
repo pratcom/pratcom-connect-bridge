@@ -19,7 +19,7 @@ namespace Pratcom\Connect\Bridge;
  *   2. Forme liste (heritee, toleree par les routes de l'API) :
  *        [ "chat", "forms" ]
  *
- * REGLE : `enabled` ABSENT de la forme table vaut ACTIF. C'est volontaire —
+ * REGLE : `enabled` ABSENT de la forme table vaut ACTIF. C'est volontaire :
  * un serveur qui n'emettrait pas encore la cle couperait sinon tous les
  * modules d'un coup. Seul un `enabled` explicitement faux desactive.
  *
@@ -144,7 +144,7 @@ final class FeaturePacks
     /**
      * Interpretation defensive d'un drapeau d'abonnement.
      *
-     * `(bool)` seul ferait passer la chaine "false" pour vraie — un echec dans
+     * `(bool)` seul ferait passer la chaine "false" pour vraie, un echec dans
      * la mauvaise direction pour une barriere d'abonnement. Les valeurs JSON
      * decodees sont de vrais booleens ; ce filet ne sert qu'aux options
      * heritees ou serialisees en chaine.

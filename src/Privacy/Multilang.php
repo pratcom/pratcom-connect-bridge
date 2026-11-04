@@ -3,7 +3,7 @@
 namespace Pratcom\Connect\Bridge\Privacy;
 
 /**
- * Détection et pilotage multilingue (WPML / Polylang) — W5, pages légales
+ * Détection et pilotage multilingue (WPML / Polylang), W5, pages légales
  * bilingues. Helper purement défensif : AUCUNE dépendance dure. Tous les
  * appels aux fonctions / filtres / actions WPML et Polylang sont gardés par
  * function_exists / defined / has_filter. Si ni WPML ni Polylang n'est
@@ -166,7 +166,7 @@ class Multilang
      *                                            Utilisé par Polylang pour lier
      *                                            le groupe en une fois.
      * @param string               $default_lang Code de la langue par défaut
-     *                                            (source) — utile à WPML.
+     *                                            (source), utile à WPML.
      * @param int                  $source_id    ID de la page source (langue
      *                                            par défaut) ; 0 si celle-ci
      *                                            EST la source. Sert à WPML

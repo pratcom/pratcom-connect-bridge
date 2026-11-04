@@ -3,7 +3,7 @@
 namespace Pratcom\Connect\Bridge\Privacy;
 
 /**
- * « Creer la page » — genere (ou detecte) la page WP contenant
+ * « Creer la page », genere (ou detecte) la page WP contenant
  * [pratcom_cookie_declaration] : declaration de temoins autonome, style
  * Cookiebot (Privacy Free, spec legal pages org).
  *
@@ -12,13 +12,13 @@ namespace Pratcom\Connect\Bridge\Privacy;
  * wp_page_for_privacy_policy). On se contente donc de creer/publier la page
  * et de memoriser son ID ; le statut « linked » = page simplement publiee.
  *
- * W5 — pages legales bilingues : si WPML ou Polylang est actif, ensure_page()
+ * W5, pages legales bilingues : si WPML ou Polylang est actif, ensure_page()
  * cree + lie automatiquement une page dans CHAQUE langue active (l'admin ne
  * fait rien). Repli inchange : 1 page si aucun plugin multilingue. Logique
  * multilingue deleguee a Multilang (defensif, zero dependance dure).
  *
  * Le rendu du bouton (render_admin_section) est appele par l'onglet
- * Confidentialite du shell admin — cette classe ne touche pas SettingsPage /
+ * Confidentialite du shell admin, cette classe ne touche pas SettingsPage /
  * AdminShell. Le handler admin_post est autonome (enregistre ici).
  */
 class CookiePolicyPage
@@ -239,7 +239,7 @@ class CookiePolicyPage
     }
 
     /**
-     * Bloc « Politique relative aux temoins » de l'onglet Confidentialite —
+     * Bloc « Politique relative aux temoins » de l'onglet Confidentialite :
      * a appeler par le shell admin. Autonome : formulaire admin-post.
      */
     public static function render_admin_section(): void
@@ -249,7 +249,7 @@ class CookiePolicyPage
 
         if ($status['linked']) {
             echo '<p style="color:#1a7f37;font-weight:600;">✓ '
-                . esc_html__('Page publiée — déclaration de témoins autonome (mise à jour automatiquement).', 'pratcom-connect')
+                . esc_html__('Page publiée, déclaration de témoins autonome (mise à jour automatiquement).', 'pratcom-connect')
                 . ' <a href="' . esc_url($status['url']) . '" target="_blank" rel="noopener">'
                 . esc_html__('Voir la page', 'pratcom-connect') . '</a></p>';
             return;

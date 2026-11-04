@@ -78,11 +78,11 @@ class ConnectionTab extends AbstractTab
                 </div>
                 <div class="pc-card__row">
                     <span class="pc-card__label"><?php esc_html_e('Dernier handshake', 'pratcom-connect'); ?></span>
-                    <span class="pc-card__value"><?php echo esc_html($last_handshake ?: '—'); ?></span>
+                    <span class="pc-card__value"><?php echo esc_html($last_handshake !== '' ? $last_handshake : __('Jamais', 'pratcom-connect')); ?></span>
                 </div>
 
                 <div class="pc-actions">
-                    <a href="<?php echo esc_url(Hotes::base('app') . '/?utm_source=wp-plugin&utm_medium=account-tab'); ?>"target="_blank" rel="noopener" class="pc-btn pc-btn--primary">
+                    <a href="<?php echo esc_url(Hotes::base('app') . '/?utm_source=wp-plugin&utm_medium=account-tab'); ?>" target="_blank" rel="noopener" class="pc-btn pc-btn--primary">
                         <?php esc_html_e('Ouvrir mon portail Pratcom Connect', 'pratcom-connect'); ?>
                     </a>
                     <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline;">
@@ -212,7 +212,11 @@ class ConnectionTab extends AbstractTab
         update_option(Plugin::OPTION_WORKSPACE_ID, $res['workspace_id'] ?? '');
         update_option(Plugin::OPTION_WORKSPACE_SLUG, $res['workspace_slug'] ?? '');
 
-        HealthCheck::schedule();
+        // Le handshake de la connexion vient d'avoir lieu : prochain passage
+        // dans une heure, meme si l'activation en avait programme un dans la
+        // minute (decaler le repousse).
+        HealthCheck::schedule(HOUR_IN_SECONDS);
+        HealthCheck::decaler();
         HealthCheck::appliquer($res);
     }
 

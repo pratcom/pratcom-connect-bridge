@@ -63,7 +63,7 @@ class DashboardTab extends AbstractTab
                 <?php endif; ?>
                 <div class="pc-card__row">
                     <span class="pc-card__label"><?php esc_html_e('Dernier handshake', 'pratcom-connect'); ?></span>
-                    <span class="pc-card__value"><?php echo esc_html($last_handshake ?: '—'); ?></span>
+                    <span class="pc-card__value"><?php echo esc_html($last_handshake !== '' ? $last_handshake : __('Jamais', 'pratcom-connect')); ?></span>
                 </div>
                 <div class="pc-actions">
                     <a href="<?php echo esc_url(admin_url('admin.php?page=' . ModulesTab::PAGE_SLUG)); ?>" class="pc-btn pc-btn--primary">

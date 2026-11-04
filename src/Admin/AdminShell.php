@@ -70,7 +70,7 @@ class AdminShell
 
     /**
      * Construit une URL vers le site marketing Pratcom Connect, dans la langue
-     * de l'admin. FR : https://pratcom.net/connect/<path> — EN :
+     * de l'admin. FR : https://pratcom.net/connect/<path>, EN :
      * https://pratcom.net/en/connect/<path>. Le segment $path peut etre vide
      * (page modules/prix) ou une ancre (ex. '#chat').
      */
@@ -117,7 +117,7 @@ class AdminShell
             PRATCOM_CONNECT_BRIDGE_VERSION
         );
 
-        // Styles additifs O2 (vitrine + onglet Formulaires) — fichier separe
+        // Styles additifs O2 (vitrine + onglet Formulaires), fichier separe
         // pour ne jamais reecrire admin.css au complet (lecon #4).
         wp_enqueue_style(
             'pratcom-connect-bridge-admin-o2',
@@ -126,7 +126,7 @@ class AdminShell
             PRATCOM_CONNECT_BRIDGE_VERSION
         );
 
-        // Styles additifs O5 (iframes mirror sessions) — fichier separe (lecon #4).
+        // Styles additifs O5 (iframes mirror sessions), fichier separe (lecon #4).
         wp_enqueue_style(
             'pratcom-connect-bridge-admin-o5',
             PRATCOM_CONNECT_BRIDGE_URL . 'assets/css/admin-o5.css',
@@ -150,8 +150,8 @@ class AdminShell
 
         // Coquille iframe integree (canal PREMIUM uniquement) : recepteur du
         // contrat postMessage 'resize'/'changed' emis par les pages embed du
-        // service. JAMAIS charge sur le canal .org (qui n'affiche aucune iframe
-        // — OrgManagePanel + liens sortants). Garde dure : === 'premium'.
+        // service. JAMAIS charge sur le canal .org (qui n'affiche aucune iframe :
+        // OrgManagePanel + liens sortants). Garde dure : === 'premium'.
         if (PRATCOM_CONNECT_BRIDGE_CHANNEL === 'premium') {
             wp_enqueue_script(
                 'pratcom-connect-bridge-admin-o5',
@@ -171,7 +171,7 @@ class AdminShell
     /**
      * Origines autorisees pour la validation postMessage cote recepteur.
      * Derivees des hotes de service (Hotes : role `app` +
-     * hote de l'API) — les iframes d'embed sont servies depuis ces hotes.
+     * hote de l'API), les iframes d'embed sont servies depuis ces hotes.
      *
      * @return array<int, string> ex. ['https://connect.pratcom.net', 'https://api.connect.pratcom.net']
      */

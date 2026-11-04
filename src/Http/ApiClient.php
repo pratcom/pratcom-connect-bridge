@@ -31,7 +31,7 @@ class ApiClient
         ];
 
         // Pousse la palette de marque riche au serveur (persistee workspace.settings.theme).
-        // Liste blanche BrandTheme — identique au type resolveTheme de connect-core.
+        // Liste blanche BrandTheme, identique au type resolveTheme de connect-core.
         // Le serveur fait un merge additif : les cles non envoyees ne sont jamais supprimees.
         $theme = Plugin::get_theme();
         if (!empty($theme['primary'])) {

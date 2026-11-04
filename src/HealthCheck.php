@@ -26,12 +26,16 @@ class HealthCheck
         add_action(self::CRON_HOOK, [$this, 'run']);
     }
 
-    public static function schedule(): void
+    /**
+     * Programme le cron horaire s'il ne l'est pas. Premier passage dans la
+     * minute par defaut (activation : le site est verifie des l'installation),
+     * puis toutes les heures. La connexion passe HOUR_IN_SECONDS : son
+     * handshake vient d'avoir lieu.
+     */
+    public static function schedule(int $premier = MINUTE_IN_SECONDS): void
     {
         if (!wp_next_scheduled(self::CRON_HOOK)) {
-            // Une heure apres la connexion, pas cinq minutes : le handshake
-            // de la connexion vient d'avoir lieu.
-            wp_schedule_event(time() + HOUR_IN_SECONDS, 'hourly', self::CRON_HOOK);
+            wp_schedule_event(time() + $premier, 'hourly', self::CRON_HOOK);
         }
     }
 

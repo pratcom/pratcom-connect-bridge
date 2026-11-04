@@ -3,7 +3,7 @@
 namespace Pratcom\Connect\Bridge\Privacy;
 
 /**
- * Registre LOCAL de consentements (Privacy Free) — preuve Loi 25 art. 14
+ * Registre LOCAL de consentements (Privacy Free), preuve Loi 25 art. 14
  * sans aucun appel serveur Pratcom (exigence .org §5 + zéro coût marginal).
  *
  * - Table dédiée {prefix}pratcom_consents (install via dbDelta, idempotent).
@@ -11,7 +11,7 @@ namespace Pratcom\Connect\Bridge\Privacy;
  *   bannière en mode local (privacy.js data-mode="local"). Public (les
  *   visiteurs ne sont pas connectés), rate-limité par IP, IP jamais en
  *   clair (hash SHA-256 + sel du site).
- * - Export CSV (admin_post, manage_options + nonce, BOM UTF-8 — même
+ * - Export CSV (admin_post, manage_options + nonce, BOM UTF-8, même
  *   convention que l'export P3 côté Connect).
  *
  * À la désinstallation, la TABLE est volontairement conservée : c'est une

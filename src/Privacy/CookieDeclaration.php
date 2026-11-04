@@ -7,7 +7,7 @@ use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Plugin;
 
 /**
- * Declaration de temoins autonome, style Cookiebot — shortcode
+ * Declaration de temoins autonome, style Cookiebot, shortcode
  * [pratcom_cookie_declaration lang="" heading="none"] (Privacy Free, spec legal pages org).
  *
  * Rend des CARTES GROUPEES PAR CATEGORIE (necessaires, preferences,
@@ -26,8 +26,8 @@ use Pratcom\Connect\Bridge\Plugin;
  * pack privacy est actif, on PEUT tenter le fragment serveur ; sinon (et par
  * defaut en gratuit) rendu 100 % local, zero appel serveur (exigence WP.org).
  *
- * Attribut heading="none|h1|h2" (defaut « none ») : aligne sur PolicyShortcode
- * — normalise le premier <h1> du fragment pour eviter un double <h1> avec le
+ * Attribut heading="none|h1|h2" (defaut « none ») : aligne sur PolicyShortcode :
+ * normalise le premier <h1> du fragment pour eviter un double <h1> avec le
  * titre de page du theme (cf. PolicyHeading). Le rendu LOCAL utilise deja un
  * <h2> pour son titre ; l'attribut agit surtout sur un fragment serveur qui
  * emettrait un <h1>.

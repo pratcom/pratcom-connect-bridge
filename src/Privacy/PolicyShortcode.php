@@ -7,7 +7,7 @@ use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Plugin;
 
 /**
- * Shortcode [pratcom_privacy_policy lang="fr" heading="none"] — politique de
+ * Shortcode [pratcom_privacy_policy lang="fr" heading="none"], politique de
  * confidentialité dynamique (P4b, spec Privacy §6b, modèle Complianz).
  *
  * - Tier Connect (connecté + pack privacy) : contenu rendu côté serveur

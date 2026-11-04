@@ -16,7 +16,7 @@ use Pratcom\Connect\Bridge\Admin\ModuleShowcase;
  * Module inactif : vitrine verrouillée animée (W4, upsell conforme WordPress.org).
  * Module actif   : session signée (B1 HMAC) → iframe /embed/chat-training/{ws}.
  *
- * Fichier neuf (leçon #4) — jamais d'édition inline du monolithe.
+ * Fichier neuf (leçon #4), jamais d'édition inline du monolithe.
  */
 class ChatTab extends AbstractTab
 {
@@ -45,7 +45,7 @@ class ChatTab extends AbstractTab
     }
 
     /**
-     * Assets de la vitrine verrouillée (W4) — enqueue page-scoped : uniquement
+     * Assets de la vitrine verrouillée (W4), enqueue page-scoped : uniquement
      * sur l'onglet Chat. Aucun <style>/<script> inline (conformité WordPress.org).
      */
     public function enqueue_showcase_assets(string $hook): void
@@ -199,7 +199,7 @@ class ChatTab extends AbstractTab
             <div class="pc-embed-wrap">
                 <div class="pc-embed-bar">
                     <span class="pc-embed-bar__label">
-                        <?php esc_html_e("Connect Chat — Tableau de bord d'entraînement", 'pratcom-connect'); ?>
+                        <?php esc_html_e("Connect Chat : Tableau de bord d'entraînement", 'pratcom-connect'); ?>
                     </span>
                     <a href="<?php echo esc_url($crm_url); ?>" target="_blank" rel="noopener"
                        class="pc-embed-bar__link">

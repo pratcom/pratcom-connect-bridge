@@ -82,6 +82,7 @@ function wp_next_scheduled($hook) { return $GLOBALS['banc_cron'][$hook] ?? false
 function wp_schedule_single_event($ts, $hook) { $GLOBALS['banc_cron'][$hook] = $ts; return true; }
 function wp_unschedule_event($ts, $hook) { unset($GLOBALS['banc_cron'][$hook]); return true; }
 function wp_schedule_event($ts, $recurrence, $hook) { $GLOBALS['banc_cron'][$hook] = $ts; return true; }
+define('MINUTE_IN_SECONDS', 60);
 define('HOUR_IN_SECONDS', 3600);
 function home_url() { return 'https://site.exemple'; }
 function wp_parse_url($u, $c = -1) { return parse_url($u, $c); }
@@ -333,6 +334,23 @@ verifier('reverification : next_check_at a +1 h couvert par le cron horaire, rie
 $GLOBALS['banc_cron'] = [];
 HealthCheck::decaler();
 verifier('decaler sans cron horaire : ne programme rien', $GLOBALS['banc_cron'] === []);
+
+echo "9. Activation : premier controle dans la minute, puis toutes les heures\n";
+$GLOBALS['banc_options'] = [];
+$GLOBALS['banc_cron'] = [];
+HealthCheck::schedule();
+$premier = $GLOBALS['banc_cron'][HealthCheck::CRON_HOOK] ?? 0;
+verifier('activation : premier controle dans la minute', $premier > 0 && $premier <= time() + 60, (string) ($premier - time()));
+HealthCheck::schedule();
+verifier('activation repetee : cron deja programme, inchange', ($GLOBALS['banc_cron'][HealthCheck::CRON_HOOK] ?? 0) === $premier);
+// Connexion dans la minute qui suit l'activation : son handshake vient
+// d'avoir lieu, le cron ne doit pas en refaire un tout de suite.
+ConnectionTab::enregistrer_connexion($cle, [
+    'ok' => true, 'workspace_id' => 'ws-banc', 'workspace_slug' => 'espace-banc',
+    'feature_packs' => [],
+]);
+verifier('connexion apres activation : cron repousse a une heure', ($GLOBALS['banc_cron'][HealthCheck::CRON_HOOK] ?? 0) >= time() + 3500);
+ConnectionTab::purger_connexion();
 
 echo "\n$ok ok, " . count($echecs) . " echec(s)\n";
 exit($echecs === [] ? 0 : 1);
