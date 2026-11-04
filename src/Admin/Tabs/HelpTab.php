@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Admin\Tabs;
 
+use Pratcom\Connect\Bridge\Hotes;
 /**
  * Onglet Aide. Contenu iso-fonctionnel au monolithe (O0).
  * Propriete : chantier Plugin .org.
@@ -65,11 +66,11 @@ class HelpTab extends AbstractTab
             </div>
             <div class="pc-card__row">
                 <span class="pc-card__label"><?php esc_html_e('API endpoint', 'pratcom-connect'); ?></span>
-                <span class="pc-card__value"><?php echo esc_html(PRATCOM_CONNECT_BRIDGE_API_BASE); ?></span>
+                <span class="pc-card__value"><?php echo esc_html(Hotes::base('api')); ?></span>
             </div>
             <div class="pc-card__row">
                 <span class="pc-card__label"><?php esc_html_e('Loader URL', 'pratcom-connect'); ?></span>
-                <span class="pc-card__value"><?php echo esc_html(PRATCOM_CONNECT_BRIDGE_LOADER_URL); ?></span>
+                <span class="pc-card__value"><?php echo esc_html(Hotes::base('app') . '/loader.js'); ?></span>
             </div>
             <div class="pc-actions">
                 <a href="<?php echo esc_url(admin_url('plugins.php')); ?>" class="pc-btn pc-btn--secondary">

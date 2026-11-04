@@ -6,18 +6,18 @@ namespace Pratcom\Connect\Bridge\Privacy;
  * Template LOCAL de la politique de confidentialité (tier Free / fallback).
  *
  * Miroir PHP du template serveur (connect-chat src/lib/privacy/
- * policy-template.ts) — mêmes 11 sections Loi 25, même version. Mis à jour
+ * policy-template.ts), mêmes 11 sections Loi 25, même version. Mis à jour
  * via les mises à jour du plugin (modèle Complianz gratuit, spec §6b).
  * ⚠️ Toute modification de contenu doit être faite EN PAIRE avec le
  * template serveur + bump de TEMPLATE_VERSION des deux côtés.
  *
  * Variables : option OPTION_VARS (legalName, websiteUrl, contactEmail,
- * contactPhone, address, officerName, officerEmail) — défauts raisonnables
+ * contactPhone, address, officerName, officerEmail), défauts raisonnables
  * tirés du site. Témoins : option OPTION_COOKIES (liste manuelle, lignes
- * {name, provider, purpose, expiry, category}) — l'UI d'édition arrive avec
+ * {name, provider, purpose, expiry, category}), l'UI d'édition arrive avec
  * l'onglet Confidentialité (O0/O3).
  *
- * ⚠️ Textes V1 provisoires (best-effort sans avocat) — disclaimer inclus.
+ * ⚠️ Textes V1 provisoires (best-effort sans avocat), disclaimer inclus.
  */
 class LocalPolicy
 {
@@ -92,7 +92,7 @@ class LocalPolicy
     }
 
     /**
-     * Sections bilingues — miroir du template serveur 2026-06-09.1.
+     * Sections bilingues, miroir du template serveur 2026-06-09.1.
      * @return array<int, array{title: array<string,string>, paragraphs: array<int, array<string,string>>}>
      */
     private static function sections(): array
@@ -151,8 +151,8 @@ class LocalPolicy
                 ],
                 'paragraphs' => [
                     [
-                        'fr' => 'À votre première visite, une fenêtre vous permet d\'accepter, de refuser ou de personnaliser les témoins par catégorie — refuser est aussi simple qu\'accepter, sans pénalité. Votre choix est conservé pendant {{reconsentMonths}} mois, après quoi il vous sera demandé de nouveau. Vous pouvez modifier ou retirer votre consentement à tout moment au moyen de l\'icône flottante de gestion des témoins affichée sur le site.',
-                        'en' => 'On your first visit, a window lets you accept, decline or customize cookies by category — declining is as easy as accepting, with no penalty. Your choice is kept for {{reconsentMonths}} months, after which you will be asked again. You can change or withdraw your consent at any time using the floating cookie management icon displayed on the site.',
+                        'fr' => 'À votre première visite, une fenêtre vous permet d\'accepter, de refuser ou de personnaliser les témoins par catégorie, refuser est aussi simple qu\'accepter, sans pénalité. Votre choix est conservé pendant {{reconsentMonths}} mois, après quoi il vous sera demandé de nouveau. Vous pouvez modifier ou retirer votre consentement à tout moment au moyen de l\'icône flottante de gestion des témoins affichée sur le site.',
+                        'en' => 'On your first visit, a window lets you accept, decline or customize cookies by category, declining is as easy as accepting, with no penalty. Your choice is kept for {{reconsentMonths}} months, after which you will be asked again. You can change or withdraw your consent at any time using the floating cookie management icon displayed on the site.',
                     ],
                 ],
             ],
@@ -262,7 +262,7 @@ class LocalPolicy
     }
 
     /**
-     * Témoins intégrés à la politique — DYNAMIQUE, rendu en cartes (CookieCards).
+     * Témoins intégrés à la politique, DYNAMIQUE, rendu en cartes (CookieCards).
      *
      * Source = CookieScan::merged_rows($lang) : fusion dédupliquée des presets
      * sélectionnés (Presets::cookie_rows) + liste manuelle (OPTION_COOKIES) +
@@ -270,7 +270,7 @@ class LocalPolicy
      * conservées (jamais écrasées). 100 % local, zéro appel serveur.
      *
      * ⚠️ RENDU PUBLIC : les témoins « non classés » (unclassified) sont exclus
-     * de ce tableau — ils ne doivent jamais paraître côté visiteur. Ils restent
+     * de ce tableau, ils ne doivent jamais paraître côté visiteur. Ils restent
      * visibles dans l'onglet d'administration pour être classés.
      */
     private static function render_cookie_table(string $lang, string $appearance = 'auto'): string

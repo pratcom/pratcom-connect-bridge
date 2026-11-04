@@ -39,3 +39,27 @@ jobs:
         run: |
           grep -q "define('PRATCOM_CONNECT_BRIDGE_CHANNEL', 'premium');" pratcom-connect-bridge.php \
             || { echo "::error::Canal par defaut != premium"; exit 1; }
+
+      - name: Bancs CLI (tests/*.php)
+        # Code 2 = cas saute (verifier-fragment.php sans --wp=) : accepte.
+        # Tout autre code non nul fait echouer l'etape.
+        run: |
+          echec=0
+          for banc in tests/*.php; do
+            echo "::group::$banc"
+            set +e
+            php "$banc"
+            code=$?
+            set -e
+            echo "::endgroup::"
+            if [ "$code" -ne 0 ] && [ "$code" -ne 2 ]; then
+              echo "::error::$banc a echoue (code $code)"; echec=1
+            fi
+          done
+          exit $echec
+
+      - name: Aucun tiret long ni moyen (U+2014, U+2013) dans src/ et readme.txt
+        run: |
+          if LC_ALL=C.UTF-8 grep -rnP '[\x{2013}\x{2014}]' src readme.txt; then
+            echo "::error::Tiret U+2014 ou U+2013 trouve (lignes ci-dessus)"; exit 1
+          fi

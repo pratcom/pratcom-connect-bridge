@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Jobs;
 
+use Pratcom\Connect\Bridge\Hotes;
 use Pratcom\Connect\Bridge\Plugin;
 
 /**
@@ -75,7 +76,7 @@ final class Catalogue
     /** Base de l'API (l'api, pas `chatbot.`), filtrable pour le staging. */
     public static function base_url(): string
     {
-        return rtrim((string) apply_filters('pratcom_connect_jobs_base_url', 'https://connect.pratcom.net'), '/');
+        return rtrim((string) apply_filters('pratcom_connect_jobs_base_url', Hotes::base('app')), '/');
     }
 
     /** Slug de l'espace, tel que le handshake l'a pose. */

@@ -6,7 +6,7 @@ use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Plugin;
 
 /**
- * Google Consent Mode v2 — signal « consent default » inline (Privacy v2).
+ * Google Consent Mode v2, signal « consent default » inline (Privacy v2).
  *
  * Emet un snippet INLINE SYNCHRONE dans le <head> a la priorite 0 (avant le
  * loader Pratcom et, surtout, avant le conteneur Google Tag Manager / gtag),
@@ -26,7 +26,7 @@ use Pratcom\Connect\Bridge\Plugin;
  * 100 % cote client : aucune donnee serveur interpolee, aucun appel externe
  * (compatible canal WordPress.org).
  *
- * COUPLAGE — OFF par defaut (deploiement sur). A n'activer que la ou privacy.js
+ * COUPLAGE, OFF par defaut (deploiement sur). A n'activer que la ou privacy.js
  * emet aussi les `update` :
  *   - tier Connect : activer « Consent Mode » dans les reglages Privacy du
  *     compte (cle serveur privacy_configs.settings.consentModeV2) ;
@@ -78,7 +78,7 @@ class ConsentMode
     private function snippet(): string
     {
         return <<<'JS'
-/* Pratcom Connect — Google Consent Mode v2 (consent default, Loi 25) */
+/* Pratcom Connect, Google Consent Mode v2 (consent default, Loi 25) */
 (function (w, d) {
   w.dataLayer = w.dataLayer || [];
   function gtag() { w.dataLayer.push(arguments); }

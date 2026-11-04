@@ -141,6 +141,9 @@ msgstr ""
 msgid "Dernier handshake"
 msgstr ""
 
+msgid "Jamais"
+msgstr ""
+
 msgid "Gérer les modules"
 msgstr ""
 
@@ -152,7 +155,7 @@ msgstr ""
 
 msgid ""
 "Connectez ce site à Pratcom Connect pour activer les modules (Chat IA, "
-"Forms, Privacy) via une seule clé API fournie par Pratcom Média."
+"Forms, Privacy, Emplois) via une seule clé API fournie par Pratcom Média."
 msgstr ""
 
 msgid "Se connecter"
@@ -397,7 +400,7 @@ msgstr ""
 msgid "Ouvrir Pratcom Connect"
 msgstr ""
 
-msgid "Connect Chat — Tableau de bord d'entraînement"
+msgid "Connect Chat : Tableau de bord d'entraînement"
 msgstr ""
 
 msgid "Ouvrir en plein écran ↗"
@@ -546,7 +549,7 @@ msgid "Bannière de consentement Free"
 msgstr ""
 
 msgid ""
-"Ne pas activer si le module Privacy Connect est déjà actif sur ce site — les"
+"Ne pas activer si le module Privacy Connect est déjà actif sur ce site, les"
 " deux bannières ne doivent pas coexister."
 msgstr ""
 
@@ -570,7 +573,7 @@ msgstr ""
 msgid "Presets détectés sur ce site"
 msgstr ""
 
-msgid "Ces plugins sont actifs — leurs presets ne sont pas encore activés :"
+msgid "Ces plugins sont actifs, leurs presets ne sont pas encore activés :"
 msgstr ""
 
 msgid ""
@@ -737,7 +740,7 @@ msgstr ""
 msgid "Découvrir Connect Privacy"
 msgstr ""
 
-msgid "Privacy Connect — Scan de confidentialité"
+msgid "Privacy Connect : Scan de confidentialité"
 msgstr ""
 
 msgid ""
@@ -764,7 +767,7 @@ msgstr ""
 msgid "Page de politique de confidentialité"
 msgstr ""
 
-msgid "Page publiée et liée — la bannière y pointe automatiquement."
+msgid "Page publiée et liée, la bannière y pointe automatiquement."
 msgstr ""
 
 msgid "Voir la page"
@@ -799,7 +802,7 @@ msgid "Page de politique relative aux témoins"
 msgstr ""
 
 msgid ""
-"Page publiée — déclaration de témoins autonome (mise à jour "
+"Page publiée, déclaration de témoins autonome (mise à jour "
 "automatiquement)."
 msgstr ""
 
@@ -819,4 +822,33 @@ msgid "Reglages"
 msgstr ""
 
 msgid "my_cookie | Mon outil | Mesure d'audience | 1 an | statistics"
+msgstr ""
+
+msgid "Pratcom Connect : ce site est suspendu, ce contenu n'est pas affiché aux visiteurs."
+msgstr ""
+
+msgid "Pratcom Connect : site suspendu."
+msgstr ""
+
+msgid "Les modules Connect ne sont plus affichés aux visiteurs. Communiquez avec Pratcom Média pour rétablir le service."
+msgstr ""
+
+msgid "État du site"
+msgstr ""
+
+msgid "Suspendu : les modules ne sont plus affichés aux visiteurs."
+msgstr ""
+
+msgid "Connect Emplois"
+msgstr ""
+
+msgid "Offres d'emploi publiées sur vos pages, avec fiches et données structurées pour Google."
+msgstr ""
+
+#: src/FeaturePacks.php
+msgid "Privacy"
+msgstr ""
+
+#: src/FeaturePacks.php src/Admin/Tabs/JobsTab.php
+msgid "Emplois"
 msgstr ""

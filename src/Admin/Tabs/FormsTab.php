@@ -13,12 +13,12 @@ use Pratcom\Connect\Bridge\Admin\ModuleShowcase;
  * Onglet Formulaires (O2) : liste des formulaires du workspace + shortcode
  * copiable par formulaire. UI = chantier Plugin .org ; la data appartient au
  * chantier Forms (API F4 cote serveur, exposee au plugin via la route
- * lecture seule GET /api/bridge/forms — voir demande inter-chantiers).
+ * lecture seule GET /api/bridge/forms, voir demande inter-chantiers).
  *
  * Non connecte ou module inactif : vitrine verrouillee animee (W4, upsell
- * conforme WordPress.org — dans NOS pages uniquement, jamais de notice globale).
+ * conforme WordPress.org, dans NOS pages uniquement, jamais de notice globale).
  *
- * O5b : section additive render_builder_section() — iframe builder signe.
+ * O5b : section additive render_builder_section(), iframe builder signe.
  *
  * Coquille integree (premium) : le builder est enveloppe dans .pc-embed-wrapper
  * (auto-hauteur via admin-o5.js) et le rafraichissement de la liste est
@@ -56,7 +56,7 @@ class FormsTab extends AbstractTab
     }
 
     /**
-     * JS de l'onglet Formulaires (copie du shortcode, selection au focus) —
+     * JS de l'onglet Formulaires (copie du shortcode, selection au focus) :
      * fichier enqueue page-scoped, remplace le <script> inline historique
      * (revue WordPress.org : pas de balise script brute dans l'admin).
      * Charge aussi les assets de la vitrine verrouillee (W4), page-scoped.
@@ -243,13 +243,13 @@ class FormsTab extends AbstractTab
      * Controle de rafraichissement de la liste.
      *
      * - Canal PREMIUM : formulaire MASQUE (#pc-forms-refresh-form). Aucun bouton
-     *   visible — admin-o5.js le soumet automatiquement a la reception du
+     *   visible, admin-o5.js le soumet automatiquement a la reception du
      *   message postMessage { source:'pratcom-connect', kind:'changed',
      *   scope:'forms' } emis par le builder quand un formulaire est cree,
      *   modifie ou supprime. Le handler purge le cache transient puis recharge
      *   avec la liste a jour. La liste se met donc a jour « toute seule ».
      * - Canal ORG : bouton VISIBLE « Actualiser la liste » (comportement
-     *   historique inchange — pas d'iframe builder, donc rafraichissement
+     *   historique inchange, pas d'iframe builder, donc rafraichissement
      *   manuel). Le handler est identique dans les deux cas.
      */
     private function render_refresh_control(): void
@@ -275,7 +275,7 @@ class FormsTab extends AbstractTab
     // ─── O5b : section builder iframe (additif) ───────────────────
 
     /**
-     * Section additive « Modifier dans le builder » — iframe signee B1.
+     * Section additive « Modifier dans le builder », iframe signee B1.
      * Appele uniquement si connected + forms_enabled (gardes dans render()).
      * Repli gracieux si l'API retourne une erreur.
      */

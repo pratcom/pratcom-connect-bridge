@@ -5,6 +5,8 @@ namespace Pratcom\Connect\Bridge\Admin\Tabs;
 use Pratcom\Connect\Bridge\Plugin;
 use Pratcom\Connect\Bridge\Http\ApiClient;
 use Pratcom\Connect\Bridge\HealthCheck;
+use Pratcom\Connect\Bridge\Hotes;
+use Pratcom\Connect\Bridge\Suspension;
 use Pratcom\Connect\Bridge\Admin\AdminShell;
 
 /**
@@ -76,11 +78,11 @@ class ConnectionTab extends AbstractTab
                 </div>
                 <div class="pc-card__row">
                     <span class="pc-card__label"><?php esc_html_e('Dernier handshake', 'pratcom-connect'); ?></span>
-                    <span class="pc-card__value"><?php echo esc_html($last_handshake ?: '—'); ?></span>
+                    <span class="pc-card__value"><?php echo esc_html($last_handshake !== '' ? $last_handshake : __('Jamais', 'pratcom-connect')); ?></span>
                 </div>
 
                 <div class="pc-actions">
-                    <a href="https://connect.pratcom.net/?utm_source=wp-plugin&utm_medium=account-tab" target="_blank" rel="noopener" class="pc-btn pc-btn--primary">
+                    <a href="<?php echo esc_url(Hotes::base('app') . '/?utm_source=wp-plugin&utm_medium=account-tab'); ?>" target="_blank" rel="noopener" class="pc-btn pc-btn--primary">
                         <?php esc_html_e('Ouvrir mon portail Pratcom Connect', 'pratcom-connect'); ?>
                     </a>
                     <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline;">
@@ -185,6 +187,21 @@ class ConnectionTab extends AbstractTab
             $this->redirect_with_notice(self::PAGE_SLUG, 'error', $msg);
         }
 
+        self::enregistrer_connexion($raw_key, $res);
+        $this->redirect_with_notice(DashboardTab::PAGE_SLUG, 'connected', '');
+    }
+
+    /**
+     * Enregistre une connexion reussie. Hotes et suspension sont appliques
+     * tout de suite, comme au handshake horaire : un site suspendu qui se
+     * connecte ne sert ni loader ni codes courts en attendant le cron.
+     * Le cron horaire est programme AVANT d'appliquer la reponse : la
+     * reverification a `next_check_at` se compare a lui.
+     *
+     * @param array<string, mixed> $res Reponse reussie du handshake.
+     */
+    public static function enregistrer_connexion(string $raw_key, array $res): void
+    {
         preg_match('/^(pck_[a-z0-9-]+_)([A-Za-z0-9]{32})$/', $raw_key, $m);
         $prefix = $m[1] ?? '';
         $last_four = isset($m[2]) ? substr($m[2], -4) : '';
@@ -194,13 +211,13 @@ class ConnectionTab extends AbstractTab
         update_option(Plugin::OPTION_KEY_LAST_FOUR, $last_four);
         update_option(Plugin::OPTION_WORKSPACE_ID, $res['workspace_id'] ?? '');
         update_option(Plugin::OPTION_WORKSPACE_SLUG, $res['workspace_slug'] ?? '');
-        update_option(Plugin::OPTION_FEATURE_PACKS, $res['feature_packs'] ?? []);
-        update_option(Plugin::OPTION_LAST_HANDSHAKE, current_time('mysql'));
-        update_option(Plugin::OPTION_STATUS, 'connected');
-        delete_option(Plugin::OPTION_LAST_ERROR);
 
-        HealthCheck::schedule();
-        $this->redirect_with_notice(DashboardTab::PAGE_SLUG, 'connected', '');
+        // Le handshake de la connexion vient d'avoir lieu : prochain passage
+        // dans une heure, meme si l'activation en avait programme un dans la
+        // minute (decaler le repousse).
+        HealthCheck::schedule(HOUR_IN_SECONDS);
+        HealthCheck::decaler();
+        HealthCheck::appliquer($res);
     }
 
     public function handle_disconnect(): void
@@ -208,6 +225,16 @@ class ConnectionTab extends AbstractTab
         if (!current_user_can('manage_options')) wp_die('forbidden', 403);
         check_admin_referer(self::NONCE_DISCONNECT);
 
+        self::purger_connexion();
+        $this->redirect_with_notice(self::PAGE_SLUG, 'disconnected', '');
+    }
+
+    /**
+     * Efface la connexion, hotes et suspension compris, et deprogramme les
+     * deux crons : un site reconnecte a un autre espace repart propre.
+     */
+    public static function purger_connexion(): void
+    {
         delete_option(Plugin::OPTION_API_KEY_PLAINTEXT);
         delete_option(Plugin::OPTION_KEY_PREFIX);
         delete_option(Plugin::OPTION_KEY_LAST_FOUR);
@@ -216,10 +243,13 @@ class ConnectionTab extends AbstractTab
         delete_option(Plugin::OPTION_FEATURE_PACKS);
         delete_option(Plugin::OPTION_LAST_HANDSHAKE);
         delete_option(Plugin::OPTION_LAST_ERROR);
+        delete_option(Hotes::OPTION);
+        delete_option(Suspension::OPTION);
+        delete_option(Suspension::OPTION_PROCHAINE);
         update_option(Plugin::OPTION_STATUS, 'disconnected');
 
         HealthCheck::unschedule();
-        $this->redirect_with_notice(self::PAGE_SLUG, 'disconnected', '');
+        Suspension::deprogrammer();
     }
 
     public function handle_check_now(): void

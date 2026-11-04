@@ -19,7 +19,7 @@ namespace Pratcom\Connect\Bridge;
  *   2. Forme liste (heritee, toleree par les routes de l'API) :
  *        [ "chat", "forms" ]
  *
- * REGLE : `enabled` ABSENT de la forme table vaut ACTIF. C'est volontaire —
+ * REGLE : `enabled` ABSENT de la forme table vaut ACTIF. C'est volontaire :
  * un serveur qui n'emettrait pas encore la cle couperait sinon tous les
  * modules d'un coup. Seul un `enabled` explicitement faux desactive.
  *
@@ -29,8 +29,80 @@ namespace Pratcom\Connect\Bridge;
  */
 final class FeaturePacks
 {
+    /** Modules que le plugin sait presenter, dans l'ordre d'affichage. */
+    public const CONNUS = ['chat', 'forms', 'privacy', 'jobs'];
+
     /**
-     * @param string $key Cle de module : `chat`, `forms` ou `privacy`.
+     * Cles de modules a presenter : les modules connus, puis toute autre cle
+     * que le handshake a renvoyee (forme table ou liste). Plus de liste figee
+     * dans les onglets d'administration.
+     *
+     * @param mixed $packs Valeur brute de l'option (forme table ou liste).
+     * @return array<int, string>
+     */
+    public static function cles_dans($packs): array
+    {
+        $cles = self::CONNUS;
+        if (!is_array($packs)) {
+            return $cles;
+        }
+        foreach ($packs as $index => $valeur) {
+            $cle = is_string($index) ? $index : (is_string($valeur) ? $valeur : '');
+            $cle = strtolower((string) preg_replace('/[^a-z0-9_-]/i', '', $cle));
+            if ($cle !== '' && !in_array($cle, $cles, true)) {
+                $cles[] = $cle;
+            }
+        }
+        return $cles;
+    }
+
+    /** @return array<int, string> */
+    public static function cles(): array
+    {
+        return self::cles_dans(get_option(Plugin::OPTION_FEATURE_PACKS, []));
+    }
+
+    /**
+     * Modules actifs (memes regles que is_active).
+     *
+     * @param mixed $packs
+     * @return array<int, string>
+     */
+    public static function actifs_dans($packs): array
+    {
+        return array_values(array_filter(
+            self::cles_dans($packs),
+            static fn (string $cle): bool => self::is_active_in($packs, $cle)
+        ));
+    }
+
+    /**
+     * Libelle d'affichage d'une cle de module (Chat, Formulaires, Privacy,
+     * Emplois). Cle inconnue du plugin : la cle, capitale en tete.
+     */
+    public static function libelle(string $cle): string
+    {
+        switch ($cle) {
+            case 'chat':
+                return __('Chat', 'pratcom-connect');
+            case 'forms':
+                return __('Formulaires', 'pratcom-connect');
+            case 'privacy':
+                return __('Privacy', 'pratcom-connect');
+            case 'jobs':
+                return __('Emplois', 'pratcom-connect');
+        }
+        return ucfirst($cle);
+    }
+
+    /** @return array<int, string> */
+    public static function actifs(): array
+    {
+        return self::actifs_dans(get_option(Plugin::OPTION_FEATURE_PACKS, []));
+    }
+
+    /**
+     * @param string $key Cle de module : `chat`, `forms`, `privacy`, `jobs`...
      */
     public static function is_active(string $key): bool
     {
@@ -72,7 +144,7 @@ final class FeaturePacks
     /**
      * Interpretation defensive d'un drapeau d'abonnement.
      *
-     * `(bool)` seul ferait passer la chaine "false" pour vraie — un echec dans
+     * `(bool)` seul ferait passer la chaine "false" pour vraie, un echec dans
      * la mauvaise direction pour une barriere d'abonnement. Les valeurs JSON
      * decodees sont de vrais booleens ; ce filet ne sert qu'aux options
      * heritees ou serialisees en chaine.

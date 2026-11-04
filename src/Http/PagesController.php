@@ -9,7 +9,7 @@ use Pratcom\Connect\Bridge\Plugin;
  * scanner d'entraînement Chat (Connect « Entraîner depuis mon site », S4).
  *
  * GET /wp-json/pratcom-connect/v1/pages
- *   En-tête : Authorization: Bearer pck_…  — la clé du workspace, stockée
+ *   En-tête : Authorization: Bearer pck_… , la clé du workspace, stockée
  *   localement par le plugin. MÊME garde que /api/bridge/forms : on valide la
  *   clé pck_ (comparaison à temps constant contre Plugin::get_api_key()).
  *
@@ -20,7 +20,7 @@ use Pratcom\Connect\Bridge\Plugin;
  *
  * Lecture seule, contenu PUBLIC uniquement : jamais de brouillon, de page
  * protégée par mot de passe ni de contenu derrière authentification. Le
- * contenu arrive « propre » (corps de l'article rendu, sans chrome de thème) —
+ * contenu arrive « propre » (corps de l'article rendu, sans chrome de thème) :
  * le scanner n'a plus qu'à extraire le texte et catégoriser. ADDITIF, aucun
  * tag (revue WP.org en cours).
  *
@@ -36,7 +36,7 @@ class PagesController
     private const DEFAULT_LIMIT = 50;
 
     /**
-     * Slugs exclus par défaut (panier, compte, paiement, connexion) — le
+     * Slugs exclus par défaut (panier, compte, paiement, connexion), le
      * scanner applique aussi ses propres exclusions ; cette liste évite
      * d'exposer du bruit transactionnel.
      */
@@ -71,7 +71,7 @@ class PagesController
     }
 
     /**
-     * Garde pck_ — identique à /api/bridge/forms : Bearer = clé du workspace.
+     * Garde pck_, identique à /api/bridge/forms : Bearer = clé du workspace.
      * Comparaison à temps constant contre la clé stockée localement.
      *
      * @param \WP_REST_Request $request
@@ -187,7 +187,7 @@ class PagesController
 
     /**
      * Rend le corps d'un article via the_content (shortcodes + blocs Gutenberg)
-     * en préservant/restaurant le post global — on ne casse pas l'état WP.
+     * en préservant/restaurant le post global, on ne casse pas l'état WP.
      */
     private static function render_content(\WP_Post $item): string
     {
@@ -204,7 +204,7 @@ class PagesController
 
     /**
      * Types demandés (défaut : page + post). On n'autorise que des post types
-     * publics — jamais de CPT privé.
+     * publics, jamais de CPT privé.
      *
      * @return string[]
      */

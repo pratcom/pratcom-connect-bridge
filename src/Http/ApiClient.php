@@ -2,10 +2,12 @@
 
 namespace Pratcom\Connect\Bridge\Http;
 
+use Pratcom\Connect\Bridge\Hotes;
 use Pratcom\Connect\Bridge\Plugin;
 
 /**
- * Client HTTP vers https://api.connect.pratcom.net.
+ * Client HTTP vers l'API Bridge (role `api` de Hotes, par defaut
+ * https://api.connect.pratcom.net).
  * Utilise wp_remote_request pour cooperer avec les filtres WP.
  */
 class ApiClient
@@ -14,10 +16,10 @@ class ApiClient
 
     public function __construct(?string $api_base = null)
     {
-        $this->api_base = $api_base ?? PRATCOM_CONNECT_BRIDGE_API_BASE;
+        $this->api_base = $api_base ?? Hotes::base('api');
     }
 
-    /** @return array{ok: bool, workspace_id?: string, workspace_slug?: string, feature_packs?: array, loader_url?: string, error?: string, http_code?: int, details?: array} */
+    /** @return array{ok: bool, workspace_id?: string, workspace_slug?: string, feature_packs?: array, loader_url?: string, suspension?: array, next_check_at?: string, hosts?: array, error?: string, http_code?: int, details?: array} */
     public function handshake(string $api_key, string $domain): array
     {
         $body = [
@@ -29,7 +31,7 @@ class ApiClient
         ];
 
         // Pousse la palette de marque riche au serveur (persistee workspace.settings.theme).
-        // Liste blanche BrandTheme — identique au type resolveTheme de connect-core.
+        // Liste blanche BrandTheme, identique au type resolveTheme de connect-core.
         // Le serveur fait un merge additif : les cles non envoyees ne sont jamais supprimees.
         $theme = Plugin::get_theme();
         if (!empty($theme['primary'])) {
@@ -46,17 +48,6 @@ class ApiClient
         return $this->request('POST', '/api/bridge/handshake', $body);
     }
 
-    public function get_config(string $api_key, string $workspace_id): array
-    {
-        return $this->request('GET', '/api/bridge/config?workspace_id=' . rawurlencode($workspace_id), null, $api_key);
-    }
-
-    /** @param array<int, array{module: string, event_type: string, payload?: array, occurred_at?: string}> $events */
-    public function send_events(string $api_key, array $events): array
-    {
-        return $this->request('POST', '/api/bridge/events', ['events' => $events], $api_key);
-    }
-
     /**
      * Liste les formulaires du workspace (onglet Formulaires, O2).
      * Endpoint attendu : GET /api/bridge/forms (Bearer pck_, lecture seule)
@@ -65,11 +56,6 @@ class ApiClient
     public function get_forms(string $api_key): array
     {
         return $this->request('GET', '/api/bridge/forms', null, $api_key);
-    }
-
-    public function get_version(): array
-    {
-        return $this->request('GET', '/api/bridge/version');
     }
 
     // ─── O5 : sessions signées pour les iframes mirror ───────────────────────

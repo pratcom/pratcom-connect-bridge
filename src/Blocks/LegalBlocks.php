@@ -25,12 +25,12 @@ use Pratcom\Connect\Bridge\Privacy\Multilang;
  * puis langue du site). On transmet ensuite cette langue au shortcode.
  *
  * CONFORMITE CANAL (critique) : le rendu front est 100 % local en gratuit
- * (aucun appel serveur) — les shortcodes ne tentent le fragment serveur que
+ * (aucun appel serveur), les shortcodes ne tentent le fragment serveur que
  * si le site est connecte ET le pack privacy actif (tier premium). Le script
  * d'editeur n'utilise que les paquets fournis par WordPress core (wp-blocks,
  * wp-element, wp-block-editor, wp-components, wp-i18n) : AUCUNE ressource
  * externe, ni en build .org ni en premium. Le bloc ne charge donc aucune
- * iframe ni script tiers — il n'a pas besoin de garde de canal et reste
+ * iframe ni script tiers, il n'a pas besoin de garde de canal et reste
  * conforme WordPress.org par construction.
  *
  * Zone chantier Privacy. Ne touche ni le shell admin, ni Chat/Forms, ni le
@@ -78,7 +78,7 @@ class LegalBlocks
 
     /**
      * Declare le script d'editeur (vanilla, dependances core uniquement).
-     * Charge depuis assets/js — embarque dans le plugin, donc present aussi
+     * Charge depuis assets/js, embarque dans le plugin, donc present aussi
      * dans le zip .org. Aucune URL externe.
      */
     private function register_editor_script(): void

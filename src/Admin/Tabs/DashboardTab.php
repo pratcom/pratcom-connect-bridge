@@ -2,7 +2,9 @@
 
 namespace Pratcom\Connect\Bridge\Admin\Tabs;
 
+use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Plugin;
+use Pratcom\Connect\Bridge\Suspension;
 
 /**
  * Onglet Tableau de bord. Contenu iso-fonctionnel au monolithe (O0).
@@ -31,14 +33,11 @@ class DashboardTab extends AbstractTab
     {
         $workspace_slug = (string) get_option(Plugin::OPTION_WORKSPACE_SLUG, '');
         $last_handshake = (string) get_option(Plugin::OPTION_LAST_HANDSHAKE, '');
-        $feature_packs = get_option(Plugin::OPTION_FEATURE_PACKS, []);
-        if (!is_array($feature_packs)) $feature_packs = [];
-
         $connected = Plugin::is_connected();
-        $active_modules = 0;
-        foreach ($feature_packs as $pack) {
-            if (is_array($pack) && !empty($pack['enabled'])) $active_modules++;
-        }
+        // Lus du handshake par FeaturePacks (formes table et liste, `jobs` compris).
+        // Libelles (Chat, Formulaires, Privacy, Emplois), pas les cles brutes.
+        $active_modules = array_map([FeaturePacks::class, 'libelle'], FeaturePacks::actifs());
+        $suspendu = Suspension::est_suspendu();
         ?>
         <h1 class="pc-content__title"><?php esc_html_e('Tableau de bord', 'pratcom-connect'); ?></h1>
         <p class="pc-content__subtitle">
@@ -54,11 +53,17 @@ class DashboardTab extends AbstractTab
                 </div>
                 <div class="pc-card__row">
                     <span class="pc-card__label"><?php esc_html_e('Modules actifs', 'pratcom-connect'); ?></span>
-                    <span class="pc-card__value"><?php echo esc_html((string) $active_modules); ?></span>
+                    <span class="pc-card__value"><?php echo esc_html($active_modules === [] ? '0' : implode(', ', $active_modules)); ?></span>
                 </div>
+                <?php if ($suspendu): ?>
+                <div class="pc-card__row">
+                    <span class="pc-card__label"><?php esc_html_e('État du site', 'pratcom-connect'); ?></span>
+                    <span class="pc-card__value"><?php esc_html_e('Suspendu : les modules ne sont plus affichés aux visiteurs.', 'pratcom-connect'); ?></span>
+                </div>
+                <?php endif; ?>
                 <div class="pc-card__row">
                     <span class="pc-card__label"><?php esc_html_e('Dernier handshake', 'pratcom-connect'); ?></span>
-                    <span class="pc-card__value"><?php echo esc_html($last_handshake ?: '—'); ?></span>
+                    <span class="pc-card__value"><?php echo esc_html($last_handshake !== '' ? $last_handshake : __('Jamais', 'pratcom-connect')); ?></span>
                 </div>
                 <div class="pc-actions">
                     <a href="<?php echo esc_url(admin_url('admin.php?page=' . ModulesTab::PAGE_SLUG)); ?>" class="pc-btn pc-btn--primary">
@@ -73,7 +78,7 @@ class DashboardTab extends AbstractTab
             <div class="pc-card">
                 <h2 class="pc-card__title"><?php esc_html_e('Bienvenue dans Pratcom Connect', 'pratcom-connect'); ?></h2>
                 <p style="color: var(--pc-text-muted); margin: 0 0 16px 0;">
-                    <?php esc_html_e('Connectez ce site à Pratcom Connect pour activer les modules (Chat IA, Forms, Privacy) via une seule clé API fournie par Pratcom Média.', 'pratcom-connect'); ?>
+                    <?php esc_html_e('Connectez ce site à Pratcom Connect pour activer les modules (Chat IA, Forms, Privacy, Emplois) via une seule clé API fournie par Pratcom Média.', 'pratcom-connect'); ?>
                 </p>
                 <div class="pc-actions">
                     <a href="<?php echo esc_url(admin_url('admin.php?page=' . ConnectionTab::PAGE_SLUG)); ?>" class="pc-btn pc-btn--primary">

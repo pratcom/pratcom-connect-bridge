@@ -6,7 +6,7 @@ namespace Pratcom\Connect\Bridge\Privacy;
  * Presets de plugins/outils populaires (Privacy Free, spec .org §4 / O3).
  *
  * DATA fournie par le chantier Privacy (presets.json embarqué, mis à jour
- * via les mises à jour du plugin — modèle Complianz gratuit). L'UI de
+ * via les mises à jour du plugin, modèle Complianz gratuit). L'UI de
  * sélection (cases à cocher + suggestions) = onglet Confidentialité du
  * chantier Plugin .org (O3) ; elle consomme cette classe.
  *
@@ -86,7 +86,7 @@ class Presets
 
     /**
      * Liste de trackers (format privacy.js : id/category/scriptPatterns)
-     * dérivée des presets sélectionnés — sert à la bannière Free locale.
+     * dérivée des presets sélectionnés, sert à la bannière Free locale.
      *
      * @return array<int, array{id: string, category: string, scriptPatterns: string[]}>
      */
@@ -111,7 +111,7 @@ class Presets
     }
 
     /**
-     * Lignes « témoins » pour la déclaration cookies locale (LocalPolicy) —
+     * Lignes « témoins » pour la déclaration cookies locale (LocalPolicy) :
      * fusionne les cookies des presets sélectionnés dans la langue demandée.
      *
      * @return array<int, array{name: string, provider: string, purpose: string, expiry: string, category: string}>

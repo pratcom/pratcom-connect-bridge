@@ -6,16 +6,16 @@ use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Plugin;
 
 /**
- * Bannière Privacy Free — mode 100 % LOCAL (spec .org §1/§4, O3).
+ * Bannière Privacy Free, mode 100 % LOCAL (spec .org §1/§4, O3).
  *
  * Enqueue privacy.js en mode local (data-mode="local") avec une config
  * inline construite depuis les presets sélectionnés : aucune requête vers
  * Pratcom en runtime. Les consentements sont POSTés au REST local
- * (LocalRegistry). Nécessite privacy.js >= v0.4 (mode local — PR
+ * (LocalRegistry). Nécessite privacy.js >= v0.4 (mode local, PR
  * connect-chat jumelle).
  *
  * Actif seulement si : option activée ET pas déjà en tier Connect (le
- * Loader connecté charge déjà la bannière via loader.js — jamais les deux).
+ * Loader connecté charge déjà la bannière via loader.js, jamais les deux).
  */
 class FreeBanner
 {
@@ -34,7 +34,7 @@ class FreeBanner
             return false;
         }
         // Tier Connect : la bannière vient du loader connecté, pas du mode Free.
-        // Si l'abonnement privacy est coupé, on RETOMBE sur la bannière Free —
+        // Si l'abonnement privacy est coupé, on RETOMBE sur la bannière Free :
         // sinon un site désabonné n'afficherait plus aucune bannière témoins.
         if (Plugin::is_connected() && FeaturePacks::is_active('privacy')) {
             return false;
@@ -43,7 +43,7 @@ class FreeBanner
     }
 
     /**
-     * URL de privacy.js — asset LOCAL embarqué par défaut (chemin gratuit
+     * URL de privacy.js, asset LOCAL embarqué par défaut (chemin gratuit
      * WordPress.org : 0 script externe). Toujours filtrable via
      * `pratcom_connect_privacy_script_url` pour qu'un site avancé puisse
      * repasser sur le CDN (https://cdn.pratcom.net/privacy.js).
@@ -79,7 +79,7 @@ class FreeBanner
             'trackers' => Presets::trackers_for_banner(),
         ];
 
-        // Google Consent Mode v2 (Privacy v2) — couplage local. Si activé, la
+        // Google Consent Mode v2 (Privacy v2), couplage local. Si activé, la
         // config locale porte consentModeV2 pour que privacy.js émette les
         // `consent update` ; le snippet inline ConsentMode pose le `default`
         // (avant GTM). Sans ce couplage, privacy.js n'émettrait aucun update.
@@ -87,7 +87,7 @@ class FreeBanner
             $config['settings']['consentModeV2'] = true;
         }
 
-        // Badge « Propulsé par Pratcom Connect » (spec Badge §5.4) — affiché par
+        // Badge « Propulsé par Pratcom Connect » (spec Badge §5.4), affiché par
         // défaut, retirable via la case de l'onglet Confidentialité OU le filtre
         // pratcom_connect_branding (conformité guideline WP.org : retrait
         // documenté, voir readme « Attribution Notice »). privacy.js lit

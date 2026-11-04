@@ -5,7 +5,7 @@ namespace Pratcom\Connect\Bridge\Privacy;
 use Pratcom\Connect\Bridge\Plugin;
 
 /**
- * Rendu « cartes » des témoins — remplace les <table> des pages légales
+ * Rendu « cartes » des témoins, remplace les <table> des pages légales
  * (politique de confidentialité + déclaration de témoins) par une grille de
  * cartes responsive (2-3 colonnes desktop, 1 colonne mobile, zéro scroll
  * horizontal).
