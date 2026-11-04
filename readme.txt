@@ -8,7 +8,7 @@ Stable tag: 2.2.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Free, 100% local cookie consent banner compliant with Quebec's Law 25. Optional paid modules: smart forms and AI chat.
+Free, 100% local cookie consent banner compliant with Quebec's Law 25. Optional paid modules: smart forms, AI chat and job postings.
 
 == Description ==
 
@@ -29,6 +29,7 @@ The plugin interface and the consent banner are fully bilingual (French and Engl
 * **Privacy Connect**: automatic scan of your site's cookies and trackers.
 * **Connect Forms**: smart forms with lead scoring and routing.
 * **Connect Chat**: multilingual AI chatbot, available 24/7, trained on your content.
+* **Connect Jobs**: your job postings published on your own pages, with a detail page per posting and JobPosting structured data for Google.
 
 Paid modules are provided by the Pratcom Connect service and are enabled by connecting your account (API key). Without an account, the plugin remains fully functional for Law 25 consent.
 
@@ -76,7 +77,7 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 2. Privacy tab — free Law 25 consent banner with popular plugin presets (GA4, Meta Pixel, WooCommerce and more), local consent registry and CSV export.
 3. Forms tab — your Connect Forms with copyable shortcodes.
 4. Appearance — brand palette with automatic WCAG-compliant contrast, shared by all modules.
-5. Modules — Connect Chat, Forms and Privacy at a glance (activate them with your Pratcom Connect account).
+5. Modules: Connect Chat, Forms, Privacy and Jobs at a glance (activate them with your Pratcom Connect account).
 6. Front-end — the consent banner live on a website, in the visitor's language.
 7. Chat tab — train your Connect Chat assistant directly from wp-admin (mirror of the Connect training dashboard).
 

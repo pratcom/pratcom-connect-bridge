@@ -10,7 +10,8 @@ use Pratcom\Connect\Bridge\Http\ApiClient;
  * - WP cron 'pratcom_connect_bridge_check' toutes les heures
  * - Re-fait handshake avec la cle stockee
  * - Si 401 (cle revoquee) : status -> 'revoked' + last_error stocke
- * - Sinon : refresh feature_packs + last_handshake
+ * - Sinon : refresh feature_packs + last_handshake, hotes (`hosts`),
+ *   suspension, et reverification programmee a `next_check_at`
  */
 class HealthCheck
 {
@@ -53,6 +54,8 @@ class HealthCheck
 
         if ($res['ok'] ?? false) {
             update_option(Plugin::OPTION_FEATURE_PACKS, $res['feature_packs'] ?? []);
+            Hotes::enregistrer($res['hosts'] ?? null);
+            Suspension::enregistrer($res['suspension'] ?? null, $res['next_check_at'] ?? null);
             update_option(Plugin::OPTION_LAST_HANDSHAKE, current_time('mysql'));
             update_option(Plugin::OPTION_STATUS, 'connected');
             delete_option(Plugin::OPTION_LAST_ERROR);

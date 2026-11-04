@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Admin;
 
+use Pratcom\Connect\Bridge\Hotes;
 use Pratcom\Connect\Bridge\Plugin;
 use Pratcom\Connect\Bridge\Admin\Tabs\AbstractTab;
 use Pratcom\Connect\Bridge\Admin\Tabs\AppearanceTab;
@@ -169,7 +170,7 @@ class AdminShell
 
     /**
      * Origines autorisees pour la validation postMessage cote recepteur.
-     * Derivees des constantes de service (hote du tableau de bord public +
+     * Derivees des hotes de service (Hotes : role `app` +
      * hote de l'API) — les iframes d'embed sont servies depuis ces hotes.
      *
      * @return array<int, string> ex. ['https://connect.pratcom.net', 'https://api.connect.pratcom.net']
@@ -177,7 +178,7 @@ class AdminShell
     private static function embed_origins(): array
     {
         $origins = [];
-        foreach ([PRATCOM_CONNECT_BRIDGE_LOADER_URL, PRATCOM_CONNECT_BRIDGE_API_BASE] as $url) {
+        foreach ([Hotes::base('app'), Hotes::base('api')] as $url) {
             $scheme = wp_parse_url($url, PHP_URL_SCHEME);
             $host   = wp_parse_url($url, PHP_URL_HOST);
             if ($scheme && $host) {

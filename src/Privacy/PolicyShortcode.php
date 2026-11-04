@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Privacy;
 
+use Pratcom\Connect\Bridge\Hotes;
 use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Plugin;
 
@@ -86,7 +87,7 @@ class PolicyShortcode
     {
         return (string) apply_filters(
             'pratcom_connect_policy_base_url',
-            'https://chatbot.pratcom.net'
+            Hotes::base('chat')
         );
     }
 

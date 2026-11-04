@@ -4,7 +4,8 @@ namespace Pratcom\Connect\Bridge;
 
 /**
  * Plugin Update Checker (YahnisElsts/plugin-update-checker v5) branche sur
- * les releases GitHub du repo pratcom/pratcom-connect-bridge.
+ * les releases GitHub (tags) du repo pratcom/pratcom-connect-bridge, avec
+ * l'asset .zip de la release (enableReleaseAssets).
  *
  * Cette classe ne fait que setup le checker, il s'auto-active a chaque admin
  * page load WP.
@@ -36,9 +37,11 @@ class Updater
             $checker->getVcsApi()->enableReleaseAssets();
         }
 
-        // Brancher sur tags (releases) plutot que sur le branch HEAD
-        if (method_exists($checker, 'setBranch')) {
-            $checker->setBranch('main');
-        }
+        // Mises a jour par releases (tags), jamais par la tete d'une branche.
+        // Sans setBranch, PUC v5 cherche la derniere release GitHub, puis le
+        // dernier tag. L'ancien setBranch('main') ajoutait la branche `main`
+        // en dernier recours : un commit de version sur main pouvait etre
+        // propose aux sites sans tag. La branche par defaut de PUC (`master`)
+        // n'existe pas ici : ce dernier recours ne propose donc plus rien.
     }
 }

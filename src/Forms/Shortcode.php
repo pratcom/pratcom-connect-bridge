@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Forms;
 
+use Pratcom\Connect\Bridge\Hotes;
 use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Plugin;
 
@@ -36,7 +37,7 @@ class Shortcode
     {
         return (string) apply_filters(
             'pratcom_connect_forms_loader_url',
-            'https://chatbot.pratcom.net/loader.js'
+            Hotes::base('chat') . '/loader.js'
         );
     }
 

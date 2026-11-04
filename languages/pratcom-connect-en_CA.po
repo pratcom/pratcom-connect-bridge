@@ -158,10 +158,10 @@ msgstr "Welcome to Pratcom Connect"
 
 msgid ""
 "Connectez ce site à Pratcom Connect pour activer les modules (Chat IA, "
-"Forms, Privacy) via une seule clé API fournie par Pratcom Média."
+"Forms, Privacy, Emplois) via une seule clé API fournie par Pratcom Média."
 msgstr ""
 "Connect this site to Pratcom Connect to enable the modules (AI Chat, Forms, "
-"Privacy) with a single API key provided by Pratcom Media."
+"Privacy, Jobs) with a single API key provided by Pratcom Media."
 
 msgid "Se connecter"
 msgstr "Connect"
@@ -894,3 +894,24 @@ msgstr "Settings"
 
 msgid "my_cookie | Mon outil | Mesure d'audience | 1 an | statistics"
 msgstr "my_cookie | My tool | Audience measurement | 1 year | statistics"
+
+msgid "Pratcom Connect : ce site est suspendu, ce contenu n'est pas affiché aux visiteurs."
+msgstr "Pratcom Connect: this site is suspended, this content is not shown to visitors."
+
+msgid "Pratcom Connect : site suspendu."
+msgstr "Pratcom Connect: site suspended."
+
+msgid "Les modules Connect ne sont plus affichés aux visiteurs. Communiquez avec Pratcom Média pour rétablir le service."
+msgstr "Connect modules are no longer shown to visitors. Contact Pratcom Média to restore the service."
+
+msgid "État du site"
+msgstr "Site status"
+
+msgid "Suspendu : les modules ne sont plus affichés aux visiteurs."
+msgstr "Suspended: modules are no longer shown to visitors."
+
+msgid "Connect Emplois"
+msgstr "Connect Jobs"
+
+msgid "Offres d'emploi publiées sur vos pages, avec fiches et données structurées pour Google."
+msgstr "Job postings published on your pages, with detail pages and structured data for Google."

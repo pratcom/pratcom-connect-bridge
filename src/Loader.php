@@ -7,7 +7,7 @@ namespace Pratcom\Connect\Bridge;
  *
  * Pattern V2 :
  *   1. Inline script window.__pratcomConnect = { workspaceId, workspaceSlug, featurePacks, theme }
- *   2. <script src="connect.pratcom.net/loader.js" defer>
+ *   2. <script src="{hote app}/loader.js" defer> (Hotes, par defaut connect.pratcom.net)
  *
  * Le loader.js cote serveur lit window.__pratcomConnect au boot et charge
  * dynamiquement les bundles selon les feature_packs actifs (chat, privacy, etc.).
@@ -23,7 +23,8 @@ class Loader
 
     public function inject_loader(): void
     {
-        if (!Plugin::is_connected()) {
+        // Site suspendu (handshake) : plus de loader, rien cote visiteur.
+        if (!Plugin::is_connected() || Suspension::est_suspendu()) {
             return;
         }
 
@@ -45,7 +46,7 @@ class Loader
         }
         $config_json = wp_json_encode($config, JSON_UNESCAPED_SLASHES);
 
-        $loader_url = PRATCOM_CONNECT_BRIDGE_LOADER_URL;
+        $loader_url = Hotes::base('app') . '/loader.js';
         $w = esc_attr($workspace_id);
 
         wp_print_inline_script_tag('window.__pratcomConnect=' . $config_json . ';');
