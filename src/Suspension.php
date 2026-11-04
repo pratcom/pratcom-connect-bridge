@@ -12,8 +12,10 @@ namespace Pratcom\Connect\Bridge;
  * Site suspendu : `loader.js` n'est plus insere et les codes courts du
  * plugin rendent une chaine vide pour le visiteur ; l'administrateur voit
  * une notice sobre dans wp-admin et une note discrete a la place du code
- * court. Le plugin reverifie a `next_check_at` (evenement cron unique), en
- * plus du handshake horaire.
+ * court. Le plugin reverifie a `next_check_at` (evenement cron unique)
+ * seulement si cette date tombe avant le prochain handshake horaire : un seul
+ * handshake par heure. Quand la reverification a lieu, le passage horaire
+ * est repousse d'une heure (HealthCheck::decaler).
  *
  * Etat absent ou inconnu : actif. Un serveur qui n'emet pas la cle ne doit
  * pas eteindre les sites (meme regle que `enabled` dans FeaturePacks).
@@ -70,6 +72,7 @@ final class Suspension
         $ts = self::horodatage($prochaine);
         if ($ts === null) {
             delete_option(self::OPTION_PROCHAINE);
+            self::deprogrammer();
             return;
         }
         update_option(self::OPTION_PROCHAINE, gmdate('c', $ts));
@@ -93,6 +96,12 @@ final class Suspension
     private static function programmer(int $ts): void
     {
         $ts = max($ts, time() + 60);
+        // Le handshake horaire passe avant (ou dans la minute) : il suffit.
+        $horaire = wp_next_scheduled(HealthCheck::CRON_HOOK);
+        if ($horaire && $ts >= $horaire - 60) {
+            self::deprogrammer();
+            return;
+        }
         $existant = wp_next_scheduled(self::CRON_RECHECK);
         if ($existant) {
             if (abs($existant - $ts) < 60) {
@@ -113,6 +122,7 @@ final class Suspension
 
     public static function reverifier(): void
     {
+        HealthCheck::decaler();
         (new HealthCheck())->run();
     }
 

@@ -915,3 +915,11 @@ msgstr "Connect Jobs"
 
 msgid "Offres d'emploi publiées sur vos pages, avec fiches et données structurées pour Google."
 msgstr "Job postings published on your pages, with detail pages and structured data for Google."
+
+#: src/FeaturePacks.php
+msgid "Privacy"
+msgstr "Privacy"
+
+#: src/FeaturePacks.php src/Admin/Tabs/JobsTab.php
+msgid "Emplois"
+msgstr "Jobs"

@@ -76,6 +76,25 @@ final class FeaturePacks
         ));
     }
 
+    /**
+     * Libelle d'affichage d'une cle de module (Chat, Formulaires, Privacy,
+     * Emplois). Cle inconnue du plugin : la cle, capitale en tete.
+     */
+    public static function libelle(string $cle): string
+    {
+        switch ($cle) {
+            case 'chat':
+                return __('Chat', 'pratcom-connect');
+            case 'forms':
+                return __('Formulaires', 'pratcom-connect');
+            case 'privacy':
+                return __('Privacy', 'pratcom-connect');
+            case 'jobs':
+                return __('Emplois', 'pratcom-connect');
+        }
+        return ucfirst($cle);
+    }
+
     /** @return array<int, string> */
     public static function actifs(): array
     {

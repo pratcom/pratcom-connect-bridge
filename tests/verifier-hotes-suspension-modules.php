@@ -81,6 +81,8 @@ function wp_print_script_tag($a) { echo '<script src="' . $a['src'] . '"></scrip
 function wp_next_scheduled($hook) { return $GLOBALS['banc_cron'][$hook] ?? false; }
 function wp_schedule_single_event($ts, $hook) { $GLOBALS['banc_cron'][$hook] = $ts; return true; }
 function wp_unschedule_event($ts, $hook) { unset($GLOBALS['banc_cron'][$hook]); return true; }
+function wp_schedule_event($ts, $recurrence, $hook) { $GLOBALS['banc_cron'][$hook] = $ts; return true; }
+define('HOUR_IN_SECONDS', 3600);
 function home_url() { return 'https://site.exemple'; }
 function wp_parse_url($u, $c = -1) { return parse_url($u, $c); }
 function get_bloginfo($k) { return '6.8'; }
@@ -98,6 +100,7 @@ function wp_remote_retrieve_body($r) { return $r['body']; }
 
 namespace Banc {
 
+use Pratcom\Connect\Bridge\Admin\Tabs\ConnectionTab;
 use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Forms\Shortcode as FormsShortcode;
 use Pratcom\Connect\Bridge\HealthCheck;
@@ -257,6 +260,79 @@ verifier('cle nettoyee', FeaturePacks::cles_dans(['<b>x</b>' => true]) === ['cha
 verifier('option illisible : modules connus, aucun actif', FeaturePacks::cles_dans('x') === FeaturePacks::CONNUS && FeaturePacks::actifs_dans('x') === []);
 update_option(Plugin::OPTION_FEATURE_PACKS, ['jobs' => ['enabled' => true]]);
 verifier('lecture de l\'option du handshake', FeaturePacks::actifs() === ['jobs']);
+verifier('libelles du tableau de bord', array_map([FeaturePacks::class, 'libelle'], ['chat', 'forms', 'privacy', 'jobs', 'inventaire']) === ['Chat', 'Formulaires', 'Privacy', 'Emplois', 'Inventaire']);
+
+echo "6. Connexion : hotes et suspension enregistres tout de suite\n";
+$GLOBALS['banc_options'] = [];
+$GLOBALS['banc_cron'] = [];
+$GLOBALS['banc_admin'] = false;
+$cle = 'pck_espace-banc_' . str_repeat('a', 28) . 'b1c2';
+ConnectionTab::enregistrer_connexion($cle, [
+    'ok' => true, 'workspace_id' => 'ws-banc', 'workspace_slug' => 'espace-banc',
+    'feature_packs' => ['forms' => ['enabled' => true]],
+    'hosts' => ['app' => 'https://app.staging.pratcom.net', 'chat' => 'https://chat.staging.pratcom.net'],
+    'suspension' => ['etat' => 'suspendu'],
+    'next_check_at' => gmdate('c', time() + 7200),
+]);
+verifier('connexion : statut connected', get_option(Plugin::OPTION_STATUS) === 'connected');
+verifier('connexion : quatre derniers caracteres', get_option(Plugin::OPTION_KEY_LAST_FOUR) === 'b1c2');
+verifier('connexion : hotes enregistres', Hotes::base('app') === 'https://app.staging.pratcom.net' && Hotes::base('chat') === 'https://chat.staging.pratcom.net');
+verifier('connexion : suspension enregistree', Suspension::est_suspendu());
+verifier('connexion suspendue : loader absent sans attendre le cron', loader_html() === '');
+verifier('connexion suspendue : code court vide', banc_code_court('pratcom_emplois') === '');
+verifier('connexion : cron horaire dans une heure', ($GLOBALS['banc_cron'][HealthCheck::CRON_HOOK] ?? 0) >= time() + 3500);
+verifier('connexion : next_check_at apres le cron horaire, pas de reverification', !isset($GLOBALS['banc_cron'][Suspension::CRON_RECHECK]));
+
+echo "7. Deconnexion : tout est purge\n";
+ConnectionTab::purger_connexion();
+verifier('deconnexion : hotes purges', get_option(Hotes::OPTION, null) === null && Hotes::base('app') === 'https://connect.pratcom.net');
+verifier('deconnexion : suspension purgee', get_option(Suspension::OPTION, null) === null && !Suspension::est_suspendu());
+verifier('deconnexion : next_check_at purge', get_option(Suspension::OPTION_PROCHAINE, null) === null);
+verifier('deconnexion : cle et espace purges', get_option(Plugin::OPTION_API_KEY_PLAINTEXT, null) === null && get_option(Plugin::OPTION_WORKSPACE_ID, null) === null);
+verifier('deconnexion : statut disconnected', get_option(Plugin::OPTION_STATUS) === 'disconnected');
+$GLOBALS['banc_cron'][Suspension::CRON_RECHECK] = time() + 600;
+$GLOBALS['banc_cron'][HealthCheck::CRON_HOOK] = time() + 1200;
+ConnectionTab::purger_connexion();
+verifier('deconnexion : les deux crons deprogrammes', $GLOBALS['banc_cron'] === [], json_encode($GLOBALS['banc_cron']));
+
+echo "8. Un seul handshake par heure\n";
+$GLOBALS['banc_options'] = [];
+$GLOBALS['banc_cron'] = [];
+connecter();
+$horaire = time() + 1800;
+$GLOBALS['banc_cron'][HealthCheck::CRON_HOOK] = $horaire;
+repondre(['workspace_id' => 'ws-banc', 'feature_packs' => [], 'next_check_at' => gmdate('c', time() + 3600)]);
+(new HealthCheck())->run();
+verifier('next_check_at apres le cron horaire : aucune reverification', !isset($GLOBALS['banc_cron'][Suspension::CRON_RECHECK]));
+verifier('cron horaire intact', $GLOBALS['banc_cron'][HealthCheck::CRON_HOOK] === $horaire);
+repondre(['workspace_id' => 'ws-banc', 'feature_packs' => [], 'next_check_at' => gmdate('c', $horaire + 30)]);
+(new HealthCheck())->run();
+verifier('next_check_at dans la minute du cron horaire : aucune reverification', !isset($GLOBALS['banc_cron'][Suspension::CRON_RECHECK]));
+$tot = time() + 600;
+repondre(['workspace_id' => 'ws-banc', 'feature_packs' => [], 'next_check_at' => gmdate('c', $tot)]);
+(new HealthCheck())->run();
+verifier('next_check_at avant le cron horaire : reverification programmee', ($GLOBALS['banc_cron'][Suspension::CRON_RECHECK] ?? 0) === $tot);
+repondre(['workspace_id' => 'ws-banc', 'feature_packs' => [], 'next_check_at' => gmdate('c', time() + 5400)]);
+(new HealthCheck())->run();
+verifier('next_check_at repousse apres le cron horaire : reverification retiree', !isset($GLOBALS['banc_cron'][Suspension::CRON_RECHECK]));
+repondre(['workspace_id' => 'ws-banc', 'feature_packs' => [], 'next_check_at' => gmdate('c', $tot)]);
+(new HealthCheck())->run();
+repondre(['workspace_id' => 'ws-banc', 'feature_packs' => []]);
+(new HealthCheck())->run();
+verifier('next_check_at absent : reverification retiree', !isset($GLOBALS['banc_cron'][Suspension::CRON_RECHECK]));
+
+// La reverification a lieu : le cron horaire est repousse d'une heure, il
+// ne refait pas un handshake dans la foulee.
+$GLOBALS['banc_cron'] = [HealthCheck::CRON_HOOK => time() + 300];
+$GLOBALS['banc_requetes'] = [];
+repondre(['workspace_id' => 'ws-banc', 'feature_packs' => [], 'next_check_at' => gmdate('c', time() + 3600)]);
+Suspension::reverifier();
+verifier('reverification : un seul handshake', count($GLOBALS['banc_requetes']) === 1);
+verifier('reverification : cron horaire repousse a une heure', ($GLOBALS['banc_cron'][HealthCheck::CRON_HOOK] ?? 0) >= time() + 3500);
+verifier('reverification : next_check_at a +1 h couvert par le cron horaire, rien de plus', !isset($GLOBALS['banc_cron'][Suspension::CRON_RECHECK]));
+$GLOBALS['banc_cron'] = [];
+HealthCheck::decaler();
+verifier('decaler sans cron horaire : ne programme rien', $GLOBALS['banc_cron'] === []);
 
 echo "\n$ok ok, " . count($echecs) . " echec(s)\n";
 exit($echecs === [] ? 0 : 1);

@@ -37,11 +37,12 @@ class Updater
             $checker->getVcsApi()->enableReleaseAssets();
         }
 
-        // Mises a jour par releases (tags), jamais par la tete d'une branche.
-        // Sans setBranch, PUC v5 cherche la derniere release GitHub, puis le
-        // dernier tag. L'ancien setBranch('main') ajoutait la branche `main`
-        // en dernier recours : un commit de version sur main pouvait etre
-        // propose aux sites sans tag. La branche par defaut de PUC (`master`)
-        // n'existe pas ici : ce dernier recours ne propose donc plus rien.
+        // Mises a jour par releases (tags). PUC v5 traite `main` comme
+        // `master` : avec l'ancien setBranch('main'), il lisait DEJA la
+        // derniere release GitHub, puis le dernier tag, et ne tombait sur la
+        // tete de `main` qu'en l'absence de toute release et de tout tag (cas
+        // qui n'existe pas dans ce depot). Retirer setBranch('main') ne
+        // corrige donc rien : c'est une clarification, l'intention (releases
+        // seulement) se lit sans connaitre ce detail de PUC.
     }
 }

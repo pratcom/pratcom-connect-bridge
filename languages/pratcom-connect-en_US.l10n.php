@@ -127,6 +127,8 @@ return [
         'Ouvrir en plein écran ↗' => 'Open in full screen ↗',
         'Interface d\'entraînement Connect Chat' => 'Connect Chat training interface',
         'Formulaires' => 'Forms',
+        'Privacy' => 'Privacy',
+        'Emplois' => 'Jobs',
         'Copié !' => 'Copied!',
         'Formulaires intelligents Connect Forms : insérez-les n\'importe où avec un shortcode.' => 'Smart Connect Forms: insert them anywhere with a shortcode.',
         'Des formulaires qui se remplissent, se notent et se routent tout seuls, prêts à coller n\'importe où avec un shortcode.' => 'Forms that fill in, score and route themselves, ready to paste anywhere with a shortcode.',

@@ -841,3 +841,11 @@ msgstr ""
 
 msgid "Offres d'emploi publiées sur vos pages, avec fiches et données structurées pour Google."
 msgstr ""
+
+#: src/FeaturePacks.php
+msgid "Privacy"
+msgstr ""
+
+#: src/FeaturePacks.php src/Admin/Tabs/JobsTab.php
+msgid "Emplois"
+msgstr ""

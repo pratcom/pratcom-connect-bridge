@@ -4,7 +4,7 @@ Tags: consent, privacy, cookies, forms, chatbot
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 2.2.2
+Stable tag: 2.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,13 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 7. Chat tab — train your Connect Chat assistant directly from wp-admin (mirror of the Connect training dashboard).
 
 == Changelog ==
+
+= 2.3.0 =
+* Single source for the Pratcom Connect hosts: the connection response can provide them, with the previous addresses as defaults.
+* A suspended site no longer loads the Connect modules for visitors (loader and shortcodes), from the moment it connects; administrators see a short notice.
+* The Jobs module is recognized in the Dashboard and Modules tabs; the Dashboard shows module names instead of internal keys.
+* At most one connection check per hour. Disconnecting now also clears the stored hosts and suspension state.
+* Clean-up: unused API calls and a deprecated admin alias removed; uninstall removes every option the plugin stores.
 
 = 2.2.2 =
 * Job page: when a job's address changes, its previous addresses (listed by Pratcom Connect in the anciens_slugs field) now redirect with a 301 to the job's current page, in the same language, instead of to the job list. Legacy /jobs/{slug}/ URLs reach the renamed job in a single redirect. No change while the catalogue does not provide the field; a job page still answers 503 while the catalogue is unavailable.

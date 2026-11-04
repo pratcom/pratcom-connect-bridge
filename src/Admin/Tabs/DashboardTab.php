@@ -35,7 +35,8 @@ class DashboardTab extends AbstractTab
         $last_handshake = (string) get_option(Plugin::OPTION_LAST_HANDSHAKE, '');
         $connected = Plugin::is_connected();
         // Lus du handshake par FeaturePacks (formes table et liste, `jobs` compris).
-        $active_modules = FeaturePacks::actifs();
+        // Libelles (Chat, Formulaires, Privacy, Emplois), pas les cles brutes.
+        $active_modules = array_map([FeaturePacks::class, 'libelle'], FeaturePacks::actifs());
         $suspendu = Suspension::est_suspendu();
         ?>
         <h1 class="pc-content__title"><?php esc_html_e('Tableau de bord', 'pratcom-connect'); ?></h1>

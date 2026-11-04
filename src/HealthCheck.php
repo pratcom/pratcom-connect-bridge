@@ -11,7 +11,11 @@ use Pratcom\Connect\Bridge\Http\ApiClient;
  * - Re-fait handshake avec la cle stockee
  * - Si 401 (cle revoquee) : status -> 'revoked' + last_error stocke
  * - Sinon : refresh feature_packs + last_handshake, hotes (`hosts`),
- *   suspension, et reverification programmee a `next_check_at`
+ *   suspension, et reverification a `next_check_at` si elle tombe avant le
+ *   prochain passage horaire (un seul handshake par heure)
+ *
+ * La connexion (ConnectionTab) applique la meme reponse par appliquer() :
+ * un site suspendu qui se connecte ne sert rien, sans attendre le cron.
  */
 class HealthCheck
 {
@@ -25,8 +29,41 @@ class HealthCheck
     public static function schedule(): void
     {
         if (!wp_next_scheduled(self::CRON_HOOK)) {
-            wp_schedule_event(time() + 300, 'hourly', self::CRON_HOOK);
+            // Une heure apres la connexion, pas cinq minutes : le handshake
+            // de la connexion vient d'avoir lieu.
+            wp_schedule_event(time() + HOUR_IN_SECONDS, 'hourly', self::CRON_HOOK);
         }
+    }
+
+    /**
+     * Repousse le passage horaire d'une heure. Appele quand la reverification
+     * a `next_check_at` fait un handshake : le cron horaire n'en refait pas
+     * un dans la foulee.
+     */
+    public static function decaler(): void
+    {
+        $ts = wp_next_scheduled(self::CRON_HOOK);
+        if (!$ts) {
+            return;
+        }
+        wp_unschedule_event($ts, self::CRON_HOOK);
+        wp_schedule_event(time() + HOUR_IN_SECONDS, 'hourly', self::CRON_HOOK);
+    }
+
+    /**
+     * Applique une reponse de handshake reussie : modules, hotes, suspension
+     * (et sa reverification), horodatage, statut.
+     *
+     * @param array<string, mixed> $res
+     */
+    public static function appliquer(array $res): void
+    {
+        update_option(Plugin::OPTION_FEATURE_PACKS, $res['feature_packs'] ?? []);
+        Hotes::enregistrer($res['hosts'] ?? null);
+        Suspension::enregistrer($res['suspension'] ?? null, $res['next_check_at'] ?? null);
+        update_option(Plugin::OPTION_LAST_HANDSHAKE, current_time('mysql'));
+        update_option(Plugin::OPTION_STATUS, 'connected');
+        delete_option(Plugin::OPTION_LAST_ERROR);
     }
 
     public static function unschedule(): void
@@ -53,12 +90,7 @@ class HealthCheck
         $res = $client->handshake($api_key, $domain);
 
         if ($res['ok'] ?? false) {
-            update_option(Plugin::OPTION_FEATURE_PACKS, $res['feature_packs'] ?? []);
-            Hotes::enregistrer($res['hosts'] ?? null);
-            Suspension::enregistrer($res['suspension'] ?? null, $res['next_check_at'] ?? null);
-            update_option(Plugin::OPTION_LAST_HANDSHAKE, current_time('mysql'));
-            update_option(Plugin::OPTION_STATUS, 'connected');
-            delete_option(Plugin::OPTION_LAST_ERROR);
+            self::appliquer($res);
             return ['ok' => true, 'status' => 'connected'];
         }
 
