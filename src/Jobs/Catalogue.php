@@ -171,6 +171,7 @@ final class Catalogue
             'fetched_at'   => $garde === null ? 0 : max((int) ($garde['fetched_at'] ?? 0), (int) get_option(self::OPTION_LU, 0)),
             'etag'         => (string) ($garde['etag'] ?? ''),
             'erreur'       => $erreur,
+            'bouton_appel' => is_array($garde['bouton_appel'] ?? null) ? $garde['bouton_appel'] : null,
         ];
     }
 
@@ -187,6 +188,7 @@ final class Catalogue
         $curseur = null;
         $premier_etag = '';
         $generated_at = '';
+        $bouton_appel = null;
 
         for ($page = 0; $page < self::PAGES_MAX; $page++) {
             $url = self::base_url() . '/api/public/offers/' . rawurlencode($espace)
@@ -246,6 +248,9 @@ final class Catalogue
             if ($page === 0) {
                 $premier_etag = (string) wp_remote_retrieve_header($rep, 'etag');
                 $generated_at = (string) ($corps['generated_at'] ?? '');
+                // Le bouton d'appel de la fiche (api, 11/11) : `null` = eteint.
+                // Garde tel quel ; c'est `Fiche::bouton_appel` qui le valide.
+                $bouton_appel = is_array($corps['call_button'] ?? null) ? $corps['call_button'] : null;
             }
 
             foreach ($corps['offers'] as $o) {
@@ -263,6 +268,7 @@ final class Catalogue
                     'fetched_at'   => time(),
                     'count'        => count($offres),
                     'offres'       => $offres,
+                    'bouton_appel' => $bouton_appel,
                 ];
                 // Une ecriture refusee laisserait l'ancien catalogue en place
                 // tout en se disant « sain » : on verifie, et on le dit.
