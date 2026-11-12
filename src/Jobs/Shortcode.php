@@ -633,6 +633,8 @@ JS;
             . '.pce-fiche__meta dd{margin:0}'
             . '.pce-fiche__description{margin:0 0 28px}'
             . '.pce-fiche__postuler{margin:0 0 28px}'
+            . '.pce-fiche__appel{margin:0 0 24px}'
+            . '.pce-bouton--appel{min-height:48px;min-width:44px;font-size:1.1em;font-weight:600;display:inline-flex;align-items:center;gap:.5em;flex-wrap:wrap}'
             . '.pce-fiche__retour{margin:0}';
     }
 }

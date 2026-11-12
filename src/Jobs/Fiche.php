@@ -211,6 +211,10 @@ final class Fiche
             $html .= '<h1 class="pce-fiche__titre">' . esc_html((string) ($o['title'] ?? '')) . '</h1>';
         }
 
+        // En haut de la fiche, AVANT le formulaire : le bouton d'appel regle
+        // dans le CRM (Emplois, Reglages). Absent du catalogue = rien.
+        $html .= self::bouton_appel(Catalogue::etat()['bouton_appel'] ?? null, $lang);
+
         $meta = [
             'meta_lieu'      => Shortcode::lieu_libelle($o, $lang),
             'meta_type'      => Vocabulaire::libelle('employment_type', $o['employment_type'] ?? null, $lang),
@@ -251,6 +255,35 @@ final class Fiche
         }
 
         return $html . '</article>';
+    }
+
+    /**
+     * Le bouton d'appel, tel que l'api le sert (`call_button` de la route
+     * publique des offres) : `{ phone: "450-555-0123", href:
+     * "tel:+14505550123", label: { fr, en } }`. AUCUNE logique metier : le
+     * reglage vit dans le CRM. La forme est seulement reverifiee, parce que
+     * la valeur vient du reseau : un `href` qui n'est pas un `tel:+1` a dix
+     * chiffres, ou un numero qui n'a pas la forme affichee, et rien ne sort.
+     * Couleurs : celles des boutons du theme (`wp-element-button`).
+     */
+    public static function bouton_appel($b, string $lang): string
+    {
+        if (!is_array($b)) {
+            return '';
+        }
+        $href = (string) ($b['href'] ?? '');
+        $phone = (string) ($b['phone'] ?? '');
+        if (!preg_match('/^tel:\+1[2-9][0-9]{2}[2-9][0-9]{6}$/', $href) || !preg_match('/^[2-9][0-9]{2}-[2-9][0-9]{2}-[0-9]{4}$/', $phone)) {
+            return '';
+        }
+        $langue = $lang === 'en' ? 'en' : 'fr';
+        $label = is_array($b['label'] ?? null) ? trim((string) ($b['label'][$langue] ?? '')) : '';
+        if ($label === '' || (int) preg_match_all('/./us', $label) > 40) {
+            $label = $langue === 'en' ? 'Call us' : 'Appelez-nous';
+        }
+        return '<p class="pce-fiche__appel"><a class="pce-bouton pce-bouton--appel wp-element-button" href="' . esc_url($href, ['tel']) . '">'
+            . '<span class="pce-bouton__libelle">' . esc_html($label) . '</span> '
+            . '<span class="pce-bouton__numero">' . esc_html($phone) . '</span></a></p>';
     }
 
     /**
