@@ -175,5 +175,52 @@ verifier('le travail qui lance Composer n\'a que la lecture', (bool) preg_match(
     $release
 ));
 
+
+// ─── 4. build-org.yml (E-22, 12/11) ─────────────────────────────────────────
+
+echo "build-org.yml\n";
+
+$org = lire($racine . '/.github/workflows/build-org.yml') ?? '';
+verifier('build-org.yml present', $org !== '');
+$org = (string) preg_replace('/^\s*#.*$/m', '', $org);
+$avantJobsOrg = (string) strstr($org, "\njobs:", true);
+verifier('build-org.yml : permissions: {} au niveau du fichier', (bool) preg_match('/^permissions:\s*\{\s*\}\s*$/m', $avantJobsOrg)
+    && !preg_match('/contents:\s*write/', $avantJobsOrg));
+verifier('build-org.yml : ecriture accordee a un seul travail', preg_match_all('/contents:\s*write/', $org) === 1);
+verifier('build-org.yml : le travail qui lance wp-cli n\'a que la lecture', (bool) preg_match(
+    '/\n  build-org:\n(?:(?!\n  \S).)*?contents:\s*read(?:(?!\n  \S).)*?php wp-cli\.phar/s',
+    $org
+));
+// Le travail en ecriture : ni extraction, ni action tierce, ni telechargement.
+$travailEcriture = preg_match('/\n  ([\w-]+):\n((?:(?!\n  \S).)*?contents:\s*write(?:(?!\n  \S).)*)/s', $org, $mw) ? $mw[2] : '';
+verifier('build-org.yml : le travail en ecriture ne lance ni action, ni checkout, ni curl, ni php', $travailEcriture !== ''
+    && !preg_match('/uses:|curl|wget|php\s/', $travailEcriture));
+verifier('build-org.yml : wp-cli a version figee (pas de gh-pages)', !preg_match('/gh-pages/', $org)
+    && (bool) preg_match('/WP_CLI_VERSION=\d+\.\d+\.\d+\s*$/m', $org));
+$posSha = preg_match('/sha256sum\s+-c/', $org, $m1, PREG_OFFSET_CAPTURE) ? $m1[0][1] : -1;
+$posExec = strpos($org, 'php wp-cli.phar');
+verifier('build-org.yml : empreinte sha256 de wp-cli.phar (64 hex) verifiee avant toute execution', (bool) preg_match('/WP_CLI_SHA256=[0-9a-f]{64}\s*$/m', $org)
+    && $posSha >= 0 && $posExec !== false && $posSha < $posExec);
+
+// ─── 5. Les 3 workflows : permissions et jeton hors de .git/config ──────────
+
+echo "Permissions et extraction des 3 workflows\n";
+
+foreach (['ci.yml', 'release.yml', 'build-org.yml'] as $nom) {
+    $texte = (string) preg_replace('/^\s*#.*$/m', '', lire($racine . '/.github/workflows/' . $nom) ?? '');
+    $avant = (string) strstr($texte, "\njobs:", true);
+    verifier("$nom : permissions declarees au fichier, sans ecriture", (bool) preg_match('/^permissions:/m', $avant)
+        && !preg_match('/:\s*write/', $avant));
+    $extractions = preg_match_all('/uses:\s*actions\/checkout@/', $texte);
+    $sansJeton = preg_match_all('/uses:\s*actions\/checkout@\S+[^\n]*\n\s+with:\n(?:\s+[\w-]+:[^\n]*\n)*?\s+persist-credentials:\s*false/', $texte);
+    verifier("$nom : chaque actions/checkout porte persist-credentials: false", $extractions === $sansJeton, "$sansJeton/$extractions");
+}
+
+// Auto-verification : l'ancien build-org.yml doit tomber.
+$ancien = "permissions:\n  contents: write\n\njobs:\n  build-org:\n    steps:\n      - uses: actions/checkout@x\n      - run: |\n          curl -sSfL -o wp-cli.phar https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar\n          php wp-cli.phar i18n make-mo languages languages\n";
+$avantAncien = (string) strstr($ancien, "\njobs:", true);
+verifier('auto-verification : l\'ancien build-org.yml est refuse', !preg_match('/^permissions:\s*\{\s*\}\s*$/m', $avantAncien)
+    && (bool) preg_match('/gh-pages/', $ancien) && !preg_match('/sha256sum\s+-c/', $ancien));
+
 echo "\n" . ($total - $echecs) . "/$total controles verts\n";
 exit($echecs === 0 ? 0 : 1);

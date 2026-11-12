@@ -9,11 +9,17 @@ on:
   push:
     branches: [main]
 
+# E-22 (12/11) : lecture seule, et le jeton ne reste pas dans .git/config.
+permissions:
+  contents: read
+
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
 
       - name: Setup PHP 8.1
         uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
