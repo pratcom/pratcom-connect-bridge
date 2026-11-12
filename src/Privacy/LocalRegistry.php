@@ -26,6 +26,9 @@ class LocalRegistry
     public const EXPORT_ACTION = 'pratcom_privacy_export_csv';
     private const RATE_LIMIT = 20;          // requêtes max…
     private const RATE_WINDOW = HOUR_IN_SECONDS; // …par IP par heure
+    /** E-24 : plafond pour tout le site, par heure (filtre `pratcom_connect_registre_plafond_global`). */
+    public const PLAFOND_GLOBAL = 1000;
+    private const CLE_GLOBALE = 'pratcom_consent_rl_global';
 
     public function __construct()
     {
@@ -87,6 +90,15 @@ class LocalRegistry
 
     private function rate_limited(): bool
     {
+        // E-24 : plafond global d'abord. Un robot qui fait tourner ses IP ne
+        // remplit plus la table sans limite.
+        $plafond = (int) apply_filters('pratcom_connect_registre_plafond_global', self::PLAFOND_GLOBAL);
+        $global = (int) get_transient(self::CLE_GLOBALE);
+        if ($plafond > 0 && $global >= $plafond) {
+            return true;
+        }
+        set_transient(self::CLE_GLOBALE, $global + 1, self::RATE_WINDOW);
+
         $key = 'pratcom_consent_rl_' . substr(self::ip_hash(), 0, 32);
         $count = (int) get_transient($key);
         if ($count >= self::RATE_LIMIT) {
@@ -123,7 +135,7 @@ class LocalRegistry
             }
         }
 
-        $anonymous = substr(sanitize_text_field((string) $request->get_param('anonymousId')), 0, 64);
+        $anonymous = self::identifiant_anonyme($request->get_param('anonymousId'));
         $lang = substr(sanitize_key((string) $request->get_param('language')), 0, 8);
         $source = esc_url_raw((string) $request->get_param('sourceUrl'));
         $banner_version = substr(sanitize_text_field((string) $request->get_param('configVersion')), 0, 32);
@@ -174,13 +186,55 @@ class LocalRegistry
             'ip_hash', 'user_agent',
         ]);
         foreach ((array) $rows as $row) {
-            fputcsv($out, [
-                $row['id'] ?? '', $row['created_at'] ?? '', $row['anonymous_id'] ?? '',
-                $row['action'] ?? '', $row['choices'] ?? '', $row['banner_version'] ?? '',
-                $row['template_version'] ?? '', $row['language'] ?? '', $row['source_url'] ?? '',
-                $row['ip_hash'] ?? '', $row['user_agent'] ?? '',
-            ]);
+            fputcsv($out, self::ligne_csv((array) $row));
         }
         exit;
+    }
+
+    /**
+     * Une ligne de l'export, cellules neutralisees (E-23).
+     *
+     * @param array<string, mixed> $row
+     * @return array<int, string>
+     */
+    public static function ligne_csv(array $row): array
+    {
+        $colonnes = [
+            'id', 'created_at', 'anonymous_id', 'action', 'choices', 'banner_version',
+            'template_version', 'language', 'source_url', 'ip_hash', 'user_agent',
+        ];
+        $ligne = [];
+        foreach ($colonnes as $c) {
+            $ligne[] = self::cellule_csv((string) ($row[$c] ?? ''));
+        }
+        return $ligne;
+    }
+
+    /**
+     * E-23 : une cellule qui commence par `=`, `+`, `-`, `@`, une tabulation
+     * ou un retour chariot est prefixee d'une apostrophe, pour qu'un tableur
+     * la lise comme du texte et jamais comme une formule.
+     */
+    public static function cellule_csv(string $valeur): string
+    {
+        if ($valeur !== '' && in_array($valeur[0], ['=', '+', '-', '@', chr(9), chr(13)], true)) {
+            return "'" . $valeur;
+        }
+        return $valeur;
+    }
+
+    /**
+     * E-24 : l'identifiant anonyme est celui que privacy.js produit (lettres,
+     * chiffres, tiret, soulignement, 64 au plus). Toute autre forme est
+     * ramenee a ces seuls caracteres : plus de formule, plus de texte libre.
+     *
+     * @param mixed $brut
+     */
+    public static function identifiant_anonyme($brut): string
+    {
+        if (!is_string($brut)) {
+            return '';
+        }
+        return substr((string) preg_replace('/[^A-Za-z0-9_-]/', '', $brut), 0, 64);
     }
 }

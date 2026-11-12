@@ -70,12 +70,17 @@ class HealthCheck
         delete_option(Plugin::OPTION_LAST_ERROR);
     }
 
+    /**
+     * Retire le passage horaire ET la reverification de suspension (E-9) :
+     * la desactivation n'appelle que cette methode.
+     */
     public static function unschedule(): void
     {
         $ts = wp_next_scheduled(self::CRON_HOOK);
         if ($ts) {
             wp_unschedule_event($ts, self::CRON_HOOK);
         }
+        Suspension::deprogrammer();
     }
 
     /**
@@ -103,6 +108,8 @@ class HealthCheck
 
         // 401 = cle invalide ou revoquee
         if ($http === 401) {
+            // E-9 : plus de reverification programmee pour une cle revoquee.
+            Suspension::deprogrammer();
             update_option(Plugin::OPTION_STATUS, 'revoked');
             update_option(Plugin::OPTION_LAST_ERROR, 'Cle revoquee ou invalide. Contacter Pratcom Media pour une nouvelle cle.');
             return ['ok' => false, 'status' => 'revoked', 'error' => $err];

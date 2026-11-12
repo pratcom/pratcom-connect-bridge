@@ -44,7 +44,7 @@ class Loader
         if (!empty($theme['primary'])) {
             $config['theme'] = $theme;
         }
-        $config_json = wp_json_encode($config, JSON_UNESCAPED_SLASHES);
+        $config_json = wp_json_encode($config, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 
         $loader_url = Hotes::base('app') . '/loader.js';
         $w = esc_attr($workspace_id);

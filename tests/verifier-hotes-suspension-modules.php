@@ -196,7 +196,8 @@ foreach ($refus as $url) {
     verifier("refuse « $url »", Hotes::url_permise($url) === null);
 }
 verifier('accepte pratcom.net nu', Hotes::url_permise('https://pratcom.net') === 'https://pratcom.net');
-verifier('accepte un port', Hotes::url_permise('https://API.pratcom.net:8443/') === 'https://api.pratcom.net:8443');
+verifier('refuse un port autre que 443 (E-21)', Hotes::url_permise('https://API.pratcom.net:8443/') === null);
+verifier('accepte 443 et le retire (E-21)', Hotes::url_permise('https://API.pratcom.net:443/') === 'https://api.pratcom.net');
 verifier('role inconnu et valeur non chaine ignores', Hotes::nettoyer(['autre' => 'https://x.pratcom.net', 'api' => ['x']]) === []);
 verifier('role inconnu : base app', Hotes::base_dans([], 'inconnu') === 'https://connect.pratcom.net');
 repondre(['workspace_id' => 'ws-banc', 'feature_packs' => [], 'hosts' => ['api' => 'https://attaquant.example']]);
