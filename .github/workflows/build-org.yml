@@ -11,14 +11,20 @@ on:
   release:
     types: [published]
 
-permissions:
-  contents: write
+# E-22 (12/11) : rien au niveau du fichier. Le travail qui construit (et lance
+# wp-cli, un binaire tiers) n a que la lecture ; l ecriture de la release vit
+# dans un seul travail, qui ne lance que gh, sans extraction du depot.
+permissions: {}
 
 jobs:
   build-org:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
 
       - name: Setup PHP 8.1
         uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
@@ -42,7 +48,15 @@ jobs:
       - name: Compiler les traductions (.po -> .mo) via WP-CLI
         run: |
           set -e
-          curl -sSfL -o wp-cli.phar https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+          # E-22 : version figee et empreinte sha256 verifiee AVANT toute
+          # execution. Empreinte publiee par wp-cli avec la release v2.12.0
+          # (wp-cli-2.12.0.phar.sha256), recalculee a l identique le 12/11.
+          # Une autre empreinte arrete le build ; monter de version = changer
+          # les deux lignes ensemble.
+          WP_CLI_VERSION=2.12.0
+          WP_CLI_SHA256=ce34ddd838f7351d6759068d09793f26755463b4a4610a5a5c0a97b68220d85c
+          curl -sSfL -o wp-cli.phar "https://github.com/wp-cli/wp-cli/releases/download/v${WP_CLI_VERSION}/wp-cli-${WP_CLI_VERSION}.phar"
+          echo "${WP_CLI_SHA256}  wp-cli.phar" | sha256sum -c - || { echo "::error::empreinte de wp-cli.phar differente, build arrete"; exit 1; }
           php wp-cli.phar --info >/dev/null
           # Genere les .mo (et .l10n.php) a partir des .po committes (FR source,
           # traductions EN). Outil officiel WordPress, deterministe, sans gettext.
@@ -97,8 +111,22 @@ jobs:
           name: pratcom-connect-org
           path: build/pratcom-connect-org.zip
 
-      - name: Joindre a la release (si declenche par une release)
-        if: github.event_name == 'release'
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
-        with:
-          files: build/pratcom-connect-org.zip
+  # Seul travail en ecriture : aucune extraction, aucune action tierce, aucun
+  # binaire telecharge. gh (installe sur le runner) recupere l artefact du
+  # travail precedent et le joint a la release.
+  joindre-release:
+    needs: build-org
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - name: Joindre le zip .org a la release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -e
+          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name pratcom-connect-org --dir build
+          gh release upload "$TAG" build/pratcom-connect-org.zip --repo "$GITHUB_REPOSITORY" --clobber
