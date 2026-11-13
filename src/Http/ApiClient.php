@@ -97,6 +97,9 @@ class ApiClient
         $args = [
             'method' => $method,
             'timeout' => 10,
+            // E-15 : aucune redirection suivie. Le corps porte la cle d'API ;
+            // WordPress en suivrait 5 par defaut, vers un hote non verifie.
+            'redirection' => 0,
             'headers' => [
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
@@ -121,14 +124,19 @@ class ApiClient
         $code = wp_remote_retrieve_response_code($response);
         $data = json_decode(wp_remote_retrieve_body($response), true);
 
+        // E-15 : un 2xx dont le corps n'est pas un objet JSON n'est pas un
+        // succes (page de portail, proxy, maintenance).
         if ($code >= 200 && $code < 300) {
-            return array_merge(['ok' => true], is_array($data) ? $data : []);
+            if (!is_array($data)) {
+                return ['ok' => false, 'http_code' => $code, 'error' => 'invalid_json', 'details' => null];
+            }
+            return array_merge(['ok' => true], $data);
         }
 
         return [
             'ok' => false,
             'http_code' => $code,
-            'error' => $data['error'] ?? 'http_error',
+            'error' => is_array($data) && is_string($data['error'] ?? null) ? $data['error'] : 'http_error',
             'details' => $data,
         ];
     }

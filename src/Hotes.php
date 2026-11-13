@@ -95,7 +95,10 @@ final class Hotes
         return $sortie;
     }
 
-    /** `https://hote[:port]` si permise, sinon null. Chemin, requete, fragment et identifiants sont refuses. */
+    /**
+     * `https://hote` si permise, sinon null. Chemin, requete, fragment et
+     * identifiants sont refuses ; un port autre que 443 aussi (E-21).
+     */
     public static function url_permise(string $url): ?string
     {
         $url = rtrim(trim($url), '/');
@@ -108,6 +111,9 @@ final class Hotes
                 return null;
             }
         }
+        if (isset($parties['port']) && (int) $parties['port'] !== 443) {
+            return null;
+        }
         $hote = strtolower($parties['host']);
         $domaines = function_exists('apply_filters')
             ? (array) apply_filters('pratcom_connect_hotes_domaines', ['pratcom.net'])
@@ -119,7 +125,7 @@ final class Hotes
             }
             $suffixe = '.' . $domaine;
             if ($hote === $domaine || substr($hote, -strlen($suffixe)) === $suffixe) {
-                return 'https://' . $hote . (isset($parties['port']) ? ':' . (int) $parties['port'] : '');
+                return 'https://' . $hote;
             }
         }
         return null;
