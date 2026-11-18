@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Jobs;
 
+use Pratcom\Connect\Bridge\Hotes;
 use Pratcom\Connect\Bridge\Plugin;
 
 /**
@@ -75,7 +76,7 @@ final class Catalogue
     /** Base de l'API (l'api, pas `chatbot.`), filtrable pour le staging. */
     public static function base_url(): string
     {
-        return rtrim((string) apply_filters('pratcom_connect_jobs_base_url', 'https://connect.pratcom.net'), '/');
+        return rtrim((string) apply_filters('pratcom_connect_jobs_base_url', Hotes::base('app')), '/');
     }
 
     /** Slug de l'espace, tel que le handshake l'a pose. */
@@ -171,6 +172,7 @@ final class Catalogue
             'etag'         => (string) ($garde['etag'] ?? ''),
             'erreur'       => $erreur,
             'spontanee'    => is_array($garde['spontanee'] ?? null) ? $garde['spontanee'] : null,
+            'bouton_appel' => is_array($garde['bouton_appel'] ?? null) ? $garde['bouton_appel'] : null,
         ];
     }
 
@@ -188,6 +190,7 @@ final class Catalogue
         $premier_etag = '';
         $generated_at = '';
         $spontanee = null;
+        $bouton_appel = null;
 
         for ($page = 0; $page < self::PAGES_MAX; $page++) {
             $url = self::base_url() . '/api/public/offers/' . rawurlencode($espace)
@@ -248,6 +251,9 @@ final class Catalogue
                 $premier_etag = (string) wp_remote_retrieve_header($rep, 'etag');
                 $generated_at = (string) ($corps['generated_at'] ?? '');
                 $spontanee = self::lire_spontanee($corps['spontaneous'] ?? null);
+                // Le bouton d'appel de la fiche (api, 11/11) : `null` = eteint.
+                // Garde tel quel ; c'est `Fiche::bouton_appel` qui le valide.
+                $bouton_appel = is_array($corps['call_button'] ?? null) ? $corps['call_button'] : null;
             }
 
             foreach ($corps['offers'] as $o) {
@@ -266,6 +272,7 @@ final class Catalogue
                     'count'        => count($offres),
                     'offres'       => $offres,
                     'spontanee'    => $spontanee,
+                    'bouton_appel' => $bouton_appel,
                 ];
                 // Une ecriture refusee laisserait l'ancien catalogue en place
                 // tout en se disant « sain » : on verifie, et on le dit.

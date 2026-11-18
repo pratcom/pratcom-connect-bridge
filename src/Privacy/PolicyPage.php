@@ -3,12 +3,12 @@
 namespace Pratcom\Connect\Bridge\Privacy;
 
 /**
- * « Créer la page » — génère (ou détecte) la page WP contenant
+ * « Créer la page », génère (ou détecte) la page WP contenant
  * [pratcom_privacy_policy], l'enregistre dans le réglage WP natif
  * « Page de politique de confidentialité » et expose un statut pour le
  * crochet vert des réglages (P4b, spec §6b).
  *
- * W5 — pages légales bilingues : si WPML ou Polylang est actif, ensure_page()
+ * W5, pages légales bilingues : si WPML ou Polylang est actif, ensure_page()
  * crée + lie automatiquement une page dans CHAQUE langue active (l'admin ne
  * fait rien). Repli inchangé : 1 page si aucun plugin multilingue. Toute la
  * logique multilingue est déléguée à Multilang (défensif, zéro dépendance
@@ -16,7 +16,7 @@ namespace Pratcom\Connect\Bridge\Privacy;
  *
  * Le rendu du bouton (render_admin_section) est conçu pour être appelé par
  * l'onglet Confidentialité du shell admin (refactor O0, chantier Plugin
- * .org) — cette classe ne touche PAS SettingsPage.php. Le handler
+ * .org), cette classe ne touche PAS SettingsPage.php. Le handler
  * admin_post est autonome (enregistré ici), donc fonctionnel dès que le
  * bouton est affiché.
  */
@@ -255,7 +255,7 @@ class PolicyPage
     }
 
     /**
-     * Bloc « Politique de confidentialité » de l'onglet Confidentialité —
+     * Bloc « Politique de confidentialité » de l'onglet Confidentialité :
      * à appeler par le shell admin (O0). Autonome : formulaire admin-post.
      */
     public static function render_admin_section(): void
@@ -265,7 +265,7 @@ class PolicyPage
 
         if ($status['linked']) {
             echo '<p style="color:#1a7f37;font-weight:600;">✓ '
-                . esc_html__('Page publiée et liée — la bannière y pointe automatiquement.', 'pratcom-connect')
+                . esc_html__('Page publiée et liée, la bannière y pointe automatiquement.', 'pratcom-connect')
                 . ' <a href="' . esc_url($status['url']) . '" target="_blank" rel="noopener">'
                 . esc_html__('Voir la page', 'pratcom-connect') . '</a></p>';
             return;

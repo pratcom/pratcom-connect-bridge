@@ -6,7 +6,7 @@ use Pratcom\Connect\Bridge\Admin\Tabs\PrivacyTab;
 
 /**
  * Contenu personnalise ajoute a la politique de confidentialite generee
- * (Privacy v2 — chantier feat/privacy-custom-content).
+ * (Privacy v2, chantier feat/privacy-custom-content).
  *
  * L'administrateur peut ajouter, A LA FIN de la politique, une serie de blocs
  * « sous-titre + contenu » bilingues (FR/EN), en TEXTE SIMPLE (aucun HTML).
@@ -14,12 +14,12 @@ use Pratcom\Connect\Bridge\Admin\Tabs\PrivacyTab;
  *   - Free / non connecte / repli : LocalPolicy::render() appelle render_section().
  *   - Connecte (pack privacy) : PolicyShortcode::render() ajoute render_section()
  *     au fragment HTML rendu par le serveur. Le serveur ignore cette option
- *     LOCALE — l'ajout cote Bridge est donc le seul mecanisme qui couvre le
+ *     LOCALE, l'ajout cote Bridge est donc le seul mecanisme qui couvre le
  *     tier connecte sans toucher au serveur ni a la CIL (0 migration).
  *
  * Stockage 100 % LOCAL (options WP) :
- *   - OPTION_ENABLED (string '1'/'')  — etat de la case.
- *   - OPTION_BLOCKS  (array)          — [{id, subtitle:{fr,en}, content:{fr,en}}].
+ *   - OPTION_ENABLED (string '1'/'') , etat de la case.
+ *   - OPTION_BLOCKS  (array)         , [{id, subtitle:{fr,en}, content:{fr,en}}].
  * Chaque bloc porte un `id` interne court : adressage AJAX stable, insensible
  * au reordonnancement / a la suppression. Le rendu public l'ignore.
  *
@@ -29,7 +29,7 @@ use Pratcom\Connect\Bridge\Admin\Tabs\PrivacyTab;
  * page-scoped (wp_enqueue_script + wp_localize_script, AUCUN inline ; globale
  * JS prefixee `pratcom`). Fonctionne dans les deux canaux (org/premium).
  *
- * Fichier neuf petit (lecon #4) — jamais d'edition inline du monolithe.
+ * Fichier neuf petit (lecon #4), jamais d'edition inline du monolithe.
  */
 class CustomContent
 {
@@ -276,7 +276,7 @@ class CustomContent
     // ─── Rendu admin (carte) ───
 
     /**
-     * Carte « Contenu personnalise » — appelee par PrivacyTab::render().
+     * Carte « Contenu personnalise », appelee par PrivacyTab::render().
      * Case a cocher + liste de blocs repetables + gabarit <template>.
      */
     public static function render_admin_card(): void

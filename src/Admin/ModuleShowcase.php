@@ -20,7 +20,7 @@ namespace Pratcom\Connect\Bridge\Admin;
  * (enqueue page-scoped par chaque onglet). prefers-reduced-motion est gere
  * dans le CSS (animations coupees/reduites).
  *
- * Fichier neuf petit (lecon #4) — jamais d'edition inline d'un monolithe.
+ * Fichier neuf petit (lecon #4), jamais d'edition inline d'un monolithe.
  */
 final class ModuleShowcase
 {

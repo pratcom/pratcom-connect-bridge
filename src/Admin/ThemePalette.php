@@ -12,7 +12,7 @@ namespace Pratcom\Connect\Bridge\Admin;
  * (voir src/theme.ts) afin que le rendu de contraste WCAG soit identique
  * côté serveur (resolveTheme) et runtime (privacy.js / loader Forms).
  *
- * ⚠️ ADDITIF UNIQUEMENT — n'enlève jamais une clé existante du thème.
+ * ⚠️ ADDITIF UNIQUEMENT, n'enlève jamais une clé existante du thème.
  * `primary` (et son override `onPrimary`) restent gérés par
  * SettingsPage::section_appearance() / handle_save_theme(). Ce helper ne
  * touche qu'aux clés supplémentaires.
@@ -26,7 +26,7 @@ namespace Pratcom\Connect\Bridge\Admin;
 class ThemePalette
 {
     /**
-     * Clés couleur additionnelles (hex) — sanitisées via sanitize_hex_color().
+     * Clés couleur additionnelles (hex), sanitisées via sanitize_hex_color().
      * @var string[]
      */
     private const COLOR_KEYS = ['primaryDark', 'secondary', 'text'];

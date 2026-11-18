@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "presetsVersion": "2026-06-11.2",
-  "_elementorNote": "Elementor Pro enregistre l'état d'affichage des popups dans localStorage (clé : elementor-popup-{id}), pas en cookie HTTP. Non inclus comme preset — candidat pour une future extension du schéma si un type 'storage' est ajouté.",
+  "_elementorNote": "Elementor Pro enregistre l'état d'affichage des popups dans localStorage (clé : elementor-popup-{id}), pas en cookie HTTP. Non inclus comme preset, candidat pour une future extension du schéma si un type 'storage' est ajouté.",
   "presets": [
     {
       "id": "ga4",
@@ -244,8 +244,8 @@
       "category": "necessary",
       "blockedByDefault": false,
       "description": {
-        "fr": "Protection anti-robots des formulaires. Classé nécessaire (sécurité) — non bloqué par défaut.",
-        "en": "Anti-bot protection for forms. Classified as necessary (security) — not blocked by default."
+        "fr": "Protection anti-robots des formulaires. Classé nécessaire (sécurité), non bloqué par défaut.",
+        "en": "Anti-bot protection for forms. Classified as necessary (security), not blocked by default."
       },
       "detect": { "plugins": ["google-captcha/google-captcha.php", "advanced-google-recaptcha/advanced-google-recaptcha.php"] },
       "blocking": { "scriptPatterns": ["google.com/recaptcha", "gstatic.com/recaptcha"] },
@@ -261,8 +261,8 @@
       "category": "necessary",
       "blockedByDefault": false,
       "description": {
-        "fr": "Témoins fonctionnels de la boutique (panier, session). Nécessaires — non bloqués.",
-        "en": "Functional store cookies (cart, session). Necessary — not blocked."
+        "fr": "Témoins fonctionnels de la boutique (panier, session). Nécessaires, non bloqués.",
+        "en": "Functional store cookies (cart, session). Necessary, not blocked."
       },
       "detect": { "plugins": ["woocommerce/woocommerce.php"] },
       "blocking": { "scriptPatterns": [] },
@@ -297,8 +297,8 @@
       "category": "necessary",
       "blockedByDefault": false,
       "description": {
-        "fr": "WPML mémorise la langue choisie par le visiteur pour maintenir la navigation cohérente sur un site multilingue. Fonctionnel — non bloqué par défaut.",
-        "en": "WPML stores the visitor's chosen language to keep navigation consistent across a multilingual site. Functional — not blocked by default."
+        "fr": "WPML mémorise la langue choisie par le visiteur pour maintenir la navigation cohérente sur un site multilingue. Fonctionnel, non bloqué par défaut.",
+        "en": "WPML stores the visitor's chosen language to keep navigation consistent across a multilingual site. Functional, not blocked by default."
       },
       "detect": { "plugins": ["sitepress-multilingual-cms/sitepress.php"] },
       "blocking": { "scriptPatterns": [] },
@@ -311,7 +311,7 @@
     {
       "id": "hubspot",
       "kind": "service",
-      "name": "HubSpot – CRM & Marketing",
+      "name": "HubSpot - CRM & Marketing",
       "provider": "HubSpot",
       "category": "marketing",
       "blockedByDefault": true,
@@ -336,8 +336,8 @@
       "category": "necessary",
       "blockedByDefault": false,
       "description": {
-        "fr": "Cloudflare Turnstile est un CAPTCHA respectueux de la vie privée qui vérifie que le visiteur est humain sans tracer ses activités ni déposer de témoins tiers non nécessaires. Classé nécessaire (sécurité) — non bloqué par défaut.",
-        "en": "Cloudflare Turnstile is a privacy-first CAPTCHA that verifies visitors are human without tracking activity or setting unnecessary third-party cookies. Classified as necessary (security) — not blocked by default."
+        "fr": "Cloudflare Turnstile est un CAPTCHA respectueux de la vie privée qui vérifie que le visiteur est humain sans tracer ses activités ni déposer de témoins tiers non nécessaires. Classé nécessaire (sécurité), non bloqué par défaut.",
+        "en": "Cloudflare Turnstile is a privacy-first CAPTCHA that verifies visitors are human without tracking activity or setting unnecessary third-party cookies. Classified as necessary (security), not blocked by default."
       },
       "detect": { "plugins": ["simple-cloudflare-turnstile/simple-cloudflare-turnstile.php", "cf-turnstile/cf-turnstile.php"] },
       "blocking": { "scriptPatterns": ["challenges.cloudflare.com/turnstile"] },
@@ -374,10 +374,10 @@
       "provider": "Defiant Inc.",
       "category": "necessary",
       "blockedByDefault": false,
-      "_source": "https://www.wordfence.com/help/general-data-protection-regulation/ — https://cookiedatabase.org/cookie/wordfence/wfwaf-authcookie/",
+      "_source": "https://www.wordfence.com/help/general-data-protection-regulation/, https://cookiedatabase.org/cookie/wordfence/wfwaf-authcookie/",
       "description": {
-        "fr": "Extension de sécurité WordPress. Dépose un témoin d'authentification WAF pour les utilisateurs connectés afin d'ajuster les règles du pare-feu. Classé nécessaire (sécurité) — non bloqué par défaut. Note : le témoin wordfence_verifiedHuman est obsolète depuis les versions récentes de Wordfence.",
-        "en": "WordPress security plugin. Sets a WAF authentication cookie for logged-in users to adjust firewall rules. Classified as necessary (security) — not blocked by default. Note: the wordfence_verifiedHuman cookie is obsolete in recent Wordfence versions."
+        "fr": "Extension de sécurité WordPress. Dépose un témoin d'authentification WAF pour les utilisateurs connectés afin d'ajuster les règles du pare-feu. Classé nécessaire (sécurité), non bloqué par défaut. Note : le témoin wordfence_verifiedHuman est obsolète depuis les versions récentes de Wordfence.",
+        "en": "WordPress security plugin. Sets a WAF authentication cookie for logged-in users to adjust firewall rules. Classified as necessary (security), not blocked by default. Note: the wordfence_verifiedHuman cookie is obsolete in recent Wordfence versions."
       },
       "detect": { "plugins": ["wordfence/wordfence.php"] },
       "blocking": { "scriptPatterns": [] },
@@ -392,10 +392,10 @@
       "provider": "WP SYNTEX",
       "category": "necessary",
       "blockedByDefault": false,
-      "_source": "https://cookiedatabase.org/cookie/polylang/pll_language/ — https://polylang.pro/documentation/support/faq/",
+      "_source": "https://cookiedatabase.org/cookie/polylang/pll_language/, https://polylang.pro/documentation/support/faq/",
       "description": {
-        "fr": "Extension multilingue WordPress. Mémorise la langue choisie par le visiteur. Fonctionnel — non bloqué par défaut.",
-        "en": "WordPress multilingual plugin. Stores the visitor's chosen language. Functional — not blocked by default."
+        "fr": "Extension multilingue WordPress. Mémorise la langue choisie par le visiteur. Fonctionnel, non bloqué par défaut.",
+        "en": "WordPress multilingual plugin. Stores the visitor's chosen language. Functional, not blocked by default."
       },
       "detect": { "plugins": ["polylang/polylang.php", "polylang-pro/polylang.php"] },
       "blocking": { "scriptPatterns": [] },
@@ -410,10 +410,10 @@
       "provider": "WordPress",
       "category": "necessary",
       "blockedByDefault": false,
-      "_source": "https://developer.wordpress.org/reference/functions/wp_set_comment_cookies/ — https://developer.wordpress.org/advanced-administration/wordpress/cookies/",
+      "_source": "https://developer.wordpress.org/reference/functions/wp_set_comment_cookies/, https://developer.wordpress.org/advanced-administration/wordpress/cookies/",
       "description": {
-        "fr": "WordPress core mémorise le nom, l'e-mail et l'URL d'un visiteur dans des témoins après la soumission d'un commentaire (si la case « Enregistrer mes informations » est cochée). Déposés sur action explicite de l'utilisateur — non bloqués par défaut.",
-        "en": "WordPress core stores a visitor's name, email and URL in cookies after comment submission (if 'Save my info' is checked). Set on explicit user action — not blocked by default."
+        "fr": "WordPress core mémorise le nom, l'e-mail et l'URL d'un visiteur dans des témoins après la soumission d'un commentaire (si la case « Enregistrer mes informations » est cochée). Déposés sur action explicite de l'utilisateur, non bloqués par défaut.",
+        "en": "WordPress core stores a visitor's name, email and URL in cookies after comment submission (if 'Save my info' is checked). Set on explicit user action, not blocked by default."
       },
       "detect": { "plugins": [] },
       "blocking": { "scriptPatterns": [] },
@@ -430,7 +430,7 @@
       "provider": "Smash Balloon",
       "category": "marketing",
       "blockedByDefault": true,
-      "_source": "https://smashballoon.com/gdpr-and-our-plugins/ — https://smashballoon.com/doc/custom-facebook-feed-gdpr-compliance/",
+      "_source": "https://smashballoon.com/gdpr-and-our-plugins/, https://smashballoon.com/doc/custom-facebook-feed-gdpr-compliance/",
       "description": {
         "fr": "Smash Balloon affiche des flux Facebook, Instagram ou Twitter/X. Lorsque les widgets sociaux natifs (bouton J'aime, Partager) sont activés, ils chargent des scripts Meta ou X qui déposent des témoins de suivi tiers. Le mode GDPR du plugin bloque ces requêtes tierces.",
         "en": "Smash Balloon displays Facebook, Instagram, or Twitter/X feeds. When native social widgets (Like, Share) are enabled, they load Meta or X scripts that set third-party tracking cookies. The plugin's GDPR mode blocks these third-party requests."
@@ -448,7 +448,7 @@
         "iframePatterns": ["facebook.com/plugins"]
       },
       "cookies": [
-        { "name": "_fbp", "expiry": { "fr": "3 mois (widgets Facebook actifs)", "en": "3 months (active Facebook widgets)" }, "thirdParty": true, "description": { "fr": "Identifiant navigateur Facebook déposé par les widgets sociaux Meta — pas par Smash Balloon lui-même.", "en": "Facebook browser identifier set by Meta social widgets — not by Smash Balloon itself." } }
+        { "name": "_fbp", "expiry": { "fr": "3 mois (widgets Facebook actifs)", "en": "3 months (active Facebook widgets)" }, "thirdParty": true, "description": { "fr": "Identifiant navigateur Facebook déposé par les widgets sociaux Meta, pas par Smash Balloon lui-même.", "en": "Facebook browser identifier set by Meta social widgets, not by Smash Balloon itself." } }
       ]
     },
     {
@@ -460,8 +460,8 @@
       "blockedByDefault": false,
       "_source": "https://wpdiscuz.com/docs/wpdiscuz-7/privacy-and-gdpr/cookies/",
       "description": {
-        "fr": "Système de commentaires avancé pour WordPress. Mémorise l'identité du commentateur (nom, e-mail, URL) et un nonce de formulaire. Fonctionnel — non bloqué par défaut. Durée configurable par l'administrateur.",
-        "en": "Advanced comment system for WordPress. Stores commenter identity (name, email, URL) and a form nonce. Functional — not blocked by default. Lifetime configurable by administrator."
+        "fr": "Système de commentaires avancé pour WordPress. Mémorise l'identité du commentateur (nom, e-mail, URL) et un nonce de formulaire. Fonctionnel, non bloqué par défaut. Durée configurable par l'administrateur.",
+        "en": "Advanced comment system for WordPress. Stores commenter identity (name, email, URL) and a form nonce. Functional, not blocked by default. Lifetime configurable by administrator."
       },
       "detect": { "plugins": ["wpdiscuz/class.WpdiscuzCore.php"] },
       "blocking": { "scriptPatterns": [] },
@@ -478,10 +478,10 @@
       "provider": "Cozmoslabs",
       "category": "necessary",
       "blockedByDefault": false,
-      "_source": "https://translatepress.com/docs/frequently-asked-questions/ — https://cookiedatabase.org/service/translatepress/",
+      "_source": "https://translatepress.com/docs/frequently-asked-questions/, https://cookiedatabase.org/service/translatepress/",
       "description": {
-        "fr": "Extension de traduction WordPress. Mémorise la langue choisie par le visiteur pour maintenir la navigation cohérente. Fonctionnel — non bloqué par défaut.",
-        "en": "WordPress translation plugin. Stores the visitor's chosen language to maintain consistent navigation. Functional — not blocked by default."
+        "fr": "Extension de traduction WordPress. Mémorise la langue choisie par le visiteur pour maintenir la navigation cohérente. Fonctionnel, non bloqué par défaut.",
+        "en": "WordPress translation plugin. Stores the visitor's chosen language to maintain consistent navigation. Functional, not blocked by default."
       },
       "detect": { "plugins": ["translatepress-multilingual/index.php"] },
       "blocking": { "scriptPatterns": [] },
@@ -496,7 +496,7 @@
       "provider": "Spotify",
       "category": "statistics",
       "blockedByDefault": true,
-      "_source": "https://cookiedatabase.org/cookie/spotify/sp_t/ — https://cookiedatabase.org/cookie/spotify/sp_landing/ — https://www.spotify.com/us/legal/cookies-policy/",
+      "_source": "https://cookiedatabase.org/cookie/spotify/sp_t/, https://cookiedatabase.org/cookie/spotify/sp_landing/, https://www.spotify.com/us/legal/cookies-policy/",
       "description": {
         "fr": "Le lecteur audio Spotify intégré dépose des témoins d'analyse dès son chargement, avant toute interaction du visiteur. Bloqué par défaut jusqu'au consentement.",
         "en": "The embedded Spotify audio player sets analytics cookies as soon as it loads, before any visitor interaction. Blocked by default until consent."
@@ -518,7 +518,7 @@
       "provider": "Pinterest",
       "category": "marketing",
       "blockedByDefault": true,
-      "_source": "https://help.pinterest.com/en/business/article/pinterest-tag-parameters-and-cookies — https://policy.pinterest.com/en/cookies",
+      "_source": "https://help.pinterest.com/en/business/article/pinterest-tag-parameters-and-cookies, https://policy.pinterest.com/en/cookies",
       "description": {
         "fr": "Pixel de suivi Pinterest pour le remarketing et les conversions publicitaires.",
         "en": "Pinterest tracking pixel for remarketing and advertising conversion tracking."
@@ -540,16 +540,16 @@
       "provider": "Stripe",
       "category": "necessary",
       "blockedByDefault": false,
-      "_source": "https://docs.stripe.com/js/appendix/cookies — https://cookiedatabase.org/cookie/stripe/__stripe_mid/ — https://cookiedatabase.org/cookie/stripe/__stripe_sid/",
+      "_source": "https://docs.stripe.com/js/appendix/cookies, https://cookiedatabase.org/cookie/stripe/__stripe_mid/, https://cookiedatabase.org/cookie/stripe/__stripe_sid/",
       "description": {
-        "fr": "Stripe.js dépose des témoins pour sécuriser le traitement du paiement et détecter les activités frauduleuses. Classé nécessaire (paiement) — non bloqué par défaut.",
-        "en": "Stripe.js sets cookies to secure payment processing and detect fraudulent activity. Classified as necessary (payment) — not blocked by default."
+        "fr": "Stripe.js dépose des témoins pour sécuriser le traitement du paiement et détecter les activités frauduleuses. Classé nécessaire (paiement), non bloqué par défaut.",
+        "en": "Stripe.js sets cookies to secure payment processing and detect fraudulent activity. Classified as necessary (payment), not blocked by default."
       },
       "detect": { "plugins": ["woocommerce-gateway-stripe/woocommerce-gateway-stripe.php"] },
       "blocking": { "scriptPatterns": ["js.stripe.com"] },
       "cookies": [
         { "name": "__stripe_mid", "expiry": { "fr": "1 an", "en": "1 year" }, "thirdParty": true, "description": { "fr": "Identifiant machine Stripe pour la prévention des fraudes.", "en": "Stripe machine identifier for fraud prevention." } },
-        { "name": "__stripe_sid", "expiry": { "fr": "30 minutes", "en": "30 minutes" }, "thirdParty": true, "description": { "fr": "Identifiant de session Stripe — déposé au démarrage du processus de paiement.", "en": "Stripe session identifier — set at the start of the payment process." } }
+        { "name": "__stripe_sid", "expiry": { "fr": "30 minutes", "en": "30 minutes" }, "thirdParty": true, "description": { "fr": "Identifiant de session Stripe, déposé au démarrage du processus de paiement.", "en": "Stripe session identifier, set at the start of the payment process." } }
       ]
     },
     {
@@ -559,10 +559,10 @@
       "provider": "PayPal",
       "category": "necessary",
       "blockedByDefault": false,
-      "_source": "https://www.paypal.com/us/legalhub/paypal/cookie-full — https://developer.paypal.com/sdk/js/",
+      "_source": "https://www.paypal.com/us/legalhub/paypal/cookie-full, https://developer.paypal.com/sdk/js/",
       "description": {
-        "fr": "Le SDK PayPal dépose des témoins dès le chargement des boutons de paiement, avant toute interaction. Classé nécessaire (paiement) — non bloqué par défaut.",
-        "en": "The PayPal SDK sets cookies as soon as payment buttons load, before any interaction. Classified as necessary (payment) — not blocked by default."
+        "fr": "Le SDK PayPal dépose des témoins dès le chargement des boutons de paiement, avant toute interaction. Classé nécessaire (paiement), non bloqué par défaut.",
+        "en": "The PayPal SDK sets cookies as soon as payment buttons load, before any interaction. Classified as necessary (payment), not blocked by default."
       },
       "detect": { "plugins": ["woocommerce-paypal-payments/woocommerce-paypal-payments.php"] },
       "blocking": { "scriptPatterns": ["paypal.com/sdk/js", "paypalobjects.com"] },
@@ -579,7 +579,7 @@
       "provider": "LiveChat Inc.",
       "category": "marketing",
       "blockedByDefault": true,
-      "_source": "https://cookiedatabase.org/service/livechat/ — https://www.livechat.com/help/prepare-chat-gdpr/",
+      "_source": "https://cookiedatabase.org/service/livechat/, https://www.livechat.com/help/prepare-chat-gdpr/",
       "description": {
         "fr": "Widget de chat en direct LiveChat. Dépose des identifiants de visiteur persistants dès le chargement. Des données sont transmises à des pays sans niveau de protection adéquat (RGPD). Requiert le consentement.",
         "en": "LiveChat live chat widget. Sets persistent visitor identifiers on load. Data is transferred to countries without adequate protection (GDPR). Requires consent."
@@ -599,7 +599,7 @@
       "provider": "Tawk.to",
       "category": "functional",
       "blockedByDefault": true,
-      "_source": "https://help.tawk.to/article/what-are-tawkto-cookies-and-what-do-they-do — https://www.tawk.to/data-protection/gdpr-2/",
+      "_source": "https://help.tawk.to/article/what-are-tawkto-cookies-and-what-do-they-do, https://www.tawk.to/data-protection/gdpr-2/",
       "description": {
         "fr": "Widget de chat en direct Tawk.to. Identifie les visiteurs récurrents par un UUID unique. Le RGPD exige le consentement avant activation du widget.",
         "en": "Tawk.to live chat widget. Identifies returning visitors by a unique UUID. GDPR requires consent before widget activation."
@@ -621,7 +621,7 @@
       "provider": "Crisp IM",
       "category": "functional",
       "blockedByDefault": true,
-      "_source": "https://docs.crisp.chat/guides/chatbox-sdks/web-sdk/cookie-policies/ — https://help.crisp.chat/en/article/crisp-chatbox-cookie-ip-policy-1147xor/",
+      "_source": "https://docs.crisp.chat/guides/chatbox-sdks/web-sdk/cookie-policies/, https://help.crisp.chat/en/article/crisp-chatbox-cookie-ip-policy-1147xor/",
       "description": {
         "fr": "Widget de chat en direct Crisp. Dépose des témoins de session préfixés crisp-client/ pour maintenir l'historique de conversation. Aucun témoin de suivi publicitaire. Infrastructure hébergée en UE.",
         "en": "Crisp live chat widget. Sets session cookies with the crisp-client/ prefix to maintain conversation history. No advertising tracking cookies. Infrastructure hosted in the EU."
@@ -629,7 +629,7 @@
       "detect": { "plugins": ["crisp-for-woocommerce/crisp.php", "crisp-live-chat/rtm.php"] },
       "blocking": { "scriptPatterns": ["client.crisp.chat"] },
       "cookies": [
-        { "name": "crisp-client/*", "expiry": { "fr": "6 mois", "en": "6 months" }, "thirdParty": true, "description": { "fr": "Session de chat du visiteur (historique, identité temporaire). Préfixe crisp-client/ — uniquement fonctionnel, pas de suivi publicitaire.", "en": "Visitor chat session (history, temporary identity). crisp-client/ prefix — functional only, no advertising tracking." } }
+        { "name": "crisp-client/*", "expiry": { "fr": "6 mois", "en": "6 months" }, "thirdParty": true, "description": { "fr": "Session de chat du visiteur (historique, identité temporaire). Préfixe crisp-client/, uniquement fonctionnel, pas de suivi publicitaire.", "en": "Visitor chat session (history, temporary identity). crisp-client/ prefix, functional only, no advertising tracking." } }
       ]
     },
     {
@@ -639,7 +639,7 @@
       "provider": "Retyp LLC",
       "category": "marketing",
       "blockedByDefault": true,
-      "_source": "https://optinmonster.com/gdpr/cookies/ — https://cookiedatabase.org/cookie/optinmonster/omseen/",
+      "_source": "https://optinmonster.com/gdpr/cookies/, https://cookiedatabase.org/cookie/optinmonster/omseen/",
       "description": {
         "fr": "Popups et formulaires d'inscription. Dépose des témoins pour le suivi des campagnes, l'A/B testing et le reciblage sur site. Requiert le consentement.",
         "en": "Opt-in popups and signup forms. Sets cookies for campaign tracking, A/B testing, and on-site retargeting. Requires consent."

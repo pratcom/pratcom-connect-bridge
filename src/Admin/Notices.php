@@ -3,6 +3,7 @@
 namespace Pratcom\Connect\Bridge\Admin;
 
 use Pratcom\Connect\Bridge\Plugin;
+use Pratcom\Connect\Bridge\Suspension;
 
 class Notices
 {
@@ -14,6 +15,17 @@ class Notices
     public function render(): void
     {
         if (!current_user_can('manage_options')) return;
+
+        if (Plugin::is_connected() && Suspension::est_suspendu()) {
+            ?>
+            <div class="notice notice-warning">
+                <p>
+                    <strong><?php esc_html_e('Pratcom Connect : site suspendu.', 'pratcom-connect'); ?></strong>
+                    <?php esc_html_e('Les modules Connect ne sont plus affichés aux visiteurs. Communiquez avec Pratcom Média pour rétablir le service.', 'pratcom-connect'); ?>
+                </p>
+            </div>
+            <?php
+        }
 
         $status = get_option(Plugin::OPTION_STATUS);
         if ($status === 'connected' || $status === 'disconnected') return;

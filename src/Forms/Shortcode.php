@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Forms;
 
+use Pratcom\Connect\Bridge\Hotes;
 use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Plugin;
 
@@ -15,7 +16,7 @@ use Pratcom\Connect\Bridge\Plugin;
  * Pourquoi le slug et non le workspace_id : loader.js utilise data-client
  * dans l'URL /api/forms/{workspace}/{slug}, resolue par SLUG cote serveur
  * (loadActiveForm WHERE w.slug = ...). Le loader injecte par wp_head
- * (src/Loader.php) passe le workspace_id (UUID) — adapte au chat, pas aux
+ * (src/Loader.php) passe le workspace_id (UUID), adapte au chat, pas aux
  * formulaires. Le shortcode enfile donc son propre tag avec le bon slug.
  *
  * Zone chantier Forms (matrice de propriete : « onglet Formulaires +
@@ -36,7 +37,7 @@ class Shortcode
     {
         return (string) apply_filters(
             'pratcom_connect_forms_loader_url',
-            'https://chatbot.pratcom.net/loader.js'
+            Hotes::base('chat') . '/loader.js'
         );
     }
 

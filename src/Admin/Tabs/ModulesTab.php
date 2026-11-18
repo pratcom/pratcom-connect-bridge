@@ -2,6 +2,8 @@
 
 namespace Pratcom\Connect\Bridge\Admin\Tabs;
 
+use Pratcom\Connect\Bridge\FeaturePacks;
+use Pratcom\Connect\Bridge\Hotes;
 use Pratcom\Connect\Bridge\Plugin;
 use Pratcom\Connect\Bridge\Admin\AdminShell;
 
@@ -31,11 +33,12 @@ class ModulesTab extends AbstractTab
 
     public function render(): void
     {
-        $feature_packs = get_option(Plugin::OPTION_FEATURE_PACKS, []);
-        if (!is_array($feature_packs)) $feature_packs = [];
         $connected = Plugin::is_connected();
 
-        $modules = [
+        // Presentation des modules connus. La LISTE vient du handshake
+        // (FeaturePacks::cles) : un module que le serveur renvoie et que ce
+        // tableau ne decrit pas s'affiche quand meme, avec sa cle.
+        $fiches = [
             'chat' => [
                 'label'    => __('Connect Chat', 'pratcom-connect'),
                 'short'    => 'C',
@@ -54,7 +57,22 @@ class ModulesTab extends AbstractTab
                 'desc'     => __('Bannière de consentement Loi 25 et catalogue de témoins automatique.', 'pratcom-connect'),
                 'tab_slug' => 'pratcom-connect-privacy',
             ],
+            'jobs' => [
+                'label'    => __('Connect Emplois', 'pratcom-connect'),
+                'short'    => 'E',
+                'desc'     => __('Offres d\'emploi publiées sur vos pages, avec fiches et données structurées pour Google.', 'pratcom-connect'),
+                'tab_slug' => JobsTab::PAGE_SLUG,
+            ],
         ];
+        $modules = [];
+        foreach (FeaturePacks::cles() as $cle) {
+            $modules[$cle] = $fiches[$cle] ?? [
+                'label'    => 'Connect ' . ucfirst($cle),
+                'short'    => strtoupper(substr($cle, 0, 1)),
+                'desc'     => '',
+                'tab_slug' => '',
+            ];
+        }
         ?>
         <h1 class="pc-content__title"><?php esc_html_e('Modules', 'pratcom-connect'); ?></h1>
         <p class="pc-content__subtitle">
@@ -63,7 +81,7 @@ class ModulesTab extends AbstractTab
 
         <div class="pc-modules-grid">
             <?php foreach ($modules as $key => $mod):
-                $is_active = isset($feature_packs[$key]['enabled']) && (bool) $feature_packs[$key]['enabled'];
+                $is_active = FeaturePacks::is_active($key);
 
                 if ($is_active) {
                     $badge_class = 'active';
@@ -89,7 +107,7 @@ class ModulesTab extends AbstractTab
                     </div>
                     <p class="pc-module-card__desc"><?php echo esc_html($mod['desc']); ?></p>
                     <p class="pc-module-card__note"><?php echo esc_html($note); ?></p>
-                    <?php if ($is_active): ?>
+                    <?php if ($is_active && $mod['tab_slug'] !== ''): ?>
                         <div class="pc-actions pc-module-card__cta">
                             <a href="<?php echo esc_url(admin_url('admin.php?page=' . $mod['tab_slug'])); ?>" class="pc-btn pc-btn--secondary">
                                 <?php esc_html_e('Ouvrir', 'pratcom-connect'); ?>
@@ -99,7 +117,7 @@ class ModulesTab extends AbstractTab
                     <?php if (!$is_active): ?>
                         <div class="pc-actions pc-module-card__cta">
                             <?php if ($connected): ?>
-                                <a href="<?php echo esc_url('https://connect.pratcom.net/?utm_source=wp-plugin&utm_medium=modules&module=' . $key); ?>"
+                                <a href="<?php echo esc_url(Hotes::base('app') . '/?utm_source=wp-plugin&utm_medium=modules&module=' . $key); ?>"
                                    target="_blank" rel="noopener" class="pc-btn pc-btn--primary">
                                     <?php esc_html_e('Activer ce module', 'pratcom-connect'); ?>
                                 </a>
@@ -107,12 +125,14 @@ class ModulesTab extends AbstractTab
                                 <a href="<?php echo esc_url(admin_url('admin.php?page=' . ConnectionTab::PAGE_SLUG)); ?>" class="pc-btn pc-btn--primary">
                                     <?php esc_html_e('Connecter mon compte', 'pratcom-connect'); ?>
                                 </a>
+                                <?php if ($mod['tab_slug'] !== ''): ?>
                                 <a href="<?php echo esc_url(admin_url('admin.php?page=' . $mod['tab_slug'])); ?>" class="pc-btn pc-btn--secondary">
                                     <?php
                                     /* translators: %s: module name, e.g. "Connect Chat". */
                                     echo esc_html(sprintf(__('C\'est quoi %s', 'pratcom-connect'), $mod['label']));
                                     ?>
                                 </a>
+                                <?php endif; ?>
                             <?php endif; ?>
                             <a href="<?php echo esc_url(AdminShell::marketing_url($key . '/')); ?>"
                                target="_blank" rel="noopener" class="pc-btn pc-btn--ghost">

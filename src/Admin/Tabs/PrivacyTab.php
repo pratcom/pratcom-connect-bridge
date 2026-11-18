@@ -19,23 +19,23 @@ use Pratcom\Connect\Bridge\Privacy\ConsentMode;
 use Pratcom\Connect\Bridge\Privacy\CustomContent;
 
 /**
- * Onglet Confidentialité — Privacy Free (spec .org §3-4, O3 + legal pages org).
+ * Onglet Confidentialité, Privacy Free (spec .org §3-4, O3 + legal pages org).
  *
  * CONTENU : zone du chantier Privacy / Plugin .org.
  * DÉPENDANCES : FreeBanner, Presets, PolicyPage, CookiePolicyPage, CookieScan,
  *               LocalPolicy, LocalRegistry (tous mergés).
- * PATTERN : fichier neuf petit (leçon #4) — jamais d'édition inline du monolithe.
+ * PATTERN : fichier neuf petit (leçon #4), jamais d'édition inline du monolithe.
  *
  * Sections :
  *   ① Toggle FreeBanner::OPTION_ENABLED + badge + avertissement module Connect.
  *   ② Bandeau de suggestions Presets::suggested() (détection passive locale).
  *   ③ Cases à cocher Presets::all() groupées par provenance (kind) puis catégorie.
- *   ④ Informations entreprise (LocalPolicy::OPTION_VARS) — handler dédié.
+ *   ④ Informations entreprise (LocalPolicy::OPTION_VARS), handler dédié.
  *   ⑤ Liste manuelle de témoins (LocalPolicy::OPTION_COOKIES) + revue du scan local.
- *   ⑥ Bouton « Créer la page » Politique de confidentialité — PolicyPage.
- *   ⑦ Bouton « Créer la page » Politique relative aux témoins — CookiePolicyPage.
- *   ⑧ Export CSV consentements — LocalRegistry::EXPORT_ACTION.
- *   ⑨ (O5b) Section « Privacy Connect » — iframe scan si pack privacy actif,
+ *   ⑥ Bouton « Créer la page » Politique de confidentialité, PolicyPage.
+ *   ⑦ Bouton « Créer la page » Politique relative aux témoins, CookiePolicyPage.
+ *   ⑧ Export CSV consentements, LocalRegistry::EXPORT_ACTION.
+ *   ⑨ (O5b) Section « Privacy Connect », iframe scan si pack privacy actif,
  *      sinon vitrine verrouillée animée (W4) en upsell. Privacy Free intacte.
  */
 class PrivacyTab extends AbstractTab
@@ -81,7 +81,7 @@ class PrivacyTab extends AbstractTab
     }
 
     /**
-     * Assets de la vitrine verrouillée Privacy Connect (W4) — enqueue
+     * Assets de la vitrine verrouillée Privacy Connect (W4), enqueue
      * page-scoped : uniquement sur l'onglet Confidentialité. Aucun
      * <style>/<script> inline (conformité WordPress.org).
      */
@@ -106,11 +106,11 @@ class PrivacyTab extends AbstractTab
         $enabled = !empty($_POST['privacy_free_enabled']) ? '1' : '';
         update_option(FreeBanner::OPTION_ENABLED, $enabled);
 
-        // ①b Badge « Propulsé par Pratcom Connect » — défaut ON ; case décochée = retrait.
+        // ①b Badge « Propulsé par Pratcom Connect », défaut ON ; case décochée = retrait.
         $badge = !empty($_POST['privacy_free_badge']) ? '1' : '0';
         update_option(FreeBanner::OPTION_BADGE_ENABLED, $badge);
 
-        // ①c Google Consent Mode v2 (Privacy v2) — emet le `consent default`
+        // ①c Google Consent Mode v2 (Privacy v2), emet le `consent default`
         // inline avant GTM. OFF par defaut.
         $consent_mode = !empty($_POST['privacy_consent_mode']) ? '1' : '0';
         update_option(ConsentMode::OPTION_ENABLED, $consent_mode);
@@ -270,7 +270,7 @@ class PrivacyTab extends AbstractTab
         $consent_mode_enabled = get_option(ConsentMode::OPTION_ENABLED, '0') === '1';
         $selected_ids   = (array) get_option(Presets::OPTION_SELECTED, []);
         $all_presets    = Presets::all();
-        $suggestions    = Presets::suggested();   // string[] — ids détectés passivement
+        $suggestions    = Presets::suggested();   // string[], ids détectés passivement
         $is_connected   = Plugin::is_connected();
 
         // O5b : vérifier si le pack privacy est actif.
@@ -338,7 +338,7 @@ class PrivacyTab extends AbstractTab
                 <?php if ($is_connected): ?>
                 <div class="pc-notice pc-notice--info" style="margin-bottom:14px;">
                     ⚠&nbsp;<?php esc_html_e(
-                        'Ne pas activer si le module Privacy Connect est déjà actif sur ce site — les deux bannières ne doivent pas coexister.',
+                        'Ne pas activer si le module Privacy Connect est déjà actif sur ce site, les deux bannières ne doivent pas coexister.',
                         'pratcom-connect'
                     ); ?>
                 </div>
@@ -400,7 +400,7 @@ class PrivacyTab extends AbstractTab
                     💡&nbsp;<?php esc_html_e('Presets détectés sur ce site', 'pratcom-connect'); ?>
                 </h2>
                 <p style="margin:0 0 10px;">
-                    <?php esc_html_e('Ces plugins sont actifs — leurs presets ne sont pas encore activés :', 'pratcom-connect'); ?>
+                    <?php esc_html_e('Ces plugins sont actifs, leurs presets ne sont pas encore activés :', 'pratcom-connect'); ?>
                 </p>
                 <ul style="margin:0 0 10px;padding-left:20px;">
                     <?php foreach ($unseen_suggestions as $sid): ?>
@@ -688,7 +688,7 @@ class PrivacyTab extends AbstractTab
     // ─── W4 : vitrine verrouillée Privacy Connect (upsell animé) ───
 
     /**
-     * Vitrine verrouillée « Privacy Connect » — affichée sous Privacy Free
+     * Vitrine verrouillée « Privacy Connect », affichée sous Privacy Free
      * quand le module connecté n'est pas actif (non connecté OU pack privacy
      * inactif). Démo animée de bannière de consentement + fonctions + CTA.
      * N'altère JAMAIS Privacy Free (sections ①-⑧ ci-dessus).
@@ -746,7 +746,7 @@ class PrivacyTab extends AbstractTab
     // ─── O5b : section Privacy Connect iframe (additif) ───
 
     /**
-     * Section « Privacy Connect » — scan de confidentialité dans une iframe signée.
+     * Section « Privacy Connect », scan de confidentialité dans une iframe signée.
      * Visible uniquement si le site est connecté ET le pack privacy est actif.
      * Privacy Free (sections ①-⑧) reste intouché.
      */
@@ -762,7 +762,7 @@ class PrivacyTab extends AbstractTab
         // gere via un lien sortant. Le build premium garde l'iframe miroir.
         if (PRATCOM_CONNECT_BRIDGE_CHANNEL === 'org') {
             OrgManagePanel::render(
-                __('Privacy Connect — Scan de confidentialité', 'pratcom-connect'),
+                __('Privacy Connect : Scan de confidentialité', 'pratcom-connect'),
                 __('Le scan automatique des témoins et traceurs se gère dans votre tableau de bord Pratcom Connect.', 'pratcom-connect'),
                 'privacy',
                 __('Ouvrir Privacy Connect', 'pratcom-connect')
@@ -776,7 +776,7 @@ class PrivacyTab extends AbstractTab
             $code = $res['error'] ?? 'unavailable';
             ?>
             <div class="pc-card" style="margin-top:24px;">
-                <h2 class="pc-card__title"><?php esc_html_e('Privacy Connect — Scan de confidentialité', 'pratcom-connect'); ?></h2>
+                <h2 class="pc-card__title"><?php esc_html_e('Privacy Connect : Scan de confidentialité', 'pratcom-connect'); ?></h2>
                 <div class="pc-notice pc-notice--warning" style="margin-bottom:12px;">
                     <?php echo esc_html(
                         sprintf(
@@ -809,7 +809,7 @@ class PrivacyTab extends AbstractTab
         <div class="pc-card pc-embed-card pc-embed-wrapper" data-pc-embed="privacy" style="margin-top:24px;padding:0;overflow:hidden;">
             <div class="pc-embed-header">
                 <span class="pc-embed-header__label">
-                    <?php esc_html_e('Privacy Connect — Scan de confidentialité', 'pratcom-connect'); ?>
+                    <?php esc_html_e('Privacy Connect : Scan de confidentialité', 'pratcom-connect'); ?>
                 </span>
                 <?php if ($crm_url): ?>
                 <a href="<?php echo esc_url($crm_url); ?>" target="_blank" rel="noopener"

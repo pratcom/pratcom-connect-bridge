@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Admin\Tabs;
 
+use Pratcom\Connect\Bridge\HealthCheck;
 use Pratcom\Connect\Bridge\Plugin;
 use Pratcom\Connect\Bridge\Http\ApiClient;
 use Pratcom\Connect\Bridge\Admin\ThemePalette;
@@ -153,9 +154,10 @@ class AppearanceTab extends AbstractTab
             if ($key) {
                 $domain = wp_parse_url(home_url(), PHP_URL_HOST);
                 $res = (new ApiClient())->handshake($key, $domain);
+                // E-20 : meme application que le cron et la connexion
+                // (modules, hotes, suspension, statut).
                 if ($res['ok'] ?? false) {
-                    update_option(Plugin::OPTION_FEATURE_PACKS, $res['feature_packs'] ?? get_option(Plugin::OPTION_FEATURE_PACKS, []));
-                    update_option(Plugin::OPTION_LAST_HANDSHAKE, current_time('mysql'));
+                    HealthCheck::appliquer($res);
                 }
             }
         }

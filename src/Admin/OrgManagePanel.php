@@ -5,22 +5,22 @@ namespace Pratcom\Connect\Bridge\Admin;
 use Pratcom\Connect\Bridge\Plugin;
 
 /**
- * Panneau natif « Gérer dans le tableau de bord » — variante WordPress.org.
+ * Panneau natif « Gérer dans le tableau de bord », variante WordPress.org.
  *
  * Dans le build .org (PRATCOM_CONNECT_BRIDGE_CHANNEL === 'org'), les onglets
  * Chat / Formulaires / Confidentialité ne chargent AUCUNE iframe de session
  * connect.pratcom.net dans le wp-admin (revue WordPress.org : les iframes
  * d'application tierce ne sont pas permises hors embeds documentés). À la
  * place, ce panneau affiche le statut de connexion + la clé pck_ (masquée) et
- * un lien sortant vers le tableau de bord Connect — exactement la
+ * un lien sortant vers le tableau de bord Connect, exactement la
  * recommandation du reviewer (« simply link to the external site »).
  *
  * Le build premium (hors annuaire, Plugin Update Checker) garde le miroir
  * iframe (O5) : une SEULE base de code, comportement différencié par la
- * constante de canal. Aucune logique métier ici — lecture des options locales
+ * constante de canal. Aucune logique métier ici, lecture des options locales
  * (déjà posées au handshake) + lien sortant, zéro appel serveur.
  *
- * Fichier neuf petit (leçon #4) — jamais d'édition inline du monolithe.
+ * Fichier neuf petit (leçon #4), jamais d'édition inline du monolithe.
  */
 final class OrgManagePanel
 {

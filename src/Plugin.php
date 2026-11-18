@@ -36,6 +36,7 @@ class Plugin
 
         new Loader();
         new HealthCheck();
+        new Suspension();
         new Forms\Shortcode();
         Jobs\Module::boot(); // Emplois (liste, fiches, JobPosting) : barriere `jobs` dans Module.
         new Privacy\PolicyShortcode();
@@ -101,13 +102,32 @@ class Plugin
             Privacy\ConsentMode::OPTION_ENABLED,
             Privacy\CustomContent::OPTION_ENABLED,
             Privacy\CustomContent::OPTION_BLOCKS,
+            Privacy\FreeBanner::OPTION_BADGE_ENABLED,
+            Privacy\PolicyPage::OPTION_PAGE_IDS_BY_LANG,
+            Privacy\CookiePolicyPage::OPTION_PAGE_IDS_BY_LANG,
+            Hotes::OPTION,
+            Suspension::OPTION,
+            Suspension::OPTION_PROCHAINE,
         ];
         foreach ($options as $opt) {
             delete_option($opt);
         }
+        // Emplois : catalogue, pages hotes par langue, regles, titre de fiche.
+        // Toutes les options du module portent le prefixe `pratcom_connect_jobs_`.
+        global $wpdb;
+        $jobs = $wpdb->get_col($wpdb->prepare(
+            "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s",
+            $wpdb->esc_like('pratcom_connect_jobs_') . '%'
+        ));
+        foreach ((array) $jobs as $opt) {
+            delete_option((string) $opt);
+        }
+        delete_transient(Jobs\Catalogue::TRANSIENT_FRAIS);
+        delete_transient('pratcom_connect_jobs_catalogue_verrou');
         // NB : la table {prefix}pratcom_consents est volontairement CONSERVÉE
-        // (preuve légale Loi 25 du client — même modèle que Complianz).
+        // (preuve légale Loi 25 du client, même modèle que Complianz).
         HealthCheck::unschedule();
+        Suspension::deprogrammer();
     }
 
     public static function is_connected(): bool
@@ -130,7 +150,7 @@ class Plugin
 
     /**
      * Retourne la palette de marque stockee localement (BrandTheme).
-     * Toutes les cles sont optionnelles — seul `primary` est requis pour
+     * Toutes les cles sont optionnelles, seul `primary` est requis pour
      * que le handshake pousse le theme au serveur.
      *
      * @return array{primary?: string, onPrimary?: string, primaryDark?: string, secondary?: string, text?: string, font?: string, radius?: string, logoUrl?: string}

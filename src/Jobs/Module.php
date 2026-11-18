@@ -5,6 +5,7 @@ namespace Pratcom\Connect\Bridge\Jobs;
 use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Plugin;
 use Pratcom\Connect\Bridge\Privacy\Multilang;
+use Pratcom\Connect\Bridge\Suspension;
 
 /**
  * Module Emplois (front-end) : amorce, reglages partages et adresses.
@@ -43,10 +44,18 @@ final class Module
         add_action('init', [self::class, 'synchroniser_regles'], 99);
     }
 
-    /** Le module est-il servi sur ce site ? */
+    /**
+     * Le module est-il servi sur ce site ?
+     *
+     * Site suspendu (handshake) : non (E-14). La fiche, le bouton d'appel,
+     * le JSON-LD et les redirections /jobs/ ne sont plus servis, comme le
+     * loader et les codes courts.
+     */
     public static function actif(): bool
     {
-        return Plugin::is_connected() && FeaturePacks::is_active('jobs');
+        return Plugin::is_connected()
+            && FeaturePacks::is_active('jobs')
+            && !Suspension::est_suspendu();
     }
 
     /** Identifiant de la page hote d'une langue (0 = non configuree). */
