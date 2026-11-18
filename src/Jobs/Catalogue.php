@@ -171,6 +171,7 @@ final class Catalogue
             'fetched_at'   => $garde === null ? 0 : max((int) ($garde['fetched_at'] ?? 0), (int) get_option(self::OPTION_LU, 0)),
             'etag'         => (string) ($garde['etag'] ?? ''),
             'erreur'       => $erreur,
+            'spontanee'    => is_array($garde['spontanee'] ?? null) ? $garde['spontanee'] : null,
             'bouton_appel' => is_array($garde['bouton_appel'] ?? null) ? $garde['bouton_appel'] : null,
         ];
     }
@@ -188,6 +189,7 @@ final class Catalogue
         $curseur = null;
         $premier_etag = '';
         $generated_at = '';
+        $spontanee = null;
         $bouton_appel = null;
 
         for ($page = 0; $page < self::PAGES_MAX; $page++) {
@@ -248,6 +250,7 @@ final class Catalogue
             if ($page === 0) {
                 $premier_etag = (string) wp_remote_retrieve_header($rep, 'etag');
                 $generated_at = (string) ($corps['generated_at'] ?? '');
+                $spontanee = self::lire_spontanee($corps['spontaneous'] ?? null);
                 // Le bouton d'appel de la fiche (api, 11/11) : `null` = eteint.
                 // Garde tel quel ; c'est `Fiche::bouton_appel` qui le valide.
                 $bouton_appel = is_array($corps['call_button'] ?? null) ? $corps['call_button'] : null;
@@ -268,6 +271,7 @@ final class Catalogue
                     'fetched_at'   => time(),
                     'count'        => count($offres),
                     'offres'       => $offres,
+                    'spontanee'    => $spontanee,
                     'bouton_appel' => $bouton_appel,
                 ];
                 // Une ecriture refusee laisserait l'ancien catalogue en place
@@ -293,6 +297,45 @@ final class Catalogue
         // qu'une liste tronquee que rien ne distinguerait d'une vraie.
         self::noter_erreur('trop_de_pages', 200);
         self::pause(self::PAUSE_ERREUR, $espace);
+    }
+
+    /**
+     * La section « Candidature spontanee » servie par la route (cle
+     * `spontaneous`, 03/11). `null` = desactivee dans le CRM, ou illisible :
+     * dans le doute, on n'affiche rien plutot qu'un titre sans formulaire.
+     * Les textes viennent du reseau : bornes ici, echappes au rendu.
+     *
+     * @return array{form_slug: string, title: array{fr: string, en: string}, text: array{fr: string, en: string}}|null
+     */
+    public static function lire_spontanee($brut): ?array
+    {
+        if (!is_array($brut)) {
+            return null;
+        }
+        $slug = is_string($brut['form_slug'] ?? null) ? $brut['form_slug'] : '';
+        if (!preg_match('/^[a-z0-9-]{1,64}$/', $slug)) {
+            return null;
+        }
+        $bilingue = static function ($v, int $max): ?array {
+            if (!is_array($v)) {
+                return null;
+            }
+            $sortie = [];
+            foreach (['fr', 'en'] as $l) {
+                $t = is_string($v[$l] ?? null) ? trim($v[$l]) : '';
+                if ($t === '') {
+                    return null;
+                }
+                $sortie[$l] = function_exists('mb_substr') ? mb_substr($t, 0, $max) : substr($t, 0, $max);
+            }
+            return $sortie;
+        };
+        $titre = $bilingue($brut['title'] ?? null, 120);
+        $texte = $bilingue($brut['text'] ?? null, 1000);
+        if ($titre === null || $texte === null) {
+            return null;
+        }
+        return ['form_slug' => $slug, 'title' => $titre, 'text' => $texte];
     }
 
     private static function pause(int $secondes, string $espace): void

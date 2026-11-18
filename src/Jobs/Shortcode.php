@@ -2,6 +2,8 @@
 
 namespace Pratcom\Connect\Bridge\Jobs;
 
+use Pratcom\Connect\Bridge\Forms\Shortcode as FormsShortcode;
+
 /**
  * Shortcode `[pratcom_emplois lang="" filtres="categorie,lieu,type,horaire,etiquette" limite="50" vide=""]`.
  *
@@ -82,8 +84,16 @@ final class Shortcode
         $offres = Module::offres_de($lang);
         $vide = trim((string) $atts['vide']) !== '' ? (string) $atts['vide'] : Vocabulaire::texte('vide', $lang);
 
+        // 🆕 03/11 : la section « Candidature spontanee », reglee dans le CRM.
+        // Elle suit la liste, y compris quand la liste est vide : c'est la
+        // qu'elle sert le plus.
+        $spontanee = self::section_spontanee($etat['spontanee'] ?? null, $lang);
+        if ($spontanee !== '') {
+            self::enfiler_loader_forms();
+        }
+
         if ($offres === []) {
-            return '<div class="pce pce-liste-bloc"><p class="pce-message">' . esc_html($vide) . '</p></div>';
+            return '<div class="pce pce-liste-bloc"><p class="pce-message">' . esc_html($vide) . '</p>' . $spontanee . '</div>';
         }
 
         $demandes = array_values(array_intersect(
@@ -124,8 +134,53 @@ final class Shortcode
             $html .= self::carte($offre, $lang, self::filtrer([$offre], $choix) === []);
         }
         $html .= '</ul>';
+        $html .= $spontanee;
 
         return $html . '</div>';
+    }
+
+    // ─── Candidature spontanee (03/11) ──────────────────────────────────────
+
+    /**
+     * La section sous la grille : titre, texte, puis le conteneur du
+     * formulaire systeme, hydrate par le meme loader Forms que la fiche
+     * d'offre. Chaine vide = desactivee dans le CRM (ou catalogue d'avant
+     * cette version) : rien sous la liste. Aucun appel reseau : la section
+     * arrive avec le catalogue des offres.
+     *
+     * @param array<string, mixed>|null $s ce que `Catalogue::lire_spontanee` a garde
+     */
+    public static function section_spontanee($s, string $lang): string
+    {
+        if (!is_array($s) || !is_string($s['form_slug'] ?? null)) {
+            return '';
+        }
+        $l = $lang === 'en' ? 'en' : 'fr';
+        $titre = (string) ($s['title'][$l] ?? '');
+        $texte = (string) ($s['text'][$l] ?? '');
+        if ($titre === '' || $texte === '') {
+            return '';
+        }
+        return '<section class="pce-spontanee" aria-labelledby="pce-spontanee-titre">'
+            . '<h2 class="pce-spontanee__titre" id="pce-spontanee-titre">' . esc_html($titre) . '</h2>'
+            . '<p class="pce-spontanee__texte">' . esc_html($texte) . '</p>'
+            . sprintf(
+                '<div data-pratcom-form="%s" data-lang="%s"></div>',
+                esc_attr($s['form_slug']),
+                esc_attr($l)
+            )
+            . '</section>';
+    }
+
+    private static function enfiler_loader_forms(): void
+    {
+        wp_enqueue_script(
+            FormsShortcode::HANDLE,
+            FormsShortcode::loader_url(),
+            [],
+            PRATCOM_CONNECT_BRIDGE_VERSION,
+            ['strategy' => 'defer', 'in_footer' => true]
+        );
     }
 
     // ─── Filtres ────────────────────────────────────────────────────────────
@@ -613,6 +668,9 @@ JS;
             . '.pce-filtre--actions{flex:0 0 auto;flex-direction:row;align-items:center;gap:12px}'
             // `hidden` doit gagner sur `display:flex` des cartes (filtres 2.2.1).
             . '.pce [hidden]{display:none!important}'
+            . '.pce-spontanee{margin-top:40px}'
+            . '.pce-spontanee__titre{margin:0 0 8px}'
+            . '.pce-spontanee__texte{margin:0 0 16px}'
             . '.pce-filtres--js .pce-filtre--actions button{display:none}'
             . '.pce-bouton{display:inline-block;min-height:44px;padding:10px 20px;cursor:pointer;text-decoration:none}'
             . '.pce-compte{margin:0 0 12px;font-size:.9em;opacity:.8}'
