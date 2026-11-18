@@ -56,8 +56,8 @@ $servie = [
     'form_slug' => 'candidature-spontanee',
     'title'     => ['fr' => 'Candidature spontanée', 'en' => 'Unsolicited application'],
     'text'      => [
-        'fr' => 'Transport Grayson est toujours à la recherche de talents.',
-        'en' => 'Transport Grayson is always looking for talent.',
+        'fr' => 'Entreprise Exemple est toujours à la recherche de talents.',
+        'en' => 'Entreprise Exemple is always looking for talent.',
     ],
 ];
 
@@ -74,12 +74,12 @@ verifier('lecture : un texte trop long est borne a 1000', $long !== null && strl
 // ─── 2. Rendu ──────────────────────────────────────────────────────────────
 $fr = Shortcode::section_spontanee($lue, 'fr');
 verifier('rendu FR : titre', strpos($fr, '>Candidature spontanée</h2>') !== false);
-verifier('rendu FR : texte avec le nom de l\'espace', strpos($fr, 'Transport Grayson est toujours') !== false);
+verifier('rendu FR : texte avec le nom de l\'espace', strpos($fr, 'Entreprise Exemple est toujours') !== false);
 verifier('rendu FR : conteneur du formulaire, langue fr', strpos($fr, '<div data-pratcom-form="candidature-spontanee" data-lang="fr"></div>') !== false);
 
 $en = Shortcode::section_spontanee($lue, 'en');
 verifier('rendu EN : titre', strpos($en, '>Unsolicited application</h2>') !== false);
-verifier('rendu EN : texte', strpos($en, 'Transport Grayson is always looking for talent.') !== false);
+verifier('rendu EN : texte', strpos($en, 'Entreprise Exemple is always looking for talent.') !== false);
 verifier('rendu EN : conteneur du formulaire, langue en', strpos($en, 'data-lang="en"') !== false);
 verifier('rendu EN : aucun texte FR', strpos($en, 'Candidature') === false);
 
