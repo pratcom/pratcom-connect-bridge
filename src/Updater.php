@@ -12,6 +12,9 @@ namespace Pratcom\Connect\Bridge;
  */
 class Updater
 {
+    /** E-28 : seul asset que PUC installe (nom exact du zip de release.yml). */
+    public const MOTIF_ASSET = '/^pratcom-connect-bridge\.zip$/';
+
     public static function init(): void
     {
         $puc_path = PRATCOM_CONNECT_BRIDGE_DIR . 'vendor/yahnis-elsts/plugin-update-checker/plugin-update-checker.php';
@@ -32,9 +35,17 @@ class Updater
             'pratcom-connect-bridge'
         );
 
-        // Lookup release asset .zip plutot que tarball auto-genere
+        // E-28 : l'asset de la release est designe par son nom exact. Deux
+        // workflows joignent chacun un zip a la meme release (premium ici,
+        // `pratcom-connect-org.zip` par build-org.yml) : sans motif, PUC prend
+        // le premier asset, quel qu'il soit. REQUIRE (valeur 2 de PUC 5.7) :
+        // tant que le zip premium n'est pas joint, aucune mise a jour n'est
+        // proposee, plutot que l'archive source sans vendor/.
         if (method_exists($checker, 'getVcsApi')) {
-            $checker->getVcsApi()->enableReleaseAssets();
+            $exiger = defined('\\YahnisElsts\\PluginUpdateChecker\\v5p7\\Vcs\\Api::REQUIRE_RELEASE_ASSETS')
+                ? \YahnisElsts\PluginUpdateChecker\v5p7\Vcs\Api::REQUIRE_RELEASE_ASSETS
+                : 2;
+            $checker->getVcsApi()->enableReleaseAssets(self::MOTIF_ASSET, $exiger);
         }
 
         // Mises a jour par releases (tags). PUC v5 traite `main` comme

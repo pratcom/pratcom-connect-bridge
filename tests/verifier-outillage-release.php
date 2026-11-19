@@ -14,7 +14,11 @@
  *   - release.yml n'echoue pas sur un verrou absent ou divergent, ne calcule
  *     pas l'empreinte SHA-256 du zip, ou ne la publie pas comme asset ;
  *   - release.yml donne l'ecriture du depot a tout le fichier au lieu d'un
- *     seul travail.
+ *     seul travail ;
+ *   - Updater.php appelle enableReleaseAssets sans un motif qui ne prend que
+ *     pratcom-connect-bridge.zip, ou les deux noms de zip se recoupent (E-28) ;
+ *   - le zip premium garde CLAUDE.md, docs/, composer.json ou un .md, ou
+ *     release.yml n'a pas les exclusions de build-org.yml (M-41).
  *
  * --racine : rejoue le banc sur une copie modifiee du depot (bancs de mutation).
  *
@@ -221,6 +225,92 @@ $ancien = "permissions:\n  contents: write\n\njobs:\n  build-org:\n    steps:\n 
 $avantAncien = (string) strstr($ancien, "\njobs:", true);
 verifier('auto-verification : l\'ancien build-org.yml est refuse', !preg_match('/^permissions:\s*\{\s*\}\s*$/m', $avantAncien)
     && (bool) preg_match('/gh-pages/', $ancien) && !preg_match('/sha256sum\s+-c/', $ancien));
+
+// ─── 6. Asset premium designe (E-28, 19/11) ────────────────────────────────
+
+echo "Asset premium designe (E-28)\n";
+
+$updater = (string) preg_replace('#^\s*//.*$#m', '', lire($racine . '/src/Updater.php') ?? '');
+$motif = preg_match("/MOTIF_ASSET\s*=\s*'([^']+)'/", $updater, $mm) ? $mm[1] : null;
+verifier('Updater.php declare un motif d\'asset', $motif !== null);
+verifier(
+    'enableReleaseAssets appele avec ce motif et une preference',
+    (bool) preg_match('/enableReleaseAssets\(\s*self::MOTIF_ASSET\s*,\s*\$\w+\s*\)/', $updater)
+);
+verifier('aucun appel a enableReleaseAssets sans motif', !preg_match('/enableReleaseAssets\(\s*\)/', $updater));
+verifier('preference REQUIRE_RELEASE_ASSETS (pas de repli sur l\'archive source)', strpos($updater, 'REQUIRE_RELEASE_ASSETS') !== false);
+
+$releaseBrut = lire($racine . '/.github/workflows/release.yml') ?? '';
+$orgBrut = lire($racine . '/.github/workflows/build-org.yml') ?? '';
+$zipPremium = preg_match('/zip\s+-r\s+(\S+\.zip)\s/', $releaseBrut, $z1) ? $z1[1] : '';
+$zipOrg = preg_match('/gh\s+release\s+upload\s+\S+\s+build\/(\S+\.zip)\s/', $orgBrut, $z2) ? $z2[1] : '';
+verifier('nom du zip premium lu dans release.yml', $zipPremium === 'pratcom-connect-bridge.zip', $zipPremium);
+verifier('nom du zip .org lu dans build-org.yml', $zipOrg !== '', $zipOrg);
+verifier('les deux noms de zip different', $zipPremium !== '' && $zipOrg !== '' && $zipPremium !== $zipOrg);
+$m = static fn(string $nom): bool => $motif !== null && @preg_match($motif, $nom) === 1;
+verifier('le motif accepte le zip premium', $m($zipPremium));
+verifier('le motif refuse le zip .org', $zipOrg !== '' && !$m($zipOrg));
+foreach (['pratcom-connect-bridge.zip.sha256', 'pratcom-connect-org.zip', 'pratcom-connect.zip', 'pratcom-connect-bridge-2.3.0.zip', 'x-pratcom-connect-bridge.zip'] as $autre) {
+    verifier("le motif refuse $autre", !$m($autre));
+}
+verifier('le motif .org ne prend pas le zip premium (noms disjoints)', $zipOrg === '' || strpos($zipPremium, pathinfo($zipOrg, PATHINFO_FILENAME)) === false);
+
+// ─── 7. Contenu du zip premium (M-41, 19/11) ────────────────────────────────
+
+echo "Contenu du zip premium (M-41)\n";
+
+/** @return array<int, string> motifs --exclude du premier rsync du fichier */
+function exclusions_rsync(string $yml): array
+{
+    $sans = (string) preg_replace('/^\s*#.*$/m', '', $yml);
+    $debut = strpos($sans, 'rsync -a');
+    $fin = $debut === false ? false : strpos($sans, './ build/', $debut);
+    if ($debut === false || $fin === false) {
+        return [];
+    }
+    preg_match_all("/--exclude='([^']+)'/", substr($sans, $debut, $fin - $debut), $e);
+    return $e[1];
+}
+
+/** Regle d'rsync pour un motif sans barre : il vise tout composant du chemin. */
+function exclu(string $chemin, array $motifs): bool
+{
+    foreach (explode('/', $chemin) as $composant) {
+        foreach ($motifs as $motif) {
+            if (fnmatch($motif, $composant)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+$exclPremium = exclusions_rsync($releaseBrut);
+$exclOrg = exclusions_rsync($orgBrut);
+verifier('exclusions lues dans les deux workflows', $exclPremium !== [] && $exclOrg !== [], count($exclPremium) . ' / ' . count($exclOrg));
+$manquantes = array_values(array_diff($exclOrg, $exclPremium, ['vendor']));
+verifier('release.yml reprend toutes les exclusions de build-org.yml sauf vendor', $manquantes === [], implode(', ', $manquantes));
+verifier('release.yml garde vendor/ (Plugin Update Checker)', !in_array('vendor', $exclPremium, true));
+
+foreach (['CLAUDE.md', 'README.md', 'docs/consent-mode-v2-bridge.md', 'composer.json', 'composer.lock', 'tests/verifier-avant-tag.php', '.distignore', '.github/workflows/ci.yml'] as $absent) {
+    verifier("zip premium sans $absent", exclu($absent, $exclPremium));
+}
+foreach (['pratcom-connect-bridge.php', 'readme.txt', 'src/Updater.php', 'vendor/autoload.php', 'vendor/yahnis-elsts/plugin-update-checker/plugin-update-checker.php', 'languages/pratcom-connect-fr_FR.po', 'assets/js/appearance-color-sync.js'] as $present) {
+    verifier("zip premium avec $present", !exclu($present, $exclPremium));
+}
+// Les fichiers reels du depot : aucun .md ni docs/ ne passe.
+$fuites = [];
+$it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($racine, FilesystemIterator::SKIP_DOTS));
+foreach ($it as $f) {
+    $rel = str_replace(DIRECTORY_SEPARATOR, '/', substr((string) $f, strlen($racine) + 1));
+    if (strpos($rel, '.git/') === 0 || strpos($rel, 'vendor/') === 0) {
+        continue;
+    }
+    if (!exclu($rel, $exclPremium) && (preg_match('/\.md$/', $rel) || strpos($rel, 'docs/') === 0 || $rel === 'composer.json')) {
+        $fuites[] = $rel;
+    }
+}
+verifier('aucun fichier .md, docs/ ou composer.json du depot dans le zip premium', $fuites === [], implode(', ', array_slice($fuites, 0, 5)));
 
 echo "\n" . ($total - $echecs) . "/$total controles verts\n";
 exit($echecs === 0 ? 0 : 1);

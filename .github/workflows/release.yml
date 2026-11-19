@@ -20,9 +20,11 @@ name: Build premium & attach plugin zip (canal GitHub/PUC)
 # - deux travaux : "build" n'a que la lecture du depot (Composer y tourne),
 #   "publier" a seul le droit d'ecrire sur la release.
 #
-# ATTENTION ordre des assets : PUC (enableReleaseAssets() sans filtre) prend
-# le PREMIER asset de la release. Le zip est donc joint dans une etape a part,
-# AVANT l'empreinte. Ne pas fusionner les deux etapes en une seule liste.
+# Asset designe (E-28) : Updater.php appelle enableReleaseAssets() avec le
+# motif /^pratcom-connect-bridge\.zip$/ (REQUIRE) : PUC n'installe que ce
+# zip, jamais pratcom-connect-org.zip joint par build-org.yml a la meme
+# release, ni l'empreinte. Ne pas renommer le zip sans changer le motif.
+# Le zip reste joint avant l'empreinte (ordre garde par prudence).
 
 on:
   release:
@@ -72,13 +74,21 @@ jobs:
       - name: Assemble plugin folder
         run: |
           mkdir -p build/pratcom-connect-bridge
+          # M-41 : memes exclusions que build-org.yml, sauf vendor/ (le zip
+          # premium embarque Plugin Update Checker). Ni CLAUDE.md, ni docs/,
+          # ni composer.json dans le zip ; tests/verifier-outillage-release.php
+          # compare les deux listes.
           rsync -a \
             --exclude='.git' \
             --exclude='.github' \
             --exclude='build' \
             --exclude='tests' \
+            --exclude='docs' \
             --exclude='.gitignore' \
+            --exclude='.distignore' \
+            --exclude='composer.json' \
             --exclude='composer.lock' \
+            --exclude='*.md' \
             --exclude='.wordpress-org' \
             ./ build/pratcom-connect-bridge/
 

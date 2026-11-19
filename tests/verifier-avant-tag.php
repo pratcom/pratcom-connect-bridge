@@ -1,7 +1,7 @@
 <?php
 /**
  * Banc CLI : lot securite avant le tag 2.3.x (E-14, E-15, E-9, E-20, E-21,
- * E-4, E-23, E-24). Le depot n'a ni PHPUnit ni Pest.
+ * E-4, E-23, E-24 ; E-29, I-25 et liste fermee des hotes le 19/11). Le depot n'a ni PHPUnit ni Pest.
  *
  *   php tests/verifier-avant-tag.php [--src=/autre/dossier/src]
  *
@@ -48,8 +48,20 @@ $GLOBALS['banc_insertions'] = [];
 function get_option($nom, $defaut = false) { return array_key_exists($nom, $GLOBALS['banc_options']) ? $GLOBALS['banc_options'][$nom] : $defaut; }
 function update_option($nom, $valeur, $auto = null) { $GLOBALS['banc_options'][$nom] = $valeur; return true; }
 function delete_option($nom) { unset($GLOBALS['banc_options'][$nom]); return true; }
-function get_transient($nom) { return $GLOBALS['banc_transients'][$nom] ?? false; }
-function set_transient($nom, $v, $d = 0) { $GLOBALS['banc_transients'][$nom] = $v; return true; }
+// Transients avec expiration, sur l'horloge du banc (E-29) : comme WordPress,
+// chaque set_transient repose l'expiration a maintenant + duree.
+function banc_maintenant(): int { return $GLOBALS['banc_temps'] ?? time(); }
+function get_transient($nom)
+{
+    $t = $GLOBALS['banc_transients'][$nom] ?? null;
+    if (!is_array($t) || ($t[1] > 0 && $t[1] <= banc_maintenant())) {
+        return false;
+    }
+    return $t[0];
+}
+function set_transient($nom, $v, $d = 0) { $GLOBALS['banc_transients'][$nom] = [$v, $d > 0 ? banc_maintenant() + (int) $d : 0]; $GLOBALS['banc_durees'][$nom] = (int) $d; return true; }
+function flush_rewrite_rules($dur = true) { $GLOBALS['banc_flush'] = ($GLOBALS['banc_flush'] ?? 0) + 1; }
+function get_post($id) { return null; }
 function add_filter($tag, $rappel, $prio = 10, $args = 1) { $GLOBALS['banc_filtres'][$tag][] = [$rappel, $args]; return true; }
 function add_action($tag, $rappel, $prio = 10, $args = 1) { return add_filter($tag, $rappel, $prio, $args); }
 function apply_filters($tag, $valeur, ...$autres)
@@ -111,6 +123,16 @@ class Banc_Wpdb
     public function insert($table, $ligne) { $GLOBALS['banc_insertions'][] = $ligne; return 1; }
 }
 $GLOBALS['wpdb'] = new Banc_Wpdb();
+
+}
+
+namespace Pratcom\Connect\Bridge\Privacy {
+
+// Horloge du banc pour LocalRegistry (appel non qualifie de time()).
+function time(): int
+{
+    return \banc_maintenant();
+}
 
 }
 
@@ -201,16 +223,16 @@ verifier('401 : reverification retiree', !isset($GLOBALS['banc_cron'][Suspension
 connecter();
 
 echo "E-20. Enregistrer le theme applique tout le handshake\n";
-$source = (string) file_get_contents($GLOBALS['banc_src'] . '/Admin/Tabs/AppearanceTab.php');
+$source = str_replace("\r\n", "\n", (string) file_get_contents($GLOBALS['banc_src'] . '/Admin/Tabs/AppearanceTab.php'));
 preg_match('/function handle_save_theme\(\).*?\n    }\n/s', $source, $m);
 $corps = $m[0] ?? '';
 verifier('handle_save_theme appelle HealthCheck::appliquer', strpos($corps, 'HealthCheck::appliquer($res)') !== false);
 verifier('plus d\'ecriture partielle des modules', strpos($corps, 'OPTION_FEATURE_PACKS') === false);
 
 echo "E-21. Hotes : port autre que 443 refuse\n";
-verifier('sans port : permis', Hotes::url_permise('https://app.connect.pratcom.net') === 'https://app.connect.pratcom.net');
-verifier('port 443 : permis, sans port', Hotes::url_permise('https://app.connect.pratcom.net:443') === 'https://app.connect.pratcom.net');
-verifier('port 8443 : refuse', Hotes::url_permise('https://app.connect.pratcom.net:8443') === null);
+verifier('sans port : permis', Hotes::url_permise('https://api.connect.pratcom.net') === 'https://api.connect.pratcom.net');
+verifier('port 443 : permis, sans port', Hotes::url_permise('https://api.connect.pratcom.net:443') === 'https://api.connect.pratcom.net');
+verifier('port 8443 : refuse', Hotes::url_permise('https://api.connect.pratcom.net:8443') === null);
 verifier('port 22 : refuse', Hotes::url_permise('https://api.pratcom.net:22') === null);
 verifier('autre domaine : refuse (inchange)', Hotes::url_permise('https://pratcom.net.exemple') === null);
 
@@ -277,6 +299,108 @@ for ($i = 0; $i < 21; $i++) {
     $codes[] = $reg->handle_consent($req)->status;
 }
 verifier('plafond par IP inchange : 20 puis 429', count(array_filter($codes, static fn($c) => $c === 201)) === 20 && end($codes) === 429);
+
+echo "E-29. Plafond global fenetre : apres l'IP et la validation, tranche horaire fixe\n";
+$GLOBALS['banc_transients'] = [];
+$GLOBALS['banc_insertions'] = [];
+$GLOBALS['banc_filtres']['pratcom_connect_registre_plafond_global'] = [];
+$GLOBALS['banc_temps'] = gmmktime(10, 15, 0, 11, 19, 2026);
+$reg = new LocalRegistry();
+$_SERVER['REMOTE_ADDR'] = '203.0.113.50';
+$codesA = [];
+for ($i = 0; $i < 1000; $i++) {
+    $codesA[] = $reg->handle_consent($req)->status;
+}
+verifier('IP A : 20 inscrits puis 429', count(array_filter($codesA, static fn($c) => $c === 201)) === 20 && end($codesA) === 429);
+$_SERVER['REMOTE_ADDR'] = '203.0.113.51';
+$rep = $reg->handle_consent($req);
+verifier('IP A a 1000 requetes : IP B inscrite (201)', $rep->status === 201, (string) $rep->status);
+
+$GLOBALS['banc_transients'] = [];
+add_filter('pratcom_connect_registre_plafond_global', static fn() => 3);
+$invalide = new \Banc_Requete(['action' => 'pirate', 'choices' => []]);
+$sansChoix = new \Banc_Requete(['action' => 'accept_all', 'choices' => 'x']);
+$codes = [];
+for ($i = 0; $i < 10; $i++) {
+    $_SERVER['REMOTE_ADDR'] = '198.18.0.' . $i;
+    $codes[] = $reg->handle_consent($i % 2 ? $invalide : $sansChoix)->status;
+}
+verifier('requetes invalides : 400', array_unique($codes) === [400], implode(',', array_unique($codes)));
+$codes = [];
+for ($i = 0; $i < 4; $i++) {
+    $_SERVER['REMOTE_ADDR'] = '198.18.1.' . $i;
+    $codes[] = $reg->handle_consent($req)->status;
+}
+verifier('10 requetes invalides ne comptent pas : 3 inscrits sur un plafond de 3, puis 429', $codes === [201, 201, 201, 429], implode(',', $codes));
+$GLOBALS['banc_filtres']['pratcom_connect_registre_plafond_global'] = [];
+
+// Compteur a 999 a 10 h 59 : il vaut 0 a 11 h 00.
+$GLOBALS['banc_transients'] = [];
+$GLOBALS['banc_temps'] = gmmktime(10, 0, 0, 11, 19, 2026);
+for ($i = 0; $i < 999; $i++) {
+    $_SERVER['REMOTE_ADDR'] = '10.' . intdiv($i, 250) . '.' . ($i % 250) . '.1';
+    $reg->handle_consent($req);
+}
+$GLOBALS['banc_temps'] = gmmktime(10, 59, 30, 11, 19, 2026);
+$cle1059 = method_exists(LocalRegistry::class, 'cle_globale') ? LocalRegistry::cle_globale($GLOBALS['banc_temps']) : '';
+verifier('cle par tranche (suffixe AAAAMMJJHH)', $cle1059 === 'pratcom_consent_rl_global_2026111910', $cle1059);
+verifier('compteur a 999 a 10 h 59', $cle1059 !== '' && get_transient($cle1059) === 999, var_export($cle1059 === '' ? null : get_transient($cle1059), true));
+verifier('expiration fixe : fin de la tranche (30 s a 10 h 59 min 30)', method_exists(LocalRegistry::class, 'fin_de_tranche') && LocalRegistry::fin_de_tranche($GLOBALS['banc_temps']) === 30);
+$_SERVER['REMOTE_ADDR'] = '10.9.9.1';
+verifier('1000e consentement a 10 h 59 : 201', $reg->handle_consent($req)->status === 201);
+$_SERVER['REMOTE_ADDR'] = '10.9.9.2';
+verifier('1001e a 10 h 59 : 429', $reg->handle_consent($req)->status === 429);
+verifier('l\'ecriture ne repousse pas l\'expiration', ($GLOBALS['banc_durees'][$cle1059] ?? 0) <= 30, (string) ($GLOBALS['banc_durees'][$cle1059] ?? '?'));
+$GLOBALS['banc_temps'] = gmmktime(11, 0, 0, 11, 19, 2026);
+$cle1100 = method_exists(LocalRegistry::class, 'cle_globale') ? LocalRegistry::cle_globale($GLOBALS['banc_temps']) : '';
+verifier('a 11 h 00 le compteur vaut 0', $cle1100 !== '' && $cle1100 !== $cle1059 && (int) get_transient($cle1100) === 0);
+$_SERVER['REMOTE_ADDR'] = '10.9.9.3';
+verifier('a 11 h 00 un consentement est inscrit', $reg->handle_consent($req)->status === 201);
+unset($GLOBALS['banc_temps']);
+$GLOBALS['banc_transients'] = [];
+
+echo "I-25. Un 5xx passager au handshake laisse regles et fiches en place\n";
+connecter();
+update_option(Plugin::OPTION_FEATURE_PACKS, ['jobs' => ['enabled' => true]]);
+update_option(Module::OPTION_REPRENDRE_JOBS, true);
+$GLOBALS['banc_flush'] = 0;
+Module::synchroniser_regles();
+$regles = Module::regles_voulues();
+verifier('regles posees au depart (un flush)', $regles !== [] && $GLOBALS['banc_flush'] === 1);
+foreach ([['code' => 503, 'body' => json_encode(['error' => 'indisponible'])], ['code' => 500, 'body' => 'erreur'], ['code' => 502, 'body' => '<html>passerelle</html>'], ['code' => 200, 'body' => '<html>maintenance</html>'], ['code' => 429, 'body' => '{}']] as $rep) {
+    $GLOBALS['banc_reponse'] = $rep;
+    $r = (new HealthCheck())->run();
+    $libelle = 'HTTP ' . $rep['code'];
+    verifier("$libelle : pas ok", $r['ok'] === false);
+    verifier("$libelle : site toujours connecte", Plugin::is_connected(), (string) get_option(Plugin::OPTION_STATUS));
+    verifier("$libelle : erreur notee", (string) get_option(Plugin::OPTION_LAST_ERROR, '') !== '');
+    verifier("$libelle : module Emplois actif (fiches servies)", Module::actif());
+    Module::synchroniser_regles();
+    verifier("$libelle : regles identiques", Module::regles_voulues() === $regles);
+    verifier("$libelle : aucun flush_rewrite_rules", $GLOBALS['banc_flush'] === 1, (string) $GLOBALS['banc_flush']);
+}
+$GLOBALS['banc_reponse'] = ['code' => 403, 'body' => json_encode(['error' => 'domain_not_allowed'])];
+$r = (new HealthCheck())->run();
+verifier('403 (refus durable) : statut error, comme avant', $r['status'] === 'error' && get_option(Plugin::OPTION_STATUS) === 'error');
+update_option(Plugin::OPTION_STATUS, 'error');
+$GLOBALS['banc_reponse'] = ['code' => 503, 'body' => '{}'];
+(new HealthCheck())->run();
+verifier('5xx sur un site deja en erreur : reste en erreur', get_option(Plugin::OPTION_STATUS) === 'error');
+delete_option(Module::OPTION_REPRENDRE_JOBS);
+connecter();
+
+echo "E-21. Hotes : liste fermee de 3 hotes\n";
+foreach (['https://api.connect.pratcom.net', 'https://connect.pratcom.net', 'https://chatbot.pratcom.net'] as $permis) {
+    verifier("permis : $permis", Hotes::url_permise($permis) === $permis);
+}
+verifier('casse ramenee en minuscules', Hotes::url_permise('https://API.Connect.Pratcom.net') === 'https://api.connect.pratcom.net');
+foreach (['https://autre.pratcom.net', 'https://pratcom.net', 'https://app.connect.pratcom.net', 'https://x.api.connect.pratcom.net', 'https://connect.pratcom.net.exemple'] as $refuse) {
+    verifier("refuse : $refuse", Hotes::url_permise($refuse) === null);
+}
+add_filter('pratcom_connect_hotes_domaines', static fn() => ['pratcom.net', 'exemple.org']);
+verifier('le filtre ne rouvre plus la liste', Hotes::url_permise('https://autre.pratcom.net') === null && Hotes::url_permise('https://x.exemple.org') === null);
+$GLOBALS['banc_filtres']['pratcom_connect_hotes_domaines'] = [];
+verifier('handshake : hote hors liste ignore, defaut garde', Hotes::nettoyer(['api' => 'https://autre.pratcom.net', 'chat' => 'https://chatbot.pratcom.net']) === ['chat' => 'https://chatbot.pratcom.net']);
 
 echo "\n$ok verification(s) reussie(s), " . count($echecs) . " echec(s).\n";
 exit($echecs === [] ? 0 : 1);
