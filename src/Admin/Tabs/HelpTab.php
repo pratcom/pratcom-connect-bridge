@@ -40,7 +40,7 @@ class HelpTab extends AbstractTab
                 <?php esc_html_e('Guide complet d\'installation, de connexion et de gestion des modules.', 'pratcom-connect'); ?>
             </p>
             <div class="pc-actions">
-                <a href="<?php echo esc_url('https://connect.pratcom.net/docs'); ?>" target="_blank" rel="noopener" class="pc-btn pc-btn--secondary">
+                <a href="<?php echo esc_url(Hotes::base('app') . '/docs'); ?>" target="_blank" rel="noopener" class="pc-btn pc-btn--secondary">
                     <?php esc_html_e('Ouvrir la documentation', 'pratcom-connect'); ?>
                 </a>
             </div>
@@ -52,7 +52,7 @@ class HelpTab extends AbstractTab
                 <?php esc_html_e('Pour toute question ou demande de support, contactez Pratcom Média :', 'pratcom-connect'); ?>
             </p>
             <div class="pc-actions">
-                <a href="<?php echo esc_url('https://connect.pratcom.net/support'); ?>" target="_blank" rel="noopener" class="pc-btn pc-btn--secondary">
+                <a href="<?php echo esc_url(Hotes::base('app') . '/support'); ?>" target="_blank" rel="noopener" class="pc-btn pc-btn--secondary">
                     <?php esc_html_e('Contacter le support', 'pratcom-connect'); ?>
                 </a>
             </div>

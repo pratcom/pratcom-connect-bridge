@@ -3,13 +3,14 @@
 namespace Pratcom\Connect\Bridge\Admin;
 
 use Pratcom\Connect\Bridge\Plugin;
+use Pratcom\Connect\Bridge\Hotes;
 
 /**
  * Panneau natif « Gérer dans le tableau de bord », variante WordPress.org.
  *
  * Dans le build .org (PRATCOM_CONNECT_BRIDGE_CHANNEL === 'org'), les onglets
  * Chat / Formulaires / Confidentialité ne chargent AUCUNE iframe de session
- * connect.pratcom.net dans le wp-admin (revue WordPress.org : les iframes
+ * de l'application Connect (Hotes::base) dans le wp-admin (revue WordPress.org : les iframes
  * d'application tierce ne sont pas permises hors embeds documentés). À la
  * place, ce panneau affiche le statut de connexion + la clé pck_ (masquée) et
  * un lien sortant vers le tableau de bord Connect, exactement la
@@ -39,8 +40,8 @@ final class OrgManagePanel
         $last_four = (string) get_option(Plugin::OPTION_KEY_LAST_FOUR, '');
 
         $dashboard_url = $slug !== ''
-            ? 'https://connect.pratcom.net/crm/' . rawurlencode($slug) . '/' . rawurlencode($module)
-            : 'https://connect.pratcom.net/';
+            ? Hotes::base('app') . '/crm/' . rawurlencode($slug) . '/' . rawurlencode($module)
+            : Hotes::base('app') . '/';
         ?>
         <div class="pc-card" style="margin-top:24px;">
             <h2 class="pc-card__title"><?php echo esc_html($title); ?></h2>

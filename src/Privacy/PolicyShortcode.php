@@ -153,7 +153,7 @@ class PolicyShortcode
         $response = wp_remote_get($url, [
             'timeout'    => 8,
             'headers'    => ['Accept' => 'text/html'],
-            'user-agent' => 'PratcomConnectBridge/' . PRATCOM_CONNECT_BRIDGE_VERSION . ' (+https://connect.pratcom.net)',
+            'user-agent' => 'PratcomConnectBridge/' . PRATCOM_CONNECT_BRIDGE_VERSION . ' (+' . Hotes::base('app') . ')',
         ]);
         if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
             return null;

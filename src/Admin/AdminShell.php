@@ -173,7 +173,7 @@ class AdminShell
      * Derivees des hotes de service (Hotes : role `app` +
      * hote de l'API), les iframes d'embed sont servies depuis ces hotes.
      *
-     * @return array<int, string> ex. ['https://connect.pratcom.net', 'https://api.connect.pratcom.net']
+     * @return array<int, string> bases app et api (Hotes)
      */
     private static function embed_origins(): array
     {

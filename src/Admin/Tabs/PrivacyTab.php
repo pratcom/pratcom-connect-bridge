@@ -3,6 +3,7 @@
 namespace Pratcom\Connect\Bridge\Admin\Tabs;
 
 use Pratcom\Connect\Bridge\FeaturePacks;
+use Pratcom\Connect\Bridge\Hotes;
 use Pratcom\Connect\Bridge\Plugin;
 use Pratcom\Connect\Bridge\Http\ApiClient;
 use Pratcom\Connect\Bridge\Admin\OrgManagePanel;
@@ -726,7 +727,7 @@ class PrivacyTab extends AbstractTab
         ob_start();
         if (Plugin::is_connected()) {
             ?>
-            <a href="https://connect.pratcom.net/?utm_source=wp-plugin&utm_medium=privacy-tab" target="_blank" rel="noopener" class="pc-btn pc-btn--primary">
+            <a href="<?php echo esc_url(Hotes::base('app') . '/?utm_source=wp-plugin&utm_medium=privacy-tab'); ?>" target="_blank" rel="noopener" class="pc-btn pc-btn--primary">
                 <?php esc_html_e('Activer ce module', 'pratcom-connect'); ?>
             </a>
             <?php
@@ -787,7 +788,7 @@ class PrivacyTab extends AbstractTab
                     ); ?>
                 </div>
                 <div class="pc-actions">
-                    <a href="https://connect.pratcom.net/?utm_source=wp-plugin&utm_medium=privacy-scan"
+                    <a href="<?php echo esc_url(Hotes::base('app') . '/?utm_source=wp-plugin&utm_medium=privacy-scan'); ?>"
                        target="_blank" rel="noopener" class="pc-btn pc-btn--secondary">
                         <?php esc_html_e("Ouvrir l'interface web", 'pratcom-connect'); ?>
                     </a>
@@ -800,7 +801,7 @@ class PrivacyTab extends AbstractTab
         $src = esc_url($res['url']);
         $crm_url = '';
         if (!empty($res['workspace_slug'])) {
-            $crm_url = 'https://connect.pratcom.net/crm/' . rawurlencode((string) $res['workspace_slug']) . '/privacy';
+            $crm_url = Hotes::base('app') . '/crm/' . rawurlencode((string) $res['workspace_slug']) . '/privacy';
         }
         // Coquille integree premium : la div carte porte aussi .pc-embed-wrapper
         // + data-pc-embed pour servir de cible au recepteur admin-o5.js
