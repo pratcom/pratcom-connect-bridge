@@ -26,7 +26,10 @@ class LocalRegistry
     public const EXPORT_ACTION = 'pratcom_privacy_export_csv';
     private const RATE_LIMIT = 20;          // requêtes max…
     private const RATE_WINDOW = HOUR_IN_SECONDS; // …par IP par heure
-    /** E-24 : plafond pour tout le site, par heure (filtre `pratcom_connect_registre_plafond_global`). */
+    /**
+     * E-24, E-29 : plafond pour tout le site, par tranche horaire UTC fixe
+     * (filtre `pratcom_connect_registre_plafond_global`).
+     */
     public const PLAFOND_GLOBAL = 1000;
     private const CLE_GLOBALE = 'pratcom_consent_rl_global';
 
@@ -88,23 +91,51 @@ class LocalRegistry
         return hash('sha256', wp_salt('auth') . '|' . $ip);
     }
 
+    /** Plafond par IP (20 par heure). Le plafond global ne joue pas ici. */
     private function rate_limited(): bool
     {
-        // E-24 : plafond global d'abord. Un robot qui fait tourner ses IP ne
-        // remplit plus la table sans limite.
-        $plafond = (int) apply_filters('pratcom_connect_registre_plafond_global', self::PLAFOND_GLOBAL);
-        $global = (int) get_transient(self::CLE_GLOBALE);
-        if ($plafond > 0 && $global >= $plafond) {
-            return true;
-        }
-        set_transient(self::CLE_GLOBALE, $global + 1, self::RATE_WINDOW);
-
         $key = 'pratcom_consent_rl_' . substr(self::ip_hash(), 0, 32);
         $count = (int) get_transient($key);
         if ($count >= self::RATE_LIMIT) {
             return true;
         }
         set_transient($key, $count + 1, self::RATE_WINDOW);
+        return false;
+    }
+
+    /**
+     * E-29 : cle du plafond global pour la tranche horaire UTC de `$t`
+     * (suffixe AAAAMMJJHH). Une tranche neuve repart a zero.
+     */
+    public static function cle_globale(int $t): string
+    {
+        return self::CLE_GLOBALE . '_' . gmdate('YmdH', $t);
+    }
+
+    /** E-29 : secondes jusqu'a la fin de la tranche (jamais repoussee). */
+    public static function fin_de_tranche(int $t): int
+    {
+        return HOUR_IN_SECONDS - ($t % HOUR_IN_SECONDS);
+    }
+
+    /**
+     * E-29 : plafond global, par tranche horaire fixe. Appele APRES le
+     * plafond par IP et la validation : une IP bloquee ou une requete
+     * invalide ne remplit pas le compteur de tout le site.
+     */
+    private function plafond_global_atteint(): bool
+    {
+        $plafond = (int) apply_filters('pratcom_connect_registre_plafond_global', self::PLAFOND_GLOBAL);
+        if ($plafond <= 0) {
+            return false;
+        }
+        $t = time();
+        $cle = self::cle_globale($t);
+        $global = (int) get_transient($cle);
+        if ($global >= $plafond) {
+            return true;
+        }
+        set_transient($cle, $global + 1, self::fin_de_tranche($t));
         return false;
     }
 
@@ -133,6 +164,10 @@ class LocalRegistry
             if (in_array($cat, ['preferences', 'statistics', 'marketing'], true)) {
                 $clean_choices[$cat] = (bool) $granted;
             }
+        }
+
+        if ($this->plafond_global_atteint()) {
+            return new \WP_REST_Response(['error' => 'rate_limited'], 429);
         }
 
         $anonymous = self::identifiant_anonyme($request->get_param('anonymousId'));

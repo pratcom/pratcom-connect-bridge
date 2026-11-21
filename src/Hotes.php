@@ -21,10 +21,10 @@ namespace Pratcom\Connect\Bridge;
  * `pratcom_connect_policy_base_url`, `pratcom_connect_jobs_base_url`)
  * restent appliques par-dessus.
  *
- * Garde : seule une URL `https://` sans chemin dont l'hote est `pratcom.net`
- * ou l'un de ses sous-domaines est retenue (la cle API part vers `api` : une
- * reponse alteree ne doit pas pouvoir l'envoyer ailleurs). La liste des
- * domaines permis est filtrable (`pratcom_connect_hotes_domaines`).
+ * Garde : seule une URL `https://` sans chemin ni port autre que 443 dont
+ * l'hote est l'un des trois de DEFAUTS est retenue (la cle API part vers
+ * `api` : une reponse alteree ne doit pas pouvoir l'envoyer ailleurs). Liste
+ * fermee depuis E-21 : ni suffixe, ni filtre.
  */
 final class Hotes
 {
@@ -35,6 +35,20 @@ final class Hotes
         'app'  => 'https://connect.pratcom.net',
         'chat' => 'https://chatbot.pratcom.net',
     ];
+
+    /**
+     * E-21 : les seuls hotes permis, tires de DEFAUTS.
+     *
+     * @return array<int, string>
+     */
+    public static function hotes_permis(): array
+    {
+        $hotes = [];
+        foreach (self::DEFAUTS as $url) {
+            $hotes[] = strtolower((string) parse_url($url, PHP_URL_HOST));
+        }
+        return $hotes;
+    }
 
     /** Base d'un role, sans barre finale. Role inconnu : base `app`. */
     public static function base(string $role): string
@@ -114,19 +128,12 @@ final class Hotes
         if (isset($parties['port']) && (int) $parties['port'] !== 443) {
             return null;
         }
+        // E-21 : liste fermee, les trois hotes de DEFAUTS (ceux que sert le
+        // handshake). Plus de suffixe `.pratcom.net`, plus de filtre : un
+        // autre sous-domaine ne recoit jamais la cle API.
         $hote = strtolower($parties['host']);
-        $domaines = function_exists('apply_filters')
-            ? (array) apply_filters('pratcom_connect_hotes_domaines', ['pratcom.net'])
-            : ['pratcom.net'];
-        foreach ($domaines as $domaine) {
-            $domaine = strtolower(trim((string) $domaine));
-            if ($domaine === '') {
-                continue;
-            }
-            $suffixe = '.' . $domaine;
-            if ($hote === $domaine || substr($hote, -strlen($suffixe)) === $suffixe) {
-                return 'https://' . $hote;
-            }
+        if (in_array($hote, self::hotes_permis(), true)) {
+            return 'https://' . $hote;
         }
         return null;
     }

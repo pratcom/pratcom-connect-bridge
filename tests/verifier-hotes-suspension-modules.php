@@ -175,38 +175,44 @@ verifier('emplois : connect.pratcom.net', $u['jobs'] === 'https://connect.pratco
 verifier('loader : connect.pratcom.net/loader.js', $u['loader'] === 'https://connect.pratcom.net/loader.js', $u['loader']);
 verifier('aucune option hosts posee', get_option(Hotes::OPTION, null) === null);
 
-echo "2. Hote unique, `hosts` servi par le handshake : une seule source\n";
+echo "2. Hote unique, `hosts` servi par le handshake : une seule source (liste fermee, roles croises)\n";
 repondre(['workspace_id' => 'ws-banc', 'feature_packs' => [], 'hosts' => [
-    'api' => 'https://api.staging.pratcom.net/', 'app' => 'https://app.staging.pratcom.net', 'chat' => 'https://chat.staging.pratcom.net',
+    'api' => 'https://api.connect.pratcom.net/', 'app' => 'https://chatbot.pratcom.net', 'chat' => 'https://connect.pratcom.net',
 ]]);
 (new HealthCheck())->run();
 $u = usages();
-verifier('forms suit chat', $u['forms'] === 'https://chat.staging.pratcom.net/loader.js', $u['forms']);
-verifier('politique suit chat', $u['policy'] === 'https://chat.staging.pratcom.net', $u['policy']);
-verifier('temoins suit chat', $u['cookies'] === 'https://chat.staging.pratcom.net', $u['cookies']);
+verifier('forms suit chat', $u['forms'] === 'https://connect.pratcom.net/loader.js', $u['forms']);
+verifier('politique suit chat', $u['policy'] === 'https://connect.pratcom.net', $u['policy']);
+verifier('temoins suit chat', $u['cookies'] === 'https://connect.pratcom.net', $u['cookies']);
 verifier('politique et temoins : meme base', $u['policy'] === $u['cookies']);
-verifier('emplois suit app', $u['jobs'] === 'https://app.staging.pratcom.net', $u['jobs']);
-verifier('loader suit app', $u['loader'] === 'https://app.staging.pratcom.net/loader.js', $u['loader']);
+verifier('emplois suit app', $u['jobs'] === 'https://chatbot.pratcom.net', $u['jobs']);
+verifier('loader suit app', $u['loader'] === 'https://chatbot.pratcom.net/loader.js', $u['loader']);
 (new HealthCheck())->run();
-verifier('handshake suivant part vers api servi (barre finale retiree)', end($GLOBALS['banc_requetes']) === 'https://api.staging.pratcom.net/api/bridge/handshake', (string) end($GLOBALS['banc_requetes']));
+verifier('handshake suivant part vers api servi (barre finale retiree)', end($GLOBALS['banc_requetes']) === 'https://api.connect.pratcom.net/api/bridge/handshake', (string) end($GLOBALS['banc_requetes']));
+repondre(['workspace_id' => 'ws-banc', 'feature_packs' => [], 'hosts' => [
+    'api' => 'https://api.staging.pratcom.net', 'app' => 'https://app.staging.pratcom.net', 'chat' => 'https://chat.staging.pratcom.net',
+]]);
+(new HealthCheck())->run();
+verifier('sous-domaines hors liste (E-21) : refuses, defauts repris', get_option(Hotes::OPTION, null) === null
+    && Hotes::base('api') === 'https://api.connect.pratcom.net' && Hotes::base('chat') === 'https://chatbot.pratcom.net');
 
 echo "3. Garde des hotes : rien hors pratcom.net, rien qu'https, pas de chemin\n";
 $refus = ['http://api.pratcom.net', 'https://pratcom.net.evil.example', 'https://evilpratcom.net', 'https://api.pratcom.net/chemin', 'https://u:p@api.pratcom.net', 'https://api.pratcom.net?x=1', 'javascript:alert(1)', ''];
 foreach ($refus as $url) {
     verifier("refuse « $url »", Hotes::url_permise($url) === null);
 }
-verifier('accepte pratcom.net nu', Hotes::url_permise('https://pratcom.net') === 'https://pratcom.net');
+verifier('refuse pratcom.net nu (liste fermee, E-21)', Hotes::url_permise('https://pratcom.net') === null);
 verifier('refuse un port autre que 443 (E-21)', Hotes::url_permise('https://API.pratcom.net:8443/') === null);
-verifier('accepte 443 et le retire (E-21)', Hotes::url_permise('https://API.pratcom.net:443/') === 'https://api.pratcom.net');
+verifier('accepte 443 et le retire (E-21)', Hotes::url_permise('https://API.connect.pratcom.net:443/') === 'https://api.connect.pratcom.net');
 verifier('role inconnu et valeur non chaine ignores', Hotes::nettoyer(['autre' => 'https://x.pratcom.net', 'api' => ['x']]) === []);
 verifier('role inconnu : base app', Hotes::base_dans([], 'inconnu') === 'https://connect.pratcom.net');
 repondre(['workspace_id' => 'ws-banc', 'feature_packs' => [], 'hosts' => ['api' => 'https://attaquant.example']]);
 (new HealthCheck())->run();
 verifier('hosts refuse : option effacee, retour aux defauts', get_option(Hotes::OPTION, null) === null && Hotes::base('api') === 'https://api.connect.pratcom.net');
-repondre(['workspace_id' => 'ws-banc', 'feature_packs' => [], 'hosts' => ['chat' => 'https://chat.staging.pratcom.net']]);
+repondre(['workspace_id' => 'ws-banc', 'feature_packs' => [], 'hosts' => ['chat' => 'https://connect.pratcom.net']]);
 (new HealthCheck())->run();
 verifier('hosts partiel : chat servi, api et app par defaut',
-    Hotes::base('chat') === 'https://chat.staging.pratcom.net' && Hotes::base('api') === 'https://api.connect.pratcom.net' && Hotes::base('app') === 'https://connect.pratcom.net');
+    Hotes::base('chat') === 'https://connect.pratcom.net' && Hotes::base('api') === 'https://api.connect.pratcom.net' && Hotes::base('app') === 'https://connect.pratcom.net');
 repondre(['workspace_id' => 'ws-banc', 'feature_packs' => []]);
 (new HealthCheck())->run();
 verifier('hosts retire du handshake : defauts', get_option(Hotes::OPTION, null) === null);
@@ -272,13 +278,13 @@ $cle = 'pck_espace-banc_' . str_repeat('a', 28) . 'b1c2';
 ConnectionTab::enregistrer_connexion($cle, [
     'ok' => true, 'workspace_id' => 'ws-banc', 'workspace_slug' => 'espace-banc',
     'feature_packs' => ['forms' => ['enabled' => true]],
-    'hosts' => ['app' => 'https://app.staging.pratcom.net', 'chat' => 'https://chat.staging.pratcom.net'],
+    'hosts' => ['app' => 'https://chatbot.pratcom.net', 'chat' => 'https://connect.pratcom.net'],
     'suspension' => ['etat' => 'suspendu'],
     'next_check_at' => gmdate('c', time() + 7200),
 ]);
 verifier('connexion : statut connected', get_option(Plugin::OPTION_STATUS) === 'connected');
 verifier('connexion : quatre derniers caracteres', get_option(Plugin::OPTION_KEY_LAST_FOUR) === 'b1c2');
-verifier('connexion : hotes enregistres', Hotes::base('app') === 'https://app.staging.pratcom.net' && Hotes::base('chat') === 'https://chat.staging.pratcom.net');
+verifier('connexion : hotes enregistres', Hotes::base('app') === 'https://chatbot.pratcom.net' && Hotes::base('chat') === 'https://connect.pratcom.net');
 verifier('connexion : suspension enregistree', Suspension::est_suspendu());
 verifier('connexion suspendue : loader absent sans attendre le cron', loader_html() === '');
 verifier('connexion suspendue : code court vide', banc_code_court('pratcom_emplois') === '');

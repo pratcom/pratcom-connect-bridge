@@ -83,6 +83,12 @@ class HealthCheck
         Suspension::deprogrammer();
     }
 
+    /** I-25 : reseau (code 0), 429, 5xx, ou 2xx dont le corps n'est pas du JSON. */
+    public static function echec_passager(int $http, string $err): bool
+    {
+        return $http === 0 || $http === 429 || $http >= 500 || $err === 'invalid_json';
+    }
+
     /**
      * Execute le handshake et update le status local.
      * @return array{ok: bool, status: string, error?: string}
@@ -115,7 +121,17 @@ class HealthCheck
             return ['ok' => false, 'status' => 'revoked', 'error' => $err];
         }
 
-        // Autres erreurs (network, 5xx, etc) : marquer en erreur mais garder connected si on l'etait avant
+        // I-25 : un echec passager (reseau, 429, 5xx, 2xx sans JSON) sur un
+        // site connecte garde `connected` : sans cela is_connected() tombe,
+        // Module::synchroniser_regles vide les regles et lance
+        // flush_rewrite_rules, et les fiches d'offres passent en 404 jusqu'au
+        // handshake suivant. Seule l'erreur est notee. Les autres 4xx
+        // marquent le site en erreur, comme avant.
+        if (self::echec_passager($http, $err) && get_option(Plugin::OPTION_STATUS) === 'connected') {
+            update_option(Plugin::OPTION_LAST_ERROR, sprintf('%s (HTTP %s)', $err, $http));
+            return ['ok' => false, 'status' => 'connected', 'error' => $err];
+        }
+
         update_option(Plugin::OPTION_STATUS, 'error');
         update_option(Plugin::OPTION_LAST_ERROR, sprintf('%s (HTTP %s)', $err, $http));
         return ['ok' => false, 'status' => 'error', 'error' => $err];
