@@ -96,7 +96,9 @@ Auparavant, chacun portait sa copie, et aucune ne lisait `enabled` : en PHP, **`
 
 **Règle du contrat, à respecter** : `enabled` **absent** de la forme table vaut **actif** — sinon un serveur qui n'émettrait pas encore la clé couperait tous les modules d'un coup.
 
-*Deux lecteurs d'affichage restent hors du helper (`DashboardTab.php:40`, `ModulesTab.php:66`). Ils portent la même cécité à la forme liste, mais en administration seulement, et leur conversion attend un arbitrage.*
+*Les deux lecteurs d'affichage longtemps restés hors du helper (Tableau de bord, Modules) y passent depuis la PR #70 : `FeaturePacks::actifs()` et `FeaturePacks::cles()` (mêmes règles que `is_active`, `jobs` compris). Il n'en reste plus.*
+
+**Suspension** : une sortie publique d'un module Connect passe aussi par `Suspension::est_suspendu()` (loader, codes courts, Emplois, bannière Privacy servie par le loader : `FreeBanner::privacy_connect_servie()`). **Hôtes** : toute URL vers Connect passe par `Hotes::base('api'|'app'|'chat')` ; le banc `tests/verifier-hotes-suspension-modules.php` échoue si une base est écrite en dur dans `src/` hors `Hotes.php`.
 
 ## 7. Zones à ne pas toucher sans vérifier l'arbitrage
 

@@ -3,6 +3,7 @@
 namespace Pratcom\Connect\Bridge\Admin\Tabs;
 
 use Pratcom\Connect\Bridge\FeaturePacks;
+use Pratcom\Connect\Bridge\Hotes;
 use Pratcom\Connect\Bridge\Plugin;
 use Pratcom\Connect\Bridge\Http\ApiClient;
 use Pratcom\Connect\Bridge\Admin\OrgManagePanel;
@@ -99,7 +100,7 @@ class ChatTab extends AbstractTab
         }
 
         $ws      = (string) ($result['workspace_slug'] ?? '');
-        $crm_url = 'https://connect.pratcom.net/crm/' . rawurlencode($ws) . '/chat';
+        $crm_url = Hotes::base('app') . '/crm/' . rawurlencode($ws) . '/chat';
         $this->render_iframe(esc_url($result['url']), esc_url($crm_url));
     }
 
@@ -137,7 +138,7 @@ class ChatTab extends AbstractTab
         ob_start();
         if (Plugin::is_connected()) {
             ?>
-            <a href="https://connect.pratcom.net/?utm_source=wp-plugin&utm_medium=chat-tab"
+            <a href="<?php echo esc_url(Hotes::base('app') . '/?utm_source=wp-plugin&utm_medium=chat-tab'); ?>"
                target="_blank" rel="noopener" class="pc-btn pc-btn--primary">
                 <?php esc_html_e('Activer ce module', 'pratcom-connect'); ?>
             </a>
@@ -181,7 +182,7 @@ class ChatTab extends AbstractTab
                 ?>
             </div>
             <div class="pc-actions">
-                <a href="https://connect.pratcom.net/" target="_blank" rel="noopener" class="pc-btn pc-btn--primary">
+                <a href="<?php echo esc_url(Hotes::base('app') . '/'); ?>" target="_blank" rel="noopener" class="pc-btn pc-btn--primary">
                     <?php esc_html_e('Ouvrir Pratcom Connect', 'pratcom-connect'); ?>
                 </a>
             </div>

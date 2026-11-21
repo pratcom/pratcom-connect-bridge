@@ -118,12 +118,6 @@ class CookieScan
         ],
     ];
 
-    /** Le nom donne figure-t-il dans la table des temoins first-party connus ? */
-    public static function is_first_party(string $name): bool
-    {
-        return isset(self::FIRST_PARTY[strtolower(trim($name))]);
-    }
-
     /**
      * Ligne de declaration prete a fusionner pour un temoin first-party connu,
      * ou null si le nom n'est pas dans la table. 'provider' vide retombe sur le

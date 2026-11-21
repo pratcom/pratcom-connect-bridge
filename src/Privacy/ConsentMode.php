@@ -2,9 +2,6 @@
 
 namespace Pratcom\Connect\Bridge\Privacy;
 
-use Pratcom\Connect\Bridge\FeaturePacks;
-use Pratcom\Connect\Bridge\Plugin;
-
 /**
  * Google Consent Mode v2, signal « consent default » inline (Privacy v2).
  *
@@ -54,10 +51,14 @@ class ConsentMode
         return (bool) apply_filters('pratcom_connect_consent_mode', $enabled);
     }
 
-    /** Le module Privacy est-il actif (tier Connect OU banniere Free) ? */
+    /**
+     * Le module Privacy est-il actif (tier Connect servi OU banniere Free) ?
+     * Site suspendu : le tier Connect n'est plus servi (pas de loader), le
+     * signal ne part que si la banniere Free prend le relais.
+     */
     private static function privacy_active(): bool
     {
-        if (Plugin::is_connected() && FeaturePacks::is_active('privacy')) {
+        if (FreeBanner::privacy_connect_servie()) {
             return true;
         }
         return FreeBanner::is_active();

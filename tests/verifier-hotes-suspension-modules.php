@@ -110,6 +110,7 @@ use Pratcom\Connect\Bridge\Jobs\Catalogue;
 use Pratcom\Connect\Bridge\Loader;
 use Pratcom\Connect\Bridge\Plugin;
 use Pratcom\Connect\Bridge\Privacy\CookieDeclaration;
+use Pratcom\Connect\Bridge\Privacy\FreeBanner;
 use Pratcom\Connect\Bridge\Privacy\PolicyShortcode;
 use Pratcom\Connect\Bridge\Suspension;
 
@@ -358,6 +359,58 @@ ConnectionTab::enregistrer_connexion($cle, [
 ]);
 verifier('connexion apres activation : cron repousse a une heure', ($GLOBALS['banc_cron'][HealthCheck::CRON_HOOK] ?? 0) >= time() + 3500);
 ConnectionTab::purger_connexion();
+
+echo "10. Privacy sous suspension : la banniere Free prend le relais du loader\n";
+// Table de verite : connecte x pack privacy x suspendu x Free active.
+// Attendu : la banniere Connect n'est servie que connecte + pack + non
+// suspendu ; sinon la Free (si activee localement) prend le relais.
+foreach ([false, true] as $co) {
+    foreach ([null, ['privacy' => ['enabled' => true]], ['privacy' => ['enabled' => false]], ['privacy'], ['forms']] as $packs) {
+        foreach ([false, true] as $susp) {
+            foreach ([false, true] as $free) {
+                $GLOBALS['banc_options'] = [];
+                if ($co) {
+                    connecter();
+                }
+                if ($packs !== null) {
+                    update_option(Plugin::OPTION_FEATURE_PACKS, $packs);
+                }
+                if ($susp) {
+                    update_option(Suspension::OPTION, ['etat' => 'suspendu']);
+                }
+                if ($free) {
+                    update_option(FreeBanner::OPTION_ENABLED, '1');
+                }
+                $pack = FeaturePacks::is_active('privacy');
+                $servie = $co && $pack && !$susp;
+                $nom = sprintf('connecte=%d packs=%s suspendu=%d free=%d', $co, json_encode($packs), $susp, $free);
+                verifier("$nom : Connect servie=" . (int) $servie, FreeBanner::privacy_connect_servie() === $servie);
+                verifier("$nom : Free=" . (int) ($free && !$servie), FreeBanner::is_active() === ($free && !$servie));
+            }
+        }
+    }
+}
+$GLOBALS['banc_options'] = [];
+
+echo "11. Aucun hote Pratcom en dur dans src/ hors Hotes.php\n";
+$trouves = [];
+$iter = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($src, \FilesystemIterator::SKIP_DOTS));
+foreach ($iter as $fichier) {
+    if ($fichier->getExtension() !== 'php' || $fichier->getFilename() === 'Hotes.php') {
+        continue;
+    }
+    foreach (file($fichier->getPathname()) as $n => $ligne) {
+        // Les commentaires (docblocs, //) peuvent nommer les hotes par defaut.
+        $code = ltrim($ligne);
+        if (strpos($code, '*') === 0 || strpos($code, '//') === 0) {
+            continue;
+        }
+        if (preg_match('#https://(api\.connect|connect|chatbot)\.pratcom\.net#', $ligne)) {
+            $trouves[] = $fichier->getFilename() . ':' . ($n + 1);
+        }
+    }
+}
+verifier('aucune base api, app ou chat en dur', $trouves === [], implode(', ', $trouves));
 
 echo "\n$ok ok, " . count($echecs) . " echec(s)\n";
 exit($echecs === [] ? 0 : 1);

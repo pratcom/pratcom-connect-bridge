@@ -4,6 +4,7 @@ namespace Pratcom\Connect\Bridge\Privacy;
 
 use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Plugin;
+use Pratcom\Connect\Bridge\Suspension;
 
 /**
  * Bannière Privacy Free, mode 100 % LOCAL (spec .org §1/§4, O3).
@@ -36,10 +37,21 @@ class FreeBanner
         // Tier Connect : la bannière vient du loader connecté, pas du mode Free.
         // Si l'abonnement privacy est coupé, on RETOMBE sur la bannière Free :
         // sinon un site désabonné n'afficherait plus aucune bannière témoins.
-        if (Plugin::is_connected() && FeaturePacks::is_active('privacy')) {
-            return false;
-        }
-        return true;
+        // Même chose pour un site SUSPENDU : le loader n'est plus inséré, la
+        // bannière Connect ne vient donc plus.
+        return !self::privacy_connect_servie();
+    }
+
+    /**
+     * La bannière Privacy de Connect est-elle servie (par le loader) ?
+     * Site connecté, pack `privacy` actif (FeaturePacks, source unique) et
+     * site non suspendu (le loader n'est pas inséré quand il l'est).
+     */
+    public static function privacy_connect_servie(): bool
+    {
+        return Plugin::is_connected()
+            && FeaturePacks::is_active('privacy')
+            && !Suspension::est_suspendu();
     }
 
     /**
