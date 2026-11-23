@@ -705,8 +705,8 @@ msgid "Privacy Connect"
 msgstr ""
 
 msgid ""
-"La conformité Loi 25 en pilote automatique : consentement, blocage des "
-"traceurs, registre et tableau de bord, au-delà de Privacy Free."
+"Vous aide à respecter vos obligations de la Loi 25 : consentement, blocage "
+"des traceurs, registre et tableau de bord, au-delà de Privacy Free."
 msgstr ""
 
 msgid ""
