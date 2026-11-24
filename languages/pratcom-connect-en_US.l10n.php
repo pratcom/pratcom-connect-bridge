@@ -213,7 +213,7 @@ return [
         'Exportez la preuve d\'audit des consentements enregistrés (Loi 25, art. 14). Le fichier CSV contient tous les enregistrements depuis l\'activation de la bannière.' => 'Export the audit trail of recorded consents (Law 25, s. 14). The CSV file contains every record since the banner was enabled.',
         'Exporter CSV' => 'Export CSV',
         'Privacy Connect' => 'Privacy Connect',
-        'La conformité Loi 25 en pilote automatique : consentement, blocage des traceurs, registre et tableau de bord, au-delà de Privacy Free.' => 'Law 25 compliance on autopilot: consent, tracker blocking, registry and dashboard, beyond Privacy Free.',
+        'Vous aide à respecter vos obligations de la Loi 25 : consentement, blocage des traceurs, registre et tableau de bord, au-delà de Privacy Free.' => 'Helps you meet your Law 25 obligations: consent, tracker blocking, registry and dashboard, beyond Privacy Free.',
         'Bannière de consentement, blocage automatique des traceurs et registre vérifiable, avec dossier self-service et tableau de bord des consentements.' => 'Consent banner, automatic tracker blocking and a verifiable registry, with a self-service record and a consent dashboard.',
         'Bannière de consentement Loi 25' => 'Law 25 consent banner',
         'Blocage des traceurs' => 'Tracker blocking',

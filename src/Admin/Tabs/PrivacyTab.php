@@ -701,7 +701,7 @@ class PrivacyTab extends AbstractTab
         <?php
         ModuleShowcase::render([
             'title'    => __('Privacy Connect', 'pratcom-connect'),
-            'subtitle' => __('La conformité Loi 25 en pilote automatique : consentement, blocage des traceurs, registre et tableau de bord, au-delà de Privacy Free.', 'pratcom-connect'),
+            'subtitle' => __('Vous aide à respecter vos obligations de la Loi 25 : consentement, blocage des traceurs, registre et tableau de bord, au-delà de Privacy Free.', 'pratcom-connect'),
             'demo'     => 'privacy',
             'tagline'  => __('Bannière de consentement, blocage automatique des traceurs et registre vérifiable, avec dossier self-service et tableau de bord des consentements.', 'pratcom-connect'),
             'features' => [
