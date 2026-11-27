@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Privacy;
 
+use Pratcom\Connect\Bridge\Langues;
 use Pratcom\Connect\Bridge\Admin\Tabs\PrivacyTab;
 
 /**
@@ -401,7 +402,7 @@ class CustomContent
         if (!self::is_enabled()) {
             return '';
         }
-        $lang = $lang === 'en' ? 'en' : 'fr';
+        $lang = Langues::normaliser($lang, code_exact: true);
         $out  = '';
         foreach (self::blocks() as $b) {
             $subtitle = trim((string) ($b['subtitle'][$lang] ?? ''));

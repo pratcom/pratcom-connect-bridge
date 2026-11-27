@@ -2,6 +2,8 @@
 
 namespace Pratcom\Connect\Bridge\Privacy;
 
+use Pratcom\Connect\Bridge\Langues;
+
 /**
  * Template LOCAL de la politique de confidentialité (tier Free / fallback).
  *
@@ -221,7 +223,7 @@ class LocalPolicy
 
     public static function render(string $lang, string $appearance = 'auto'): string
     {
-        $lang = $lang === 'en' ? 'en' : 'fr';
+        $lang = Langues::normaliser($lang, code_exact: true);
         $vars = self::variables($lang);
 
         $title = $lang === 'en' ? 'Privacy Policy' : 'Politique de confidentialité';

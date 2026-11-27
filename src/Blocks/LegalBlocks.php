@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Blocks;
 
+use Pratcom\Connect\Bridge\Langues;
 use Pratcom\Connect\Bridge\Privacy\Multilang;
 
 /**
@@ -126,7 +127,7 @@ class LegalBlocks
     private function resolve_lang(array $attributes): string
     {
         $lang = isset($attributes['lang']) ? strtolower((string) $attributes['lang']) : '';
-        if (in_array($lang, ['fr', 'en'], true)) {
+        if (Langues::normaliser($lang, code_exact: true, repli: '') !== '') {
             return $lang;
         }
 
@@ -140,7 +141,7 @@ class LegalBlocks
             $detected = determine_locale();
         }
 
-        return (strpos((string) $detected, 'en') === 0) ? 'en' : 'fr';
+        return Langues::depuis_locale((string) $detected);
     }
 
     /**

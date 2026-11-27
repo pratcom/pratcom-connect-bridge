@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Privacy;
 
+use Pratcom\Connect\Bridge\Langues;
 use Pratcom\Connect\Bridge\Hotes;
 use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Plugin;
@@ -57,9 +58,9 @@ class CookieDeclaration
         $atts = shortcode_atts(['lang' => '', 'heading' => PolicyHeading::DEFAULT_MODE, 'appearance' => 'auto'], $atts, 'pratcom_cookie_declaration');
 
         $lang = strtolower((string) $atts['lang']);
-        if (!in_array($lang, ['fr', 'en'], true)) {
+        if (Langues::normaliser($lang, code_exact: true, repli: '') === '') {
             // Suit la langue de la page (WPML/Polylang via determine_locale).
-            $lang = (strpos(determine_locale(), 'en') === 0) ? 'en' : 'fr';
+            $lang = Langues::depuis_locale(determine_locale());
         }
 
         $heading = PolicyHeading::sanitize_mode($atts['heading']);
@@ -82,7 +83,7 @@ class CookieDeclaration
      */
     public static function render_local(string $lang, string $appearance = 'auto'): string
     {
-        $lang = $lang === 'en' ? 'en' : 'fr';
+        $lang = Langues::normaliser($lang, code_exact: true);
         $groups = CookieScan::grouped_rows_public($lang);
 
         $title = $lang === 'en' ? 'Cookie Declaration' : 'Déclaration relative aux témoins';
@@ -120,7 +121,7 @@ class CookieDeclaration
      */
     public static function render_groups(array $groups, string $lang, string $appearance = 'auto'): string
     {
-        $lang = $lang === 'en' ? 'en' : 'fr';
+        $lang = Langues::normaliser($lang, code_exact: true);
         $labels = CookieScan::category_label($lang);
         $descs  = CookieScan::category_description($lang);
 

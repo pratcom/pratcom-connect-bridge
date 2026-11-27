@@ -2,6 +2,8 @@
 
 namespace Pratcom\Connect\Bridge\Privacy;
 
+use Pratcom\Connect\Bridge\Langues;
+
 /**
  * Mini-scan local des temoins + agregation des lignes de la declaration
  * (Privacy Free, spec legal pages org §1/§5, chantier feat/org-legal-pages).
@@ -131,7 +133,7 @@ class CookieScan
         if (!isset(self::FIRST_PARTY[$key])) {
             return null;
         }
-        $lang = $lang === 'en' ? 'en' : 'fr';
+        $lang = Langues::normaliser($lang, code_exact: true);
         $def = self::FIRST_PARTY[$key];
         $provider = (string) ($def['provider'] ?? '');
         if ($provider === '') {
@@ -243,7 +245,7 @@ class CookieScan
      */
     public static function grouped_rows(string $lang): array
     {
-        $lang = $lang === 'en' ? 'en' : 'fr';
+        $lang = Langues::normaliser($lang, code_exact: true);
         $rows = self::merged_rows($lang);
 
         $groups = [];
@@ -286,7 +288,7 @@ class CookieScan
      */
     public static function merged_rows(string $lang): array
     {
-        $lang = $lang === 'en' ? 'en' : 'fr';
+        $lang = Langues::normaliser($lang, code_exact: true);
         $rows = [];
         $seen = [];
 
@@ -391,7 +393,7 @@ class CookieScan
      *
      * @return string[]
      */
-    public static function unclassified_scanned(string $lang = 'fr'): array
+    public static function unclassified_scanned(string $lang = Langues::PAR_DEFAUT): array
     {
         $covered = [];
         foreach (Presets::cookie_rows($lang) as $row) {

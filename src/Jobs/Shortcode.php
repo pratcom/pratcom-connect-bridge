@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Jobs;
 
+use Pratcom\Connect\Bridge\Langues;
 use Pratcom\Connect\Bridge\Forms\Shortcode as FormsShortcode;
 
 /**
@@ -155,7 +156,7 @@ final class Shortcode
         if (!is_array($s) || !is_string($s['form_slug'] ?? null)) {
             return '';
         }
-        $l = $lang === 'en' ? 'en' : 'fr';
+        $l = Langues::normaliser($lang, code_exact: true);
         $titre = (string) ($s['title'][$l] ?? '');
         $texte = (string) ($s['text'][$l] ?? '');
         if ($titre === '' || $texte === '') {

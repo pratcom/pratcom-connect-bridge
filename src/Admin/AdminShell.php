@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Admin;
 
+use Pratcom\Connect\Bridge\Langues;
 use Pratcom\Connect\Bridge\Hotes;
 use Pratcom\Connect\Bridge\Plugin;
 use Pratcom\Connect\Bridge\Admin\Tabs\AbstractTab;
@@ -65,7 +66,7 @@ class AdminShell
     public static function admin_lang(): string
     {
         $locale = function_exists('get_user_locale') ? get_user_locale() : determine_locale();
-        return strpos((string) $locale, 'en') === 0 ? 'en' : 'fr';
+        return Langues::depuis_locale((string) $locale);
     }
 
     /**

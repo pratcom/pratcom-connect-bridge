@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Jobs;
 
+use Pratcom\Connect\Bridge\Langues;
 use Pratcom\Connect\Bridge\Hotes;
 use Pratcom\Connect\Bridge\Plugin;
 
@@ -321,7 +322,7 @@ final class Catalogue
                 return null;
             }
             $sortie = [];
-            foreach (['fr', 'en'] as $l) {
+            foreach (Langues::PRISES_EN_CHARGE as $l) {
                 $t = is_string($v[$l] ?? null) ? trim($v[$l]) : '';
                 if ($t === '') {
                     return null;

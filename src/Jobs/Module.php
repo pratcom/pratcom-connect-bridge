@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Jobs;
 
+use Pratcom\Connect\Bridge\Langues;
 use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Plugin;
 use Pratcom\Connect\Bridge\Privacy\Multilang;
@@ -101,7 +102,7 @@ final class Module
     /** Langue courante du site (WPML/Polylang via `determine_locale`). */
     public static function langue_courante(): string
     {
-        return (strpos(determine_locale(), 'en') === 0) ? 'en' : 'fr';
+        return Langues::depuis_locale(determine_locale());
     }
 
     /** URL de la liste d'une langue, vide si aucune page hote. */
