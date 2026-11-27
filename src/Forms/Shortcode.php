@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Forms;
 
+use Pratcom\Connect\Bridge\Langues;
 use Pratcom\Connect\Bridge\Hotes;
 use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Plugin;
@@ -78,7 +79,7 @@ class Shortcode
         }
 
         $lang = strtolower((string) $atts['lang']);
-        $lang = in_array($lang, ['fr', 'en'], true) ? $lang : '';
+        $lang = Langues::normaliser($lang, code_exact: true, repli: '');
 
         $workspace_slug = (string) get_option(Plugin::OPTION_WORKSPACE_SLUG, '');
         if ($workspace_slug === '') {

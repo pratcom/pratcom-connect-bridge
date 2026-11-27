@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Jobs;
 
+use Pratcom\Connect\Bridge\Langues;
 use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Forms\Shortcode as FormsShortcode;
 
@@ -276,7 +277,7 @@ final class Fiche
         if (!preg_match('/^tel:\+1[2-9][0-9]{2}[2-9][0-9]{6}$/', $href) || !preg_match('/^[2-9][0-9]{2}-[2-9][0-9]{2}-[0-9]{4}$/', $phone)) {
             return '';
         }
-        $langue = $lang === 'en' ? 'en' : 'fr';
+        $langue = Langues::normaliser($lang, code_exact: true);
         $label = is_array($b['label'] ?? null) ? trim((string) ($b['label'][$langue] ?? '')) : '';
         if ($label === '' || (int) preg_match_all('/./us', $label) > 40) {
             $label = $langue === 'en' ? 'Call us' : 'Appelez-nous';

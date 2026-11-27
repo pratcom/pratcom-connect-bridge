@@ -2,6 +2,8 @@
 
 namespace Pratcom\Connect\Bridge\Jobs;
 
+use Pratcom\Connect\Bridge\Langues;
+
 /**
  * Les vocabulaires fermes du module Emplois, leurs libelles FR/EN, et la
  * traduction vers schema.org a la SORTIE.
@@ -47,8 +49,8 @@ final class Vocabulaire
     /** `salary_currency`, varchar(3). */
     public const DEVISES = ['CAD', 'USD'];
 
-    /** Le modele bilingue du CRM : une entree EST une langue. */
-    public const LANGUES = ['fr', 'en'];
+    /** Alias public conserve pour les consommateurs du module Emplois. */
+    public const LANGUES = Langues::PRISES_EN_CHARGE;
 
     /** Champ de l'offre => liste fermee. */
     private const CHAMPS = [
@@ -164,8 +166,7 @@ final class Vocabulaire
     /** Langue publique : `fr` ou `en`, `fr` par defaut (langue source du produit). */
     public static function langue(?string $lang): string
     {
-        $lang = strtolower(substr(trim((string) $lang), 0, 2));
-        return in_array($lang, self::LANGUES, true) ? $lang : 'fr';
+        return Langues::normaliser($lang);
     }
 
     /** La valeur appartient-elle a la liste fermee du champ ? */

@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Privacy;
 
+use Pratcom\Connect\Bridge\Langues;
 use Pratcom\Connect\Bridge\Hotes;
 use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Plugin;
@@ -104,8 +105,8 @@ class PolicyShortcode
         $atts = shortcode_atts(['lang' => '', 'heading' => PolicyHeading::DEFAULT_MODE, 'appearance' => 'auto'], $atts, 'pratcom_privacy_policy');
 
         $lang = strtolower((string) $atts['lang']);
-        if (!in_array($lang, ['fr', 'en'], true)) {
-            $lang = (strpos(get_locale(), 'en') === 0) ? 'en' : 'fr';
+        if (Langues::normaliser($lang, code_exact: true, repli: '') === '') {
+            $lang = Langues::depuis_locale(get_locale());
         }
 
         $heading = PolicyHeading::sanitize_mode($atts['heading']);

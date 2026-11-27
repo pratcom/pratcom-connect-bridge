@@ -27,6 +27,7 @@ function esc_url($u, $protocoles = null)
     return in_array($schema, $permis, true) ? htmlspecialchars($u, ENT_QUOTES, 'UTF-8') : '';
 }
 
+require dirname(__DIR__) . '/src/Langues.php';
 require dirname(__DIR__) . '/src/Jobs/Fiche.php';
 
 use Pratcom\Connect\Bridge\Jobs\Fiche;

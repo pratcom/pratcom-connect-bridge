@@ -2,6 +2,8 @@
 
 namespace Pratcom\Connect\Bridge\Privacy;
 
+use Pratcom\Connect\Bridge\Langues;
+
 /**
  * Presets de plugins/outils populaires (Privacy Free, spec .org §4 / O3).
  *
@@ -118,7 +120,7 @@ class Presets
      */
     public static function cookie_rows(string $lang): array
     {
-        $lang = $lang === 'en' ? 'en' : 'fr';
+        $lang = Langues::normaliser($lang, code_exact: true);
         $rows = [];
         $seen = [];
         foreach (self::selected() as $preset) {

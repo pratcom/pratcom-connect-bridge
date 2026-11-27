@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Privacy;
 
+use Pratcom\Connect\Bridge\Langues;
 use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Plugin;
 use Pratcom\Connect\Bridge\Suspension;
@@ -85,7 +86,7 @@ class FreeBanner
                 'categories'      => ['statistics', 'marketing', 'preferences'],
                 'reconsentMonths' => 12,
                 'policyUrl'       => $policy['linked'] ? $policy['url'] : '',
-                'defaultLang'     => (strpos(get_locale(), 'en') === 0) ? 'en' : 'fr',
+                'defaultLang'     => Langues::depuis_locale(get_locale()),
             ],
             'theme'    => Plugin::get_theme() ?: null,
             'trackers' => Presets::trackers_for_banner(),

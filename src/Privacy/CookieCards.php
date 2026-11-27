@@ -2,6 +2,7 @@
 
 namespace Pratcom\Connect\Bridge\Privacy;
 
+use Pratcom\Connect\Bridge\Langues;
 use Pratcom\Connect\Bridge\Plugin;
 
 /**
@@ -49,7 +50,7 @@ class CookieCards
      */
     public static function render(array $rows, string $lang, string $appearance = 'auto', bool $show_category = true): string
     {
-        $lang = $lang === 'en' ? 'en' : 'fr';
+        $lang = Langues::normaliser($lang, code_exact: true);
         $appearance = self::sanitize_mode($appearance);
         $labels = CookieScan::category_label($lang);
 
