@@ -852,3 +852,28 @@ msgstr ""
 #: src/FeaturePacks.php src/Admin/Tabs/JobsTab.php
 msgid "Emplois"
 msgstr ""
+
+#: src/Admin/Tabs/JobsTab.php
+msgid "Titres à revoir (Google)"
+msgstr ""
+
+#: src/Admin/Tabs/JobsTab.php
+msgid "Aucun"
+msgstr ""
+
+#: src/Admin/Tabs/JobsTab.php
+msgid "contient le lieu"
+msgstr ""
+
+#: src/Admin/Tabs/JobsTab.php
+msgid "contient le nom de l'entreprise"
+msgstr ""
+
+#. translators: 1: job title, 2: language code, 3: reasons.
+#: src/Admin/Tabs/JobsTab.php
+msgid "%1$s (%2$s) : %3$s"
+msgstr ""
+
+#: src/Admin/Tabs/JobsTab.php
+msgid "Google demande un titre de poste seul, sans lieu ni nom d'entreprise. Le site ne modifie pas le titre : corrigez-le au CRM si besoin."
+msgstr ""
