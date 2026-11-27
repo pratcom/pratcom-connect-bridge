@@ -5,6 +5,7 @@ namespace Pratcom\Connect\Bridge\Admin\Tabs;
 use Pratcom\Connect\Bridge\FeaturePacks;
 use Pratcom\Connect\Bridge\Jobs\Catalogue;
 use Pratcom\Connect\Bridge\Jobs\Fiche;
+use Pratcom\Connect\Bridge\Jobs\JsonLd;
 use Pratcom\Connect\Bridge\Jobs\Module;
 use Pratcom\Connect\Bridge\Jobs\Shortcode;
 use Pratcom\Connect\Bridge\Jobs\Vocabulaire;
@@ -133,6 +134,7 @@ class JobsTab extends AbstractTab
                                 ?>
                             </td>
                         </tr>
+                        <?php $this->render_alertes_titres(); ?>
                         <tr>
                             <th scope="row"><?php esc_html_e('Empreinte (ETag)', 'pratcom-connect'); ?></th>
                             <td><code><?php echo esc_html($etat['etag'] !== '' ? substr(trim($etat['etag'], '"'), 0, 10) : '-'); ?></code></td>
@@ -168,6 +170,52 @@ class JobsTab extends AbstractTab
                 <p class="pc-form-help"><?php esc_html_e('Le site relit Connect au plus toutes les 5 minutes. Une offre publiée au CRM apparaît donc ici en 5 minutes au plus, ou tout de suite avec ce bouton.', 'pratcom-connect'); ?></p>
             <?php endif; ?>
         </div>
+        <?php
+    }
+
+    /**
+     * Titres que Google demande de revoir (lieu ou nom de l'entreprise dans
+     * `title`). Avertissement seulement : le titre vient du CRM et n'est
+     * jamais modifie par le site.
+     */
+    private function render_alertes_titres(): void
+    {
+        $motifs = [
+            'lieu'       => __('contient le lieu', 'pratcom-connect'),
+            'entreprise' => __('contient le nom de l\'entreprise', 'pratcom-connect'),
+        ];
+        $lignes = [];
+        foreach (Vocabulaire::LANGUES as $lang) {
+            foreach (Module::offres_de($lang) as $offre) {
+                $alertes = JsonLd::alertes_titre($offre, JsonLd::nom_employeur($offre));
+                if ($alertes === []) {
+                    continue;
+                }
+                $lignes[] = sprintf(
+                    /* translators: 1: job title, 2: language code, 3: reasons. */
+                    __('%1$s (%2$s) : %3$s', 'pratcom-connect'),
+                    (string) ($offre['title'] ?? ''),
+                    strtoupper($lang),
+                    implode(', ', array_map(static fn($a) => $motifs[$a] ?? $a, $alertes))
+                );
+            }
+        }
+        ?>
+        <tr>
+            <th scope="row"><?php esc_html_e('Titres à revoir (Google)', 'pratcom-connect'); ?></th>
+            <td>
+                <?php if ($lignes === []): ?>
+                    <?php esc_html_e('Aucun', 'pratcom-connect'); ?>
+                <?php else: ?>
+                    <ul style="margin: 0;">
+                        <?php foreach ($lignes as $ligne): ?>
+                            <li><?php echo esc_html($ligne); ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                    <p class="pc-form-help"><?php esc_html_e('Google demande un titre de poste seul, sans lieu ni nom d\'entreprise. Le site ne modifie pas le titre : corrigez-le au CRM si besoin.', 'pratcom-connect'); ?></p>
+                <?php endif; ?>
+            </td>
+        </tr>
         <?php
     }
 

@@ -254,5 +254,11 @@ return [
         'Suspendu : les modules ne sont plus affichés aux visiteurs.' => 'Suspended: modules are no longer shown to visitors.',
         'Connect Emplois' => 'Connect Jobs',
         'Offres d\'emploi publiées sur vos pages, avec fiches et données structurées pour Google.' => 'Job postings published on your pages, with detail pages and structured data for Google.',
+        'Titres à revoir (Google)' => 'Titles to review (Google)',
+        'Aucun' => 'None',
+        'contient le lieu' => 'contains the location',
+        'contient le nom de l\'entreprise' => 'contains the company name',
+        '%1$s (%2$s) : %3$s' => '%1$s (%2$s): %3$s',
+        'Google demande un titre de poste seul, sans lieu ni nom d\'entreprise. Le site ne modifie pas le titre : corrigez-le au CRM si besoin.' => 'Google asks for the job title only, without a location or company name. The site does not change the title: correct it in the CRM if needed.',
     ],
 ];
