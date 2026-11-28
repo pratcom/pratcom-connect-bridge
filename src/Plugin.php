@@ -69,6 +69,8 @@ class Plugin
             update_option(self::OPTION_STATUS, 'disconnected');
         }
         Privacy\LocalRegistry::maybe_install();
+        // R2 (27/11) : purge du registre, independante de la connexion.
+        Privacy\LocalRegistry::programmer_purge();
 
         // Auto-creation des pages legales (idempotent : ne duplique jamais une
         // page contenant deja le shortcode). L'utilisateur active le plugin :
@@ -128,6 +130,7 @@ class Plugin
         // (preuve légale Loi 25 du client, même modèle que Complianz).
         HealthCheck::unschedule();
         Suspension::deprogrammer();
+        Privacy\LocalRegistry::deprogrammer_purge();
     }
 
     public static function is_connected(): bool

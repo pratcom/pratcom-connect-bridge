@@ -4,7 +4,9 @@ name: Build variante WordPress.org
 # SANS Plugin Update Checker (interdit sur WP.org, lecon #10) et sans
 # vendor/ (l'autoloader PSR-4 maison du fichier principal suffit).
 # Declenchement manuel (preparation de soumission / mise a jour SVN) ou
-# sur release publiee.
+# sur le push d'un tag vX.Y.Z (R1, 27/11 : la release est publiee par
+# release.yml avec le jeton du workflow, ce qui ne declenche aucun autre
+# workflow ; `release: published` ne partirait donc plus).
 #
 # E-34 (27/11) : le zip .org reste un ARTEFACT de ce workflow, jamais un asset
 # de la release publique. Les sites premium en v2.2.2 appellent
@@ -17,8 +19,8 @@ name: Build variante WordPress.org
 
 on:
   workflow_dispatch:
-  release:
-    types: [published]
+  push:
+    tags: ['v*']
 
 # E-22 (12/11) : rien au niveau du fichier. Le seul travail (qui lance wp-cli,
 # un binaire tiers) n a que la lecture. E-34 : aucun travail en ecriture.

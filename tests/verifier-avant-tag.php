@@ -25,6 +25,7 @@ define('PRATCOM_CONNECT_BRIDGE_LOADER_URL', 'https://connect.pratcom.net/loader.
 define('MINUTE_IN_SECONDS', 60);
 define('HOUR_IN_SECONDS', 3600);
 define('DAY_IN_SECONDS', 86400);
+define('PRATCOM_CONNECT_BRIDGE_FILE', dirname(__DIR__) . '/pratcom-connect-bridge.php');
 
 spl_autoload_register(static function (string $classe) use ($src): void {
     $prefixe = 'Pratcom\\Connect\\Bridge\\';
@@ -89,7 +90,8 @@ function wp_print_script_tag($a) { echo '<script src="' . $a['src'] . '"></scrip
 function wp_next_scheduled($hook) { return $GLOBALS['banc_cron'][$hook] ?? false; }
 function wp_schedule_single_event($ts, $hook) { $GLOBALS['banc_cron'][$hook] = $ts; return true; }
 function wp_unschedule_event($ts, $hook) { unset($GLOBALS['banc_cron'][$hook]); return true; }
-function wp_schedule_event($ts, $r, $hook) { $GLOBALS['banc_cron'][$hook] = $ts; return true; }
+function wp_schedule_event($ts, $r, $hook) { $GLOBALS['banc_cron'][$hook] = $ts; $GLOBALS['banc_recurrence'][$hook] = $r; return true; }
+function plugin_basename($f) { return basename(dirname($f)) . '/' . basename($f); }
 function home_url() { return 'https://site.exemple'; }
 function site_url() { return $GLOBALS['banc_site_url'] ?? 'https://site.exemple'; }
 function wp_parse_url($u, $c = -1) { return parse_url($u, $c); }
@@ -475,13 +477,77 @@ $passages = [];
 for ($i = 0; $i < 4 && method_exists(LocalRegistry::class, 'purger'); $i++) {
     $passages[] = LocalRegistry::purger();
 }
-verifier('2500 lignes vieilles : 1000, 1000, 500, 0 par passage horaire', $passages === [1000, 1000, 500, 0], implode(',', $passages));
+verifier('2500 lignes vieilles : 1000, 1000, 500, 0 par appel', $passages === [1000, 1000, 500, 0], implode(',', $passages));
 verifier('la ligne recente survit aux passages', array_column($GLOBALS['banc_table'], 'id') === [9999]);
+
+echo "R2 (27/11). Purge sur une tache quotidienne propre au registre, qui survit a la deconnexion
+";
+$aCron = defined(LocalRegistry::class . '::CRON_PURGE');
+$crochet = $aCron ? LocalRegistry::CRON_PURGE : '?';
+verifier('tache nommee, distincte du passage horaire de HealthCheck', $aCron && $crochet !== HealthCheck::CRON_HOOK, $crochet);
+$GLOBALS['banc_filtres'] = [];
+$GLOBALS['banc_cron'] = [HealthCheck::CRON_HOOK => banc_maintenant() + 600];
+$GLOBALS['banc_recurrence'] = [];
+new LocalRegistry();
+verifier('mise a jour (site deja installe, tache absente) : programmee au chargement', isset($GLOBALS['banc_cron'][$crochet]));
+verifier('recurrence quotidienne', ($GLOBALS['banc_recurrence'][$crochet] ?? '') === 'daily', (string) ($GLOBALS['banc_recurrence'][$crochet] ?? ''));
+$premier = $GLOBALS['banc_cron'][$crochet] ?? null;
+new LocalRegistry();
+verifier('chargement suivant : rien de reprogramme (meme echeance)', ($GLOBALS['banc_cron'][$crochet] ?? null) === $premier);
 $branche = false;
-foreach ($GLOBALS['banc_filtres'][HealthCheck::CRON_HOOK] ?? [] as [$rappel, $n]) {
-    $branche = $branche || ($rappel === [LocalRegistry::class, 'purger'] && $n === 0);
+foreach ($GLOBALS['banc_filtres'][$crochet] ?? [] as [$rappel, $n]) {
+    $branche = $branche || ($rappel === [LocalRegistry::class, 'purger_passage'] && $n === 0);
 }
-verifier('purge branchee sur la tache planifiee horaire existante, sans argument', $branche);
+verifier('purge branchee sur sa tache, sans argument', $branche);
+$surHoraire = false;
+foreach ($GLOBALS['banc_filtres'][HealthCheck::CRON_HOOK] ?? [] as [$rappel]) {
+    $surHoraire = $surHoraire || (is_array($rappel) && ($rappel[0] ?? null) === LocalRegistry::class);
+}
+verifier('purge plus branchee sur le passage horaire de HealthCheck', !$surHoraire);
+
+HealthCheck::unschedule();
+verifier('HealthCheck::unschedule() : purge toujours programmee', isset($GLOBALS['banc_cron'][$crochet]));
+verifier('HealthCheck::unschedule() : passage horaire retire', !isset($GLOBALS['banc_cron'][HealthCheck::CRON_HOOK]));
+$GLOBALS['banc_cron'][HealthCheck::CRON_HOOK] = banc_maintenant() + 600;
+\Pratcom\Connect\Bridge\Admin\Tabs\ConnectionTab::purger_connexion();
+verifier('deconnexion : purge toujours programmee', isset($GLOBALS['banc_cron'][$crochet]));
+verifier('deconnexion : passage horaire retire (inchange)', !isset($GLOBALS['banc_cron'][HealthCheck::CRON_HOOK]));
+connecter();
+
+$desactivation = 'deactivate_pratcom-connect-bridge/pratcom-connect-bridge.php';
+$retrait = null;
+foreach ($GLOBALS['banc_filtres'][$desactivation] ?? [] as [$rappel, $n]) {
+    if ($rappel === [LocalRegistry::class, 'deprogrammer_purge'] && $n === 0) {
+        $retrait = $rappel;
+    }
+}
+verifier('desactivation : retrait branche sur ' . $desactivation, $retrait !== null);
+if ($retrait !== null) {
+    $retrait();
+}
+verifier('desactivation : purge retiree', !isset($GLOBALS['banc_cron'][$crochet]));
+$plugin = str_replace("\r\n", "\n", (string) file_get_contents($GLOBALS['banc_src'] . '/Plugin.php'));
+$corps = static fn(string $f): string => preg_match('/function ' . $f . '\(\).*?\n    }\n/s', $plugin, $mm) ? $mm[0] : '';
+verifier('activation : Plugin::on_activate programme la purge', strpos($corps('on_activate'), 'LocalRegistry::programmer_purge()') !== false);
+verifier('desinstallation : Plugin::on_uninstall retire la purge', strpos($corps('on_uninstall'), 'LocalRegistry::deprogrammer_purge()') !== false);
+
+$GLOBALS['banc_table'] = [];
+for ($i = 0; $i < 30500; $i++) {
+    $GLOBALS['banc_table'][] = ['id' => $i, 'created_at' => '2024-01-01 00:00:00'];
+}
+$GLOBALS['banc_table'][] = ['id' => 99999, 'created_at' => '2026-11-01 00:00:00'];
+$avant = count($GLOBALS['wpdb']->requetes);
+$jour1 = method_exists(LocalRegistry::class, 'purger_passage') ? LocalRegistry::purger_passage() : -1;
+$req1 = count($GLOBALS['wpdb']->requetes) - $avant;
+verifier('passage quotidien : 24 lots au plus (24000 lignes, 24 requetes)', $jour1 === 24000 && $req1 === 24, "$jour1 lignes, $req1 requetes");
+$avant = count($GLOBALS['wpdb']->requetes);
+$jour2 = method_exists(LocalRegistry::class, 'purger_passage') ? LocalRegistry::purger_passage() : -1;
+$req2 = count($GLOBALS['wpdb']->requetes) - $avant;
+verifier('passage suivant : arret au premier lot incomplet (6500 lignes, 7 requetes)', $jour2 === 6500 && $req2 === 7, "$jour2 lignes, $req2 requetes");
+verifier('la ligne recente survit aux passages quotidiens', array_column($GLOBALS['banc_table'], 'id') === [99999]);
+$avant = count($GLOBALS['wpdb']->requetes);
+$jour3 = method_exists(LocalRegistry::class, 'purger_passage') ? LocalRegistry::purger_passage() : -1;
+verifier('table propre : une seule requete, 0 ligne', $jour3 === 0 && count($GLOBALS['wpdb']->requetes) - $avant === 1);
 $code = (string) file_get_contents($GLOBALS['banc_src'] . '/Privacy/LocalRegistry.php');
 verifier('index created_at present dans la table (purge sans balayage)', (bool) preg_match('/KEY\s+created_at\s*\(created_at\)/', $code));
 $GLOBALS['banc_table'] = [];
