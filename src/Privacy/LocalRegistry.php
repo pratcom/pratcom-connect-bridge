@@ -10,7 +10,12 @@ namespace Pratcom\Connect\Bridge\Privacy;
  * - REST POST /wp-json/pratcom-connect/v1/consent : enregistré par la
  *   bannière en mode local (privacy.js data-mode="local"). Public (les
  *   visiteurs ne sont pas connectés), rate-limité par IP, IP jamais en
- *   clair (hash SHA-256 + sel du site).
+ *   clair (hash SHA-256 + sel du site). E-24 (27/11) : refusé sans en-tête
+ *   Origin du site (le navigateur l'envoie sur tout POST de privacy.js).
+ *   Pas de nonce : il casserait les pages mises en cache.
+ * - Durée de garde : DUREE_GARDE_MOIS (12 mois, décision du 27/11). Les
+ *   lignes plus vieilles sont purgées par lots par la tâche planifiée
+ *   horaire existante (HealthCheck::CRON_HOOK), sur l'index created_at.
  * - Export CSV (admin_post, manage_options + nonce, BOM UTF-8, même
  *   convention que l'export P3 côté Connect).
  *
@@ -32,10 +37,17 @@ class LocalRegistry
      */
     public const PLAFOND_GLOBAL = 1000;
     private const CLE_GLOBALE = 'pratcom_consent_rl_global';
+    /** Durée de garde d'une preuve de consentement (décision du 27/11). */
+    public const DUREE_GARDE_MOIS = 12;
+    /** Lignes purgées au plus par passage horaire (borne de la requête). */
+    public const PURGE_LOT = 1000;
 
     public function __construct()
     {
         add_action('rest_api_init', [$this, 'register_routes']);
+        // Purge sur la tâche planifiée horaire existante ; 0 argument : le
+        // rappel ne reçoit pas la chaîne vide que do_action passe sinon.
+        add_action(\Pratcom\Connect\Bridge\HealthCheck::CRON_HOOK, [self::class, 'purger'], 20, 0);
         if (is_admin()) {
             add_action('admin_post_' . self::EXPORT_ACTION, [$this, 'handle_export']);
         }
@@ -149,6 +161,12 @@ class LocalRegistry
             return new \WP_REST_Response(['error' => 'rate_limited'], 429);
         }
 
+        // E-24 : avant la validation et le plafond global, pour qu'une
+        // requete forgee hors du site ne remplisse pas le compteur commun.
+        if (!self::origine_permise($request->get_header('origin'))) {
+            return new \WP_REST_Response(['error' => 'invalid_origin'], 403);
+        }
+
         $action = (string) $request->get_param('action');
         if (!in_array($action, ['accept_all', 'refuse_all', 'custom'], true)) {
             return new \WP_REST_Response(['error' => 'invalid_action'], 400);
@@ -194,6 +212,83 @@ class LocalRegistry
         ]);
 
         return new \WP_REST_Response(['ok' => true], 201);
+    }
+
+    /**
+     * E-24 : origine normalisee `schema://hote[:port]` (minuscules, port par
+     * defaut retire), ou '' si l'URL n'en a pas.
+     */
+    public static function origine(string $url): string
+    {
+        $p = wp_parse_url(trim($url));
+        if (!is_array($p) || empty($p['scheme']) || empty($p['host'])) {
+            return '';
+        }
+        $schema = strtolower((string) $p['scheme']);
+        if ($schema !== 'https' && $schema !== 'http') {
+            return '';
+        }
+        $port = isset($p['port']) ? (int) $p['port'] : 0;
+        $defaut = $schema === 'https' ? 443 : 80;
+        return $schema . '://' . strtolower((string) $p['host']) . ($port > 0 && $port !== $defaut ? ':' . $port : '');
+    }
+
+    /**
+     * Origines du site : home_url() et site_url(), plus celles qu'ajoute le
+     * filtre `pratcom_connect_registre_origines` (un domaine par langue).
+     *
+     * @return array<int, string>
+     */
+    public static function origines_permises(): array
+    {
+        $liste = [self::origine((string) home_url()), self::origine((string) site_url())];
+        $ajout = apply_filters('pratcom_connect_registre_origines', []);
+        foreach (is_array($ajout) ? $ajout : [] as $o) {
+            $liste[] = self::origine((string) $o);
+        }
+        return array_values(array_unique(array_filter($liste, static fn(string $o): bool => $o !== '')));
+    }
+
+    /**
+     * E-24 : le consentement vient d'une page du site. Le navigateur envoie
+     * l'en-tete Origin sur tout POST de fetch() ; absent, `null` ou d'un
+     * autre site : refuse.
+     *
+     * @param mixed $entete valeur de l'en-tete Origin
+     */
+    public static function origine_permise($entete): bool
+    {
+        if (!is_string($entete) || $entete === '' || strtolower(trim($entete)) === 'null') {
+            return false;
+        }
+        $o = self::origine($entete);
+        return $o !== '' && in_array($o, self::origines_permises(), true);
+    }
+
+    /** Date UTC (format de created_at) avant laquelle une ligne est purgee. */
+    public static function seuil_garde(int $t): string
+    {
+        return (new \DateTimeImmutable('@' . $t))
+            ->modify('-' . self::DUREE_GARDE_MOIS . ' months')
+            ->format('Y-m-d H:i:s');
+    }
+
+    /**
+     * Purge les lignes plus vieilles que la duree de garde : un lot borne par
+     * passage (PURGE_LOT), sur l'index created_at. Rappel de la tache
+     * planifiee horaire ; rend le nombre de lignes supprimees.
+     */
+    public static function purger(): int
+    {
+        global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- purge de la table dediee du plugin.
+        $n = $wpdb->query($wpdb->prepare(
+            'DELETE FROM %i WHERE created_at < %s LIMIT %d',
+            self::table(),
+            self::seuil_garde(time()),
+            self::PURGE_LOT
+        ));
+        return is_int($n) ? $n : 0;
     }
 
     /** Export CSV complet (preuve d'audit), BOM UTF-8 pour Excel. */

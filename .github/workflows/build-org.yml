@@ -4,16 +4,24 @@ name: Build variante WordPress.org
 # SANS Plugin Update Checker (interdit sur WP.org, lecon #10) et sans
 # vendor/ (l'autoloader PSR-4 maison du fichier principal suffit).
 # Declenchement manuel (preparation de soumission / mise a jour SVN) ou
-# sur release publiee (artifact joint pour archive).
+# sur release publiee.
+#
+# E-34 (27/11) : le zip .org reste un ARTEFACT de ce workflow, jamais un asset
+# de la release publique. Les sites premium en v2.2.2 appellent
+# enableReleaseAssets() sans motif : Plugin Update Checker y installe le
+# premier asset de la release, quel qu'il soit. Un zip .org joint a la release
+# ferait passer ces sites sur la variante sans Updater.php, et ils ne se
+# mettraient plus jamais a jour. La soumission WordPress.org part de
+# l'artefact (onglet Actions du run). tests/verifier-outillage-release.php
+# refuse tout retour d'une jonction (gh release upload, action de release).
 
 on:
   workflow_dispatch:
   release:
     types: [published]
 
-# E-22 (12/11) : rien au niveau du fichier. Le travail qui construit (et lance
-# wp-cli, un binaire tiers) n a que la lecture ; l ecriture de la release vit
-# dans un seul travail, qui ne lance que gh, sans extraction du depot.
+# E-22 (12/11) : rien au niveau du fichier. Le seul travail (qui lance wp-cli,
+# un binaire tiers) n a que la lecture. E-34 : aucun travail en ecriture.
 permissions: {}
 
 jobs:
@@ -105,28 +113,10 @@ jobs:
           cd build
           zip -rq pratcom-connect-org.zip pratcom-connect
 
-      - name: Publier l'artifact
+      - name: Publier l'artifact (jamais joint a la release, E-34)
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: pratcom-connect-org
           path: build/pratcom-connect-org.zip
-
-  # Seul travail en ecriture : aucune extraction, aucune action tierce, aucun
-  # binaire telecharge. gh (installe sur le runner) recupere l artefact du
-  # travail precedent et le joint a la release.
-  joindre-release:
-    needs: build-org
-    if: github.event_name == 'release'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      actions: read
-    steps:
-      - name: Joindre le zip .org a la release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.release.tag_name }}
-        run: |
-          set -e
-          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name pratcom-connect-org --dir build
-          gh release upload "$TAG" build/pratcom-connect-org.zip --repo "$GITHUB_REPOSITORY" --clobber
+          if-no-files-found: error
+          retention-days: 90
