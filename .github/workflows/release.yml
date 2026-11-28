@@ -1,9 +1,21 @@
 name: Build premium & attach plugin zip (canal GitHub/PUC)
 
-# A chaque release publiee sur GitHub, construit un .zip complet du plugin
-# (avec le dossier vendor/ resolu par Composer) et le joint a la release.
+# A chaque tag vX.Y.Z pousse, construit un .zip complet du plugin (avec le
+# dossier vendor/ resolu par Composer), CREE la release en brouillon, y joint
+# le zip, reverifie l'empreinte de l'asset telecharge, puis PUBLIE la release.
 # C'est ce .zip que le Plugin Update Checker telecharge (enableReleaseAssets).
 # Sans cet asset, WordPress installe un paquet incomplet -> erreur fatale.
+#
+# Aucune fenetre sans asset (R1, 27/11) : avant, le workflow partait sur
+# `release: published`, la release etait donc publique quelques minutes SANS
+# zip. Un site en 2.2.2 (PUC 5.7, enableReleaseAssets() sans motif) qui
+# verifiait dans cette fenetre prenait zipball_url, l'archive source sans
+# vendor/, et ne se mettait plus jamais a jour. Un brouillon est invisible de
+# PUC (/releases/latest ignore les brouillons) : la release ne devient
+# publique qu'avec son zip joint et verifie. Ne jamais creer ni publier la
+# release a la main : garde-release.yml remet en brouillon une release
+# publiee sans son seul zip. Relance a la main : Actions, ce workflow,
+# "Run workflow" sur le tag (un brouillon existant est repris).
 #
 # NOTE (incident v2.0.3) : un tag "v.2.0.3" (typo) a fait echouer le guard
 # et la release est restee sans zip premium. Le guard normalise maintenant
@@ -34,10 +46,16 @@ name: Build premium & attach plugin zip (canal GitHub/PUC)
 # tests/verifier-outillage-release.php refuse tout autre asset.
 
 on:
-  release:
-    types: [published]
+  push:
+    tags: ['v*']
+  workflow_dispatch:
 
 permissions: {}
+
+# Deux passages sur le meme tag ne se croisent pas.
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -49,6 +67,10 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           persist-credentials: false
+
+      - name: Lance sur un tag (jamais sur une branche)
+        run: |
+          [ "$GITHUB_REF_TYPE" = "tag" ] || { echo "::error::release.yml se lance sur un tag vX.Y.Z, pas sur $GITHUB_REF_NAME"; exit 1; }
 
       - name: Verifier header et constante == tag (lecon 5)
         run: |
@@ -111,6 +133,19 @@ jobs:
           cat pratcom-connect-bridge.zip.sha256
           sha256sum -c pratcom-connect-bridge.zip.sha256
 
+      # Notes de la version : docs/notes-release/<version>.md s'il existe
+      # (docs/ est exclu du zip). L'empreinte s'y ajoute a la publication.
+      - name: Notes de la version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${VERSION#.}"
+          if [ -f "docs/notes-release/${VERSION}.md" ]; then
+            cp "docs/notes-release/${VERSION}.md" build/notes-version.md
+          else
+            echo "::warning::docs/notes-release/${VERSION}.md absent : notes reduites a l'empreinte"
+            : > build/notes-version.md
+          fi
+
       - name: Transmettre le zip et son empreinte au travail de publication
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
@@ -118,6 +153,7 @@ jobs:
           path: |
             build/pratcom-connect-bridge.zip
             build/pratcom-connect-bridge.zip.sha256
+            build/notes-version.md
           if-no-files-found: error
           retention-days: 7
 
@@ -126,6 +162,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ github.ref_name }}
     steps:
       - name: Recuperer le zip et son empreinte
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
@@ -138,24 +178,48 @@ jobs:
           cd build
           sha256sum -c pratcom-connect-bridge.zip.sha256
 
-      - name: Attach zip to the release
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
-        with:
-          files: build/pratcom-connect-bridge.zip
-
-      - name: Lire l'empreinte pour les notes de la release
-        id: empreinte
+      # E-34 : aucun second asset. L'empreinte va dans les notes.
+      - name: Notes de la release (notes de la version, puis empreinte SHA-256)
         run: |
-          cd build
-          ligne=$(cat pratcom-connect-bridge.zip.sha256)
+          set -euo pipefail
+          ligne=$(cat build/pratcom-connect-bridge.zip.sha256)
           echo "$ligne" | grep -Eq '^[0-9a-f]{64}  pratcom-connect-bridge\.zip$' || { echo "::error::empreinte illisible"; exit 1; }
-          echo "ligne=$ligne" >> "$GITHUB_OUTPUT"
+          { cat build/notes-version.md; printf '\nSHA-256 : `%s`\n' "$ligne"; } > build/notes.md
+          cat build/notes.md
 
-      # E-34 : aucun second asset. L'empreinte s'ajoute aux notes existantes.
-      - name: Ecrire l'empreinte SHA-256 dans les notes de la release
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
-        with:
-          append_body: true
-          body: |
+      # Brouillon : invisible du Plugin Update Checker. Un brouillon deja la
+      # (relance) est repris ; une release deja publique arrete tout.
+      - name: Creer la release en brouillon
+        run: |
+          set -euo pipefail
+          if brouillon=$(gh release view "$TAG" --json isDraft --jq '.isDraft' 2>/dev/null); then
+            if [ "$brouillon" != "true" ]; then
+              echo "::error::la release $TAG est deja publique (creee a la main ?). garde-release.yml la remet en brouillon ; relancez ensuite ce workflow sur le tag."
+              exit 1
+            fi
+            echo "brouillon existant repris"
+          else
+            gh release create "$TAG" --draft --verify-tag --title "$TAG" --notes-file build/notes.md
+          fi
 
-            SHA-256 : `${{ steps.empreinte.outputs.ligne }}`
+      - name: Joindre le zip au brouillon (seul asset)
+        run: gh release upload "$TAG" build/pratcom-connect-bridge.zip --clobber
+
+      - name: Verifier le brouillon (un seul asset, le bon zip, la bonne empreinte)
+        run: |
+          set -euo pipefail
+          etat=$(gh release view "$TAG" --json isDraft,assets --jq '[(.isDraft | tostring)] + (.assets | map(.name)) | join(",")')
+          echo "etat=$etat"
+          [ "$etat" = "true,pratcom-connect-bridge.zip" ] || { echo "::error::brouillon inattendu ($etat) : rien n'est publie"; exit 1; }
+          mkdir -p verif
+          gh release download "$TAG" --pattern pratcom-connect-bridge.zip --dir verif --clobber
+          cd verif
+          sha256sum -c ../build/pratcom-connect-bridge.zip.sha256
+
+      - name: Publier la release (asset joint et verifie)
+        run: |
+          set -euo pipefail
+          gh release edit "$TAG" --draft=false --latest --notes-file build/notes.md
+          etat=$(gh release view "$TAG" --json isDraft,assets --jq '[(.isDraft | tostring)] + (.assets | map(.name)) | join(",")')
+          echo "etat=$etat"
+          [ "$etat" = "false,pratcom-connect-bridge.zip" ] || { echo "::error::release publiee dans un etat inattendu ($etat)"; exit 1; }

@@ -1,0 +1,48 @@
+name: Garde (aucune release publique sans son seul zip)
+
+# R1 (27/11). release.yml cree la release en brouillon, y joint
+# pratcom-connect-bridge.zip, le verifie puis la publie avec le jeton du
+# workflow : cette publication-la ne declenche AUCUN workflow (regle GitHub
+# pour GITHUB_TOKEN), donc pas ce garde.
+#
+# Ce garde ne part que si une personne publie une release elle-meme (bouton
+# "Publish release" de l'interface). Si la release ne porte pas exactement un
+# asset, pratcom-connect-bridge.zip, il la remet en brouillon tout de suite :
+# un site en 2.2.2 (PUC 5.7, enableReleaseAssets() sans motif) prendrait
+# sinon zipball_url, l'archive source sans vendor/, et ne se mettrait plus
+# jamais a jour. La fenetre reste de quelques secondes au lieu de durer
+# jusqu'a ce que quelqu'un s'en apercoive. Ensuite : Actions, release.yml,
+# "Run workflow" sur le tag (le brouillon est repris, le zip joint, verifie,
+# publie).
+
+on:
+  release:
+    types: [published]
+
+permissions: {}
+
+concurrency:
+  group: garde-release-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  garde:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ github.event.release.tag_name }}
+    steps:
+      - name: Remettre en brouillon une release publiee sans son seul zip
+        run: |
+          set -euo pipefail
+          assets=$(gh release view "$TAG" --json assets --jq '.assets | map(.name) | join(",")')
+          echo "assets=$assets"
+          if [ "$assets" != "pratcom-connect-bridge.zip" ]; then
+            gh release edit "$TAG" --draft=true
+            echo "::error::release $TAG publiee sans son seul zip ($assets) : remise en brouillon. Relancez release.yml sur le tag (Actions, Run workflow)."
+            exit 1
+          fi
+          echo "release $TAG : un seul asset, pratcom-connect-bridge.zip"

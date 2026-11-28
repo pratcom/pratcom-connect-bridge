@@ -14,8 +14,12 @@ namespace Pratcom\Connect\Bridge\Privacy;
  *   Origin du site (le navigateur l'envoie sur tout POST de privacy.js).
  *   Pas de nonce : il casserait les pages mises en cache.
  * - Durée de garde : DUREE_GARDE_MOIS (12 mois, décision du 27/11). Les
- *   lignes plus vieilles sont purgées par lots par la tâche planifiée
- *   horaire existante (HealthCheck::CRON_HOOK), sur l'index created_at.
+ *   lignes plus vieilles sont purgées par lots, sur l'index created_at, par
+ *   une tâche quotidienne PROPRE au registre (CRON_PURGE, R2 du 27/11) :
+ *   la déconnexion retire le passage horaire de HealthCheck, pas celle-ci.
+ *   Programmée à l'activation et, si elle manque (mise à jour depuis une
+ *   version qui ne la connaissait pas), au premier chargement ; retirée
+ *   seulement à la désactivation et à la désinstallation.
  * - Export CSV (admin_post, manage_options + nonce, BOM UTF-8, même
  *   convention que l'export P3 côté Connect).
  *
@@ -39,15 +43,25 @@ class LocalRegistry
     private const CLE_GLOBALE = 'pratcom_consent_rl_global';
     /** Durée de garde d'une preuve de consentement (décision du 27/11). */
     public const DUREE_GARDE_MOIS = 12;
-    /** Lignes purgées au plus par passage horaire (borne de la requête). */
+    /** Lignes purgées au plus par requête (borne du DELETE). */
     public const PURGE_LOT = 1000;
+    /** Requêtes au plus par passage quotidien : 24 lots, le débit de l'ancien passage horaire. */
+    public const PURGE_LOTS_PAR_PASSAGE = 24;
+    /** Tâche quotidienne de purge, propre au registre (indépendante de la connexion). */
+    public const CRON_PURGE = 'pratcom_connect_registre_purge';
 
     public function __construct()
     {
         add_action('rest_api_init', [$this, 'register_routes']);
-        // Purge sur la tâche planifiée horaire existante ; 0 argument : le
-        // rappel ne reçoit pas la chaîne vide que do_action passe sinon.
-        add_action(\Pratcom\Connect\Bridge\HealthCheck::CRON_HOOK, [self::class, 'purger'], 20, 0);
+        // Purge sur sa propre tâche quotidienne ; 0 argument : le rappel ne
+        // reçoit pas la chaîne vide que do_action passe sinon.
+        add_action(self::CRON_PURGE, [self::class, 'purger_passage'], 10, 0);
+        // Mise à jour : ni l'activation ni la mise à jour automatique ne
+        // relancent le crochet d'activation. La tâche se programme donc ici
+        // si elle manque (coût : une lecture du tableau cron, déjà chargé).
+        self::programmer_purge();
+        // Hors is_admin() : WP-CLI désactive aussi l'extension.
+        add_action('deactivate_' . plugin_basename(PRATCOM_CONNECT_BRIDGE_FILE), [self::class, 'deprogrammer_purge'], 10, 0);
         if (is_admin()) {
             add_action('admin_post_' . self::EXPORT_ACTION, [$this, 'handle_export']);
         }
@@ -275,8 +289,8 @@ class LocalRegistry
 
     /**
      * Purge les lignes plus vieilles que la duree de garde : un lot borne par
-     * passage (PURGE_LOT), sur l'index created_at. Rappel de la tache
-     * planifiee horaire ; rend le nombre de lignes supprimees.
+     * appel (PURGE_LOT), sur l'index created_at. Appele par purger_passage() ;
+     * rend le nombre de lignes supprimees.
      */
     public static function purger(): int
     {
@@ -289,6 +303,40 @@ class LocalRegistry
             self::PURGE_LOT
         ));
         return is_int($n) ? $n : 0;
+    }
+
+    /**
+     * Passage quotidien : purge des lots jusqu'à un lot incomplet, au plus
+     * PURGE_LOTS_PAR_PASSAGE requêtes. Rend le total supprimé.
+     */
+    public static function purger_passage(): int
+    {
+        $total = 0;
+        for ($i = 0; $i < self::PURGE_LOTS_PAR_PASSAGE; $i++) {
+            $n = self::purger();
+            $total += $n;
+            if ($n < self::PURGE_LOT) {
+                break;
+            }
+        }
+        return $total;
+    }
+
+    /** Programme la purge quotidienne si elle ne l'est pas (idempotent). */
+    public static function programmer_purge(): void
+    {
+        if (!wp_next_scheduled(self::CRON_PURGE)) {
+            wp_schedule_event(time() + HOUR_IN_SECONDS, 'daily', self::CRON_PURGE);
+        }
+    }
+
+    /** Retire la purge quotidienne (désactivation, désinstallation seulement). */
+    public static function deprogrammer_purge(): void
+    {
+        $ts = wp_next_scheduled(self::CRON_PURGE);
+        if ($ts) {
+            wp_unschedule_event($ts, self::CRON_PURGE);
+        }
     }
 
     /** Export CSV complet (preuve d'audit), BOM UTF-8 pour Excel. */
