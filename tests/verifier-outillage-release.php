@@ -59,6 +59,15 @@
  *     travail dont l'en-tete porte un commentaire lu pour ses permissions,
  *     uses: sans valeur sur sa ligne refuse, et tout mot de commande qui
  *     CONTIENT $ ou un accent grave devant release refuse (${g}h, g${v}h).
+ *   - Relecture C2 de la PR #83 (28/11) : B1, toute entree de
+ *     .github/workflows est lue (.yml et .yaml) et toute entree hors des
+ *     quatre noms de PERMISSIONS_ATTENDUES est refusee. RA, permissions d'un
+ *     travail lues au retrait reel de ses cles, travail aux cles hors de 4
+ *     colonnes refuse ; hors travaux figes, toute mention de github dans une
+ *     expression ${{ }} hors de GITHUB_PERMIS_EXPRESSIONS est refusee (lignes
+ *     jointes, casse ignoree), et aucune barre oblique inverse hors scalaire
+ *     en bloc (echappement YAML). RC, le message d'un changement voulu d'une
+ *     zone figee rappelle de mettre a jour les ancres des mutations.
  *
  * --racine : rejoue le banc sur une copie modifiee du depot (bancs de mutation).
  *
@@ -155,7 +164,17 @@ verifier(
 
 echo "Actions epinglees par SHA\n";
 
-$workflows = glob($racine . '/.github/workflows/*.yml') ?: [];
+// B1 (relecture C2 de la PR #83, 28/11) : GitHub execute aussi les .yaml du
+// dossier. Chaque entree du dossier est lue (.yml, .yaml ou autre), et toute
+// entree hors des quatre noms de PERMISSIONS_ATTENDUES est refusee
+// (defauts_rc, categorie permissions).
+$dossierWorkflows = $racine . '/.github/workflows';
+$workflows = [];
+foreach (is_dir($dossierWorkflows) ? (scandir($dossierWorkflows) ?: []) : [] as $entree) {
+    if ($entree !== '.' && $entree !== '..') {
+        $workflows[] = $dossierWorkflows . '/' . $entree;
+    }
+}
 verifier('au moins un workflow trouve', $workflows !== []);
 
 $vuesTotal = 0;
@@ -865,12 +884,32 @@ function formes_yaml_refusees(string $yml): array
             $motif = 'blanc avant le deux-points d\'une cle';
         } elseif (preg_match('/^[ \t]*(?:-[ \t]+)?(?:\?|<<|[&*!])/', $l) || preg_match('/^[ \t]*(?:-[ \t]+)?[^\s#][^\n]*?:[ \t]+[&*!]/', $l)) {
             $motif = 'cle complexe, fusion, ancre, alias ou etiquette';
+        } elseif (strpos($l, '\\') !== false) {
+            // RA (relecture C2 de la PR #83) : hors scalaire en bloc, une barre
+            // oblique inverse peut etre un echappement YAML ("\x24{{", "git\
+            // hub" joint sans blanc) qui cache une expression ou un mot a la
+            // lecture du texte brut. Aucune ligne des workflows n'en a.
+            $motif = 'barre oblique inverse hors scalaire en bloc';
         }
         if ($motif !== null) {
             $refusees[] = "ligne $no, $motif : " . trim($l);
         }
     }
     return $refusees;
+}
+
+/**
+ * RA (relecture C2 de la PR #83) : retrait reel des cles d'un travail, celui
+ * de sa premiere ligne non vide (commentaires deja retires), ou null.
+ */
+function retrait_travail(string $corps): ?int
+{
+    foreach (explode("\n", $corps) as $l) {
+        if (trim($l) !== '') {
+            return strspn($l, ' ');
+        }
+    }
+    return null;
 }
 
 /** Permissions d'un bloc (`permissions:` au retrait donne), normalisees, ou null. */
@@ -944,7 +983,8 @@ const GARDE_SCRIPT = [
 // un commentaire (suite d'une chaine citee sur plusieurs lignes).
 //
 // CHANGEMENT VOULU d'un de ces travaux : relire son diff ligne a ligne, puis
-// reporter ici l'empreinte que le banc affiche, dans la meme PR. C'est une PR
+// reporter ici l'empreinte que le banc affiche, et mettre a jour les mutations
+// du banc dont l'ancre est dans le texte change, dans la meme PR. C'est une PR
 // d'outillage : label relue pose par Martin seulement.
 const TRAVAUX_FIGES = [
     'release.yml' => ['travail' => 'publier', 'empreinte' => '4c7c7d64fab5218b060d2ed299eb646e4e586e8b0436e8b1471a6afe52721e87'],
@@ -1015,7 +1055,49 @@ function jetons_hors_figes(array $lignes): array
             $trouves[] = $m[0] . ' dans : ' . trim($l);
         }
     }
+    foreach (github_hors_liste(implode("\n", $lignes)) as $expression) {
+        $trouves[] = 'github hors de GITHUB_PERMIS_EXPRESSIONS dans : ${{' . $expression . '}}';
+    }
     return $trouves;
+}
+
+// RA (relecture C2 de la PR #83) : seules proprietes du contexte github permises
+// dans une expression ${{ }} hors des travaux figes. Liste batie sur les
+// workflows au 28/11 (github.token, lui, n'est permis que dans les travaux
+// figes). Toute autre mention du mot github (github, github.*, github.event,
+// toJSON(github), github coupe sur deux lignes, autre casse...) est refusee.
+const GITHUB_PERMIS_EXPRESSIONS = ['github.ref_name', 'github.repository', 'github.event.release.tag_name'];
+
+/**
+ * RA : expressions ${{ }} d'un texte qui mentionnent github hors de la liste
+ * blanche. L'expression peut courir sur plusieurs lignes (scalaire plie, ou
+ * simple sur plusieurs lignes) : ses lignes sont jointes par un blanc, comme
+ * YAML les plie. Une barre oblique inverse dans une expression est refusee
+ * (echappement YAML d'une chaine entre guillemets doubles, ex. \x67ithub).
+ * Casse ignoree, comme les expressions de GitHub.
+ *
+ * @return array<int, string> expressions refusees (contenu entre ${{ et }})
+ */
+function github_hors_liste(string $texte): array
+{
+    $refusees = [];
+    $permis = implode('|', array_map(static fn(string $p): string => preg_quote($p, '/'), GITHUB_PERMIS_EXPRESSIONS));
+    preg_match_all('/\$\{\{(.*?)\}\}/s', str_replace(["\r\n", "\r"], "\n", $texte), $mm);
+    foreach ($mm[1] as $brute) {
+        $expression = (string) preg_replace('/\s+/', ' ', $brute);
+        if (strpos($expression, '\\') !== false) {
+            $refusees[] = $expression;
+            continue;
+        }
+        preg_match_all('/\bgithub\b/i', $expression, $g, PREG_OFFSET_CAPTURE);
+        foreach ($g[0] as [, $position]) {
+            if (!preg_match('/\G(?:' . $permis . ')(?!\s*[\w.\[(-])/i', $expression, $ok, 0, $position)) {
+                $refusees[] = $expression;
+                break;
+            }
+        }
+    }
+    return $refusees;
 }
 
 /** Cles de premier niveau hors de CLES_PREMIER_NIVEAU (lignes YAML hors scalaires en bloc). */
@@ -1055,7 +1137,8 @@ function defauts_rc(array $textes): array
         } elseif (($vue = hash('sha256', $fige)) !== $attendue) {
             $d['travail_fige'][] = "$quoi : empreinte $vue au lieu de $attendue. Ce texte ecrit sur les releases et il est fige."
                 . ' Changement voulu : relire son diff ligne a ligne, puis reporter l\'empreinte vue dans TRAVAUX_FIGES'
-                . ' (tests/verifier-outillage-release.php) dans la meme PR, qui devient une PR d\'outillage (label relue par Martin)';
+                . ' (tests/verifier-outillage-release.php) et mettre a jour les mutations du banc dont l\'ancre est dans le texte change,'
+                . ' dans la meme PR, qui devient une PR d\'outillage (label relue par Martin)';
         }
     }
     foreach ($textes as $nom => $texte) {
@@ -1090,11 +1173,23 @@ function defauts_rc(array $textes): array
         $avant = (string) strstr(sans_commentaires($texte), "\njobs:", true);
         $vues = ['<fichier>' => permissions_bloc($avant . "\n", 0)];
         foreach (travaux($texte) as $travail => $corps) {
-            $vues[$travail] = permissions_bloc($corps, 4);
+            // RA : permissions lues au retrait reel des cles du travail, et
+            // tout travail dont les cles ne sont pas a 4 colonnes refuse.
+            $retrait = retrait_travail($corps);
+            $vues[$travail] = $retrait === null ? null : permissions_bloc($corps, $retrait);
+            if ($retrait !== 4) {
+                $d['permissions'][] = "$nom, travail $travail : cles a " . ($retrait ?? 'aucune') . ' colonnes au lieu de 4';
+            }
         }
-        $attendues = PERMISSIONS_ATTENDUES[$nom] ?? null;
-        if ($vues !== $attendues) {
-            $d['permissions'][] = "$nom : " . json_encode($vues) . ' au lieu de ' . json_encode($attendues);
+        if (!array_key_exists($nom, PERMISSIONS_ATTENDUES)) {
+            // B1 : seuls les quatre noms de PERMISSIONS_ATTENDUES (GitHub lit
+            // .yml et .yaml ; tout autre fichier du dossier est refuse aussi).
+            $d['permissions'][] = "$nom : fichier de .github/workflows hors des quatre noms de PERMISSIONS_ATTENDUES ("
+                . implode(', ', array_keys(PERMISSIONS_ATTENDUES)) . ')';
+            continue;
+        }
+        if ($vues !== PERMISSIONS_ATTENDUES[$nom]) {
+            $d['permissions'][] = "$nom : " . json_encode($vues) . ' au lieu de ' . json_encode(PERMISSIONS_ATTENDUES[$nom]);
         }
     }
     foreach (array_diff(array_keys(PERMISSIONS_ATTENDUES), array_keys($textes)) as $absent) {
@@ -1133,11 +1228,11 @@ verifier('RC : toute creation de release a toutes ses valeurs de --draft vraies'
 verifier('RC : une seule publication (--draft lu comme booleen), dans release.yml', $defauts['publication'] === [], implode('; ', $defauts['publication']));
 verifier('RC : garde sans if:, commande en tete de ligne, sur tout asset autre que le seul zip', $defauts['garde'] === [], implode('; ', $defauts['garde']));
 verifier('RC : aucune expression ${{ dans un run: (tous workflows)', $defauts['expression'] === [], implode('; ', $defauts['expression']));
-verifier('RC : permissions de chaque fichier et de chaque travail egales a la liste exacte', $defauts['permissions'] === [], implode('; ', $defauts['permissions']));
+verifier('RC, RA et B1 : seuls les quatre fichiers, permissions de chaque fichier et de chaque travail (cles a 4 colonnes) egales a la liste exacte',$defauts['permissions'] === [], implode('; ', $defauts['permissions']));
 verifier('RH : seuls les noms de ACTIONS_AUTORISEES, dans tous les workflows (correction 1, R3)', $defauts['actions'] === [], implode('; ', $defauts['actions']));
 verifier('RH : aucun appel de release par une variable shell, une substitution ou gh alias', $defauts['gh_variable'] === [], implode('; ', $defauts['gh_variable']));
 verifier('Correction 1 : aucune etape ni travail en flux YAML, aucune cle echappee, ancre ou alias (tous workflows)', $defauts['forme_yaml'] === [], implode('; ', $defauts['forme_yaml']));
-verifier('Correction 2 : aucun secrets, GH_TOKEN, GITHUB_TOKEN ni github.token hors de publier (release.yml) et garde-release.yml', $defauts['jeton'] === [], implode('; ', $defauts['jeton']));
+verifier('Correction 2 et RA : aucun secrets, GH_TOKEN, GITHUB_TOKEN, github.token ni github hors de GITHUB_PERMIS_EXPRESSIONS hors de publier (release.yml) et garde-release.yml',$defauts['jeton'] === [], implode('; ', $defauts['jeton']));
 verifier('Correction 2 : texte de publier (release.yml) et de garde-release.yml egal a TRAVAUX_FIGES, cles de premier niveau permises', $defauts['travail_fige'] === [], implode('; ', $defauts['travail_fige']));
 // Fins de ligne indifferentes : la meme empreinte en LF et en CRLF.
 $crlf = array_map(static fn(string $t): string => str_replace("\n", "\r\n", str_replace("\r\n", "\n", $t)), $reels);
@@ -1313,6 +1408,33 @@ $detournees['permissions : write-all (blanc avant :) sur lint (ci.yml)'] = ['ci.
     "  lint:\n    runs-on: ubuntu-latest\n    permissions : write-all\n", 'forme_yaml'];
 $detournees['travail de plus, commentaire sur son en-tete (ci.yml)'] = ['ci.yml', "\njobs:\n",
     "\njobs:\n  autre: # x\n    runs-on: ubuntu-latest\n    permissions: write-all\n    steps:\n      - run: echo x\n", 'permissions'];
+// RA (relecture C2 de la PR #83) : cles du travail lint retirees autrement
+// que de 4 colonnes (YAML valide). Le corps entier de lint est decale.
+$ciLf = str_replace("\r\n", "\n", $reels['ci.yml'] ?? '');
+$corpsLint = ($p = strpos($ciLf, "\n  lint:\n")) === false ? '' : substr($ciLf, $p + strlen("\n  lint:\n"));
+$detournees['cles de lint a 6 colonnes, contents: write (ci.yml)'] = ['ci.yml', "\n  lint:\n" . $corpsLint,
+    "\n  lint:\n      permissions:\n        contents: write\n" . preg_replace('/^(?=[ \t]*\S)/m', '  ', $corpsLint), 'permissions'];
+$detournees['cles de lint a 3 colonnes (ci.yml)'] = ['ci.yml', "\n  lint:\n" . $corpsLint,
+    "\n  lint:\n" . preg_replace('/^ (?=[ \t]*\S)/m', '', $corpsLint), 'permissions'];
+// RA : le contexte github atteint par une autre ecriture que github.token,
+// hors des travaux figes. Aucune de ces formes n'est vue par le motif ligne a
+// ligne de jetons_hors_figes : seule la liste blanche les fait rougir.
+$avantBancs = "      - name: Bancs CLI (tests/*.php)\n";
+foreach ([
+    'contexte github entier' => "          C: \${{ github }}\n",
+    'github coupe sur deux lignes (scalaire simple)' => "          C: \${{ github\n            .token }}\n",
+    'github. puis token sur la ligne suivante (scalaire plie)' => "          C: >-\n            \${{ github.\n            token }}\n",
+    'propriete hors liste (github.event)' => "          C: \${{ toJSON(github.event) }}\n",
+    'echappement \\x67 dans l\'expression' => "          C: \"\${{ \\x67ithub.token }}\"\n",
+] as $libelle => $env) {
+    $detournees["jeton par $libelle (ci.yml)"] = ['ci.yml', $avantBancs, $avantBancs . "        env:\n" . $env, 'jeton'];
+}
+$detournees['propriete permise suivie de github (concurrency de release.yml)'] = ['release.yml', 'group: release-${{ github.ref_name }}',
+    'group: release-${{ github.ref_name || github }}', 'jeton'];
+$detournees['${{ ecrit \\x24{{ entre guillemets doubles (ci.yml)'] = ['ci.yml', $avantBancs,
+    $avantBancs . "        env:\n          C: \"\\x24{{ github.token }}\"\n", 'forme_yaml'];
+$detournees['git\\ puis hub sur la ligne suivante, guillemets doubles (ci.yml)'] = ['ci.yml', $avantBancs,
+    $avantBancs . "        env:\n          C: \"\${{ git\\\n            hub.token }}\"\n", 'forme_yaml'];
 
 foreach ($detournees as $libelle => [$cible, $avant, $apres, $categorie]) {
     $copie = $reels;
@@ -1320,9 +1442,41 @@ foreach ($detournees as $libelle => [$cible, $avant, $apres, $categorie]) {
     $applique = $avant !== '' && substr_count($texte, $avant) === 1 && $avant !== $apres;
     $copie[$cible] = str_replace($avant, $apres, $texte);
     $vus = defauts_rc($copie);
+    // RC : une ancre introuvable apres un changement voulu se corrige ici.
     verifier("RC/RH : forme detournee rouge [$categorie] : $libelle", $applique && ($vus[$categorie] ?? []) !== [],
-        $applique ? "categorie $categorie attendue, vues : " . implode(', ', array_keys(array_filter($vus))) : 'mutation non appliquee une seule fois');
+        $applique ? "categorie $categorie attendue, vues : " . implode(', ', array_keys(array_filter($vus)))
+            : 'mutation non appliquee une seule fois : si le texte vise a change volontairement, mettre a jour son ancre dans $detournees');
 }
+
+// B1 (relecture C2 de la PR #83) : un fichier ajoute au dossier des workflows,
+// .yaml compris, rougit en permissions quel que soit son contenu. Le contenu
+// joue est celui de la relecture : push de main, ecriture sur le contenu,
+// jeton du workflow, brouillon retire.
+$ajout = "name: x\n\non:\n  push:\n    branches: [main]\n\npermissions:\n  contents: write\n\njobs:\n  x:\n    runs-on: ubuntu-latest\n"
+    . "    env:\n      GH_TOKEN: \${{ github.token }}\n    steps:\n      - run: gh release edit \"\$TAG\" --draft=false\n";
+foreach (['publier-vite.yaml' => $ajout, 'publier-vite.yml' => $ajout, 'release.yaml' => $ajout,
+    'publier-vide.yaml' => "on: push\njobs: {}\n", 'LISEZMOI.md' => "notes\n"] as $ajoute => $contenu) {
+    $copie = $reels;
+    $copie[$ajoute] = $contenu;
+    $vus = defauts_rc($copie);
+    verifier("B1 : fichier ajoute rouge [permissions] : .github/workflows/$ajoute", !isset($reels[$ajoute]) && $vus['permissions'] !== [],
+        'categorie permissions attendue, vues : ' . implode(', ', array_keys(array_filter($vus))));
+}
+// Temoin de B1 : le dossier reel n'a que les quatre noms, et ils sont verts.
+$entreesReelles = array_map('basename', $workflows);
+sort($entreesReelles);
+$quatre = array_keys(PERMISSIONS_ATTENDUES);
+sort($quatre);
+verifier('B1 : .github/workflows ne contient que les quatre noms de PERMISSIONS_ATTENDUES (.yml et .yaml lus)', $entreesReelles === $quatre, implode(', ', $entreesReelles));
+
+// RA : controles unitaires de la lecture au retrait reel et de la liste blanche.
+$travaux6 = travaux("jobs:\n  t:\n      runs-on: x\n      permissions: write-all\n");
+verifier('RA : permissions lues au retrait reel des cles (6 colonnes)', retrait_travail($travaux6['t'] ?? '') === 6
+    && permissions_bloc($travaux6['t'] ?? '', 6) === 'write-all');
+verifier('RA : liste blanche github, formes permises acceptees', github_hors_liste(
+    "a: \${{ github.ref_name }}\nb: \${{ GitHub.Repository }}\nc: >-\n  \${{\n  github.event.release.tag_name }}\nd: \${{ startsWith(github.ref_name, 'v') && github.repository == 'x' }}\n") === []);
+verifier('RA : liste blanche github, formes voisines refusees', count(github_hors_liste(
+    "a: \${{ github.repository_owner }}\nb: \${{ github.ref_name.x }}\nc: \${{ github.event.release }}\nd: \${{ github['ref_name'] }}\ne: \${{ github.ref_name (x) }}\n")) === 5);
 
 // Controles positifs : la regle porte sur les commandes et evenements vises.
 verifier('Correction 1 (R3) : un workflow manuel est aussi soumis a la liste d\'actions',
