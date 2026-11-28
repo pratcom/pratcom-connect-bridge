@@ -36,6 +36,10 @@
  *     suit la forme attendue ligne a ligne, chaque commande en tete de ligne.
  *     Aucun ${{ dans un run:. Les permissions de chaque fichier et de chaque
  *     travail sont egales a une liste exacte (PERMISSIONS_ATTENDUES).
+ *   - RH (28/11) : sur tag, release ou workflow_run, tout uses: hors de
+ *     ACTIONS_AUTORISEES_RELEASE est refuse, meme epingle par SHA. Un appel
+ *     de release par une variable shell est refuse. Les cles run citees
+ *     sont lues comme run. Chaque mutation prouve sa categorie de defaut.
  *
  * --racine : rejoue le banc sur une copie modifiee du depot (bancs de mutation).
  *
@@ -370,6 +374,16 @@ function declenche_par_release(string $yml): bool
     return (bool) preg_match('/(?<![\w-])release(?![\w-])/', $m[1]);
 }
 
+/** Evenements sensibles : tags, release ou workflow_run dans le bloc on. */
+function declenche_release_sensible(string $yml): bool
+{
+    $sans = sans_commentaires($yml);
+    if (!preg_match('/^(?:on|"on"|\'on\'):(.*?)(?=^\S|\z)/ms', $sans, $m)) {
+        return false;
+    }
+    return (bool) preg_match('/(?<![\w-])(?:tags|release|workflow_run)(?![\w-])/', $m[1]);
+}
+
 /** Jetons d'une ligne de shell : guillemets respectes, guillemets retires. */
 function jetons_shell(string $ligne): array
 {
@@ -674,14 +688,14 @@ verifier('auto-verification R1 : action de release en brouillon acceptee', creat
 
 echo "Valeurs lues, pas le texte (RC)\n";
 
-/** Scripts de chaque `run:` du texte brut (commentaires du script compris). */
+/** Scripts de chaque run, cle citee ou non (commentaires du script compris). */
 function blocs_run(string $yml): array
 {
     $lignes = explode("\n", str_replace("\r\n", "\n", $yml));
     $blocs = [];
     $n = count($lignes);
     for ($i = 0; $i < $n; $i++) {
-        if (!preg_match('/^([ \t]*(?:-[ \t]+)?)run:(.*)$/', $lignes[$i], $m)) {
+        if (!preg_match('/^([ \t]*(?:-[ \t]+)?)(?:run|"run"|\'run\')[ \t]*:(.*)$/', $lignes[$i], $m)) {
             continue;
         }
         $retrait = strlen($m[1]);
@@ -692,6 +706,52 @@ function blocs_run(string $yml): array
         $blocs[] = implode("\n", $bloc);
     }
     return $blocs;
+}
+
+// Noms exacts des seules actions presentes dans les workflows de release.
+// Le controle des SHA et commentaires de version reste independant (section 2).
+// Ni action de script arbitraire, ni action locale, Docker ou workflow reutilise.
+const ACTIONS_AUTORISEES_RELEASE = [
+    'actions/checkout',
+    'shivammathur/setup-php',
+    'actions/upload-artifact',
+    'actions/download-artifact',
+];
+
+/** Tous les uses: d'un workflow sensible, y compris les cles citees. */
+function actions_hors_liste(string $yml): array
+{
+    if (!declenche_release_sensible($yml)) {
+        return [];
+    }
+    $refusees = [];
+    preg_match_all('/^[ \t]*(?:-[ \t]+)?(?:uses|"uses"|\'uses\')[ \t]*:[ \t]*(\S+)/m', sans_commentaires($yml), $usages);
+    foreach ($usages[1] as $usage) {
+        $action = (string) preg_replace('/@.*$/', '', trim($usage, '"\''));
+        if (!in_array($action, ACTIONS_AUTORISEES_RELEASE, true)) {
+            $refusees[] = $action;
+        }
+    }
+    return $refusees;
+}
+
+/**
+ * Commande release appelee par une variable : l'executable echappe a la lecture
+ * de gh. Refus conservateur, sans essayer de resoudre les affectations shell.
+ */
+function appels_release_variables(string $yml): array
+{
+    $appels = [];
+    $variable = '\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[A-Za-z_][A-Za-z0-9_]*\})';
+    $motif = '/(?:^|[;&|(`])[ \t]*(?:(?:if|then|do|elif|exec|command|!)[ \t]+)*'
+        . '(?:"' . $variable . '"|' . $variable . ')[ \t]+release\b/m';
+    foreach (blocs_run($yml) as $bloc) {
+        preg_match_all($motif, sans_commentaires($bloc), $m);
+        foreach ($m[0] as $appel) {
+            $appels[] = trim($appel);
+        }
+    }
+    return $appels;
 }
 
 /** Permissions d'un bloc (`permissions:` au retrait donne), normalisees, ou null. */
@@ -755,16 +815,22 @@ const GARDE_SCRIPT = [
 ];
 
 /**
- * Defauts RC d'un jeu de workflows (nom => texte brut), par categorie.
+ * Defauts RC et RH d'un jeu de workflows (nom => texte brut), par categorie.
  *
  * @param array<string, string> $textes
  * @return array<string, array<int, string>>
  */
 function defauts_rc(array $textes): array
 {
-    $d = ['creation' => [], 'publication' => [], 'garde' => [], 'expression' => [], 'permissions' => []];
+    $d = ['creation' => [], 'publication' => [], 'garde' => [], 'expression' => [], 'permissions' => [], 'actions' => [], 'gh_variable' => []];
     $pub = [];
     foreach ($textes as $nom => $texte) {
+        foreach (actions_hors_liste($texte) as $action) {
+            $d['actions'][] = "$nom : $action hors ACTIONS_AUTORISEES_RELEASE";
+        }
+        foreach (appels_release_variables($texte) as $appel) {
+            $d['gh_variable'][] = "$nom : $appel";
+        }
         foreach (creations_publiques($texte) as $c) {
             $d['creation'][] = "$nom : $c";
         }
@@ -823,6 +889,8 @@ verifier('RC : une seule publication (--draft lu comme booleen), dans release.ym
 verifier('RC : garde sans if:, commande en tete de ligne, sur tout asset autre que le seul zip', $defauts['garde'] === [], implode('; ', $defauts['garde']));
 verifier('RC : aucune expression ${{ dans un run: (tous workflows)', $defauts['expression'] === [], implode('; ', $defauts['expression']));
 verifier('RC : permissions de chaque fichier et de chaque travail egales a la liste exacte', $defauts['permissions'] === [], implode('; ', $defauts['permissions']));
+verifier('RH : seuls les noms de ACTIONS_AUTORISEES_RELEASE sur tag, release ou workflow_run', $defauts['actions'] === [], implode('; ', $defauts['actions']));
+verifier('RH : aucun appel de release par une variable shell', $defauts['gh_variable'] === [], implode('; ', $defauts['gh_variable']));
 
 // Lecture des booleens, comme gh.
 verifier('RC : valeurs de --draft lues comme gh', valeurs_draft(['v1', '--draft']) === [true]
@@ -836,29 +904,83 @@ verifier('RC : valeurs de --draft lues comme gh', valeurs_draft(['v1', '--draft'
     && valeurs_draft(['v1', '--notes-file', 'x']) === []);
 
 // Les formes detournees de la relecture, rejouees sur les vrais workflows.
+// La categorie attendue doit rougir : un autre defaut ne prouve rien.
 $avantJoindre = "      - name: Joindre le zip au brouillon (seul asset)\n";
 $detournees = [
-    'edit --draft=0 avant la jonction' => ['release.yml', $avantJoindre, "      - name: x\n        run: gh release edit \"\$TAG\" --draft=0\n\n" . $avantJoindre],
-    'create --draft --verify-tag --draft=false' => ['release.yml', 'gh release create "$TAG" --draft --verify-tag', 'gh release create "$TAG" --draft --verify-tag --draft=false'],
-    'edit --draft="$D" (D=false) avant la jonction' => ['release.yml', $avantJoindre, "      - name: x\n        run: |\n          D=false\n          gh release edit \"\$TAG\" --draft=\"\$D\"\n\n" . $avantJoindre],
-    'create -d=false' => ['release.yml', 'gh release create "$TAG" --draft --verify-tag', 'gh release create "$TAG" -d=false --verify-tag'],
-    'garde neutralise par if: false sur son travail' => ['garde-release.yml', "  garde:\n    runs-on: ubuntu-latest\n", "  garde:\n    if: false\n    runs-on: ubuntu-latest\n"],
-    'garde limite a zero asset' => ['garde-release.yml', 'if [ "$assets" != "pratcom-connect-bridge.zip" ]; then', 'if [ -z "$assets" ]; then'],
-    'commande du garde precedee de :' => ['garde-release.yml', '            gh release edit "$TAG" --draft=true', '            : gh release edit "$TAG" --draft=true'],
-    'garde sur une etape avec if:' => ['garde-release.yml', "      - name: Remettre en brouillon", "      - if: false\n        name: Remettre en brouillon"],
-    '${{ github.ref_name }} dans un run:' => ['release.yml', 'run: gh release upload "$TAG"', 'run: gh release upload "${{ github.ref_name }}"'],
-    '${{ }} dans un commentaire de script' => ['ci.yml', "          echec=0\n", "          echec=0\n          # \${{ github.head_ref }}\n"],
-    'actions: write sur le travail du garde' => ['garde-release.yml', "    permissions:\n      contents: write\n", "    permissions:\n      contents: write\n      actions: write\n"],
-    'permissions: write-all sur publier' => ['release.yml', "    permissions:\n      contents: write\n", "    permissions: write-all\n"],
-    'travail de plus dans ci.yml' => ['ci.yml', "\njobs:\n", "\njobs:\n  autre:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo x\n"],
+    'edit --draft=0 avant la jonction' => ['release.yml', $avantJoindre, "      - name: x\n        run: gh release edit \"\$TAG\" --draft=0\n\n" . $avantJoindre, 'publication'],
+    'create --draft --verify-tag --draft=false' => ['release.yml', 'gh release create "$TAG" --draft --verify-tag', 'gh release create "$TAG" --draft --verify-tag --draft=false', 'creation'],
+    'edit --draft="$D" (D=false) avant la jonction' => ['release.yml', $avantJoindre, "      - name: x\n        run: |\n          D=false\n          gh release edit \"\$TAG\" --draft=\"\$D\"\n\n" . $avantJoindre, 'publication'],
+    'create -d=false' => ['release.yml', 'gh release create "$TAG" --draft --verify-tag', 'gh release create "$TAG" -d=false --verify-tag', 'creation'],
+    'garde neutralise par if: false sur son travail' => ['garde-release.yml', "  garde:\n    runs-on: ubuntu-latest\n", "  garde:\n    if: false\n    runs-on: ubuntu-latest\n", 'garde'],
+    'garde limite a zero asset' => ['garde-release.yml', 'if [ "$assets" != "pratcom-connect-bridge.zip" ]; then', 'if [ -z "$assets" ]; then', 'garde'],
+    'commande du garde precedee de :' => ['garde-release.yml', '            gh release edit "$TAG" --draft=true', '            : gh release edit "$TAG" --draft=true', 'garde'],
+    'garde sur une etape avec if:' => ['garde-release.yml', "      - name: Remettre en brouillon", "      - if: false\n        name: Remettre en brouillon", 'garde'],
+    '${{ github.ref_name }} dans un run:' => ['release.yml', 'run: gh release upload "$TAG"', 'run: gh release upload "${{ github.ref_name }}"', 'expression'],
+    '${{ }} dans un commentaire de script' => ['ci.yml', "          echec=0\n", "          echec=0\n          # \${{ github.head_ref }}\n", 'expression'],
+    'actions: write sur le travail du garde' => ['garde-release.yml', "    permissions:\n      contents: write\n", "    permissions:\n      contents: write\n      actions: write\n", 'permissions'],
+    'permissions: write-all sur publier' => ['release.yml', "    permissions:\n      contents: write\n", "    permissions: write-all\n", 'permissions'],
+    'travail de plus dans ci.yml' => ['ci.yml', "\njobs:\n", "\njobs:\n  autre:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo x\n", 'permissions'],
 ];
-foreach ($detournees as $libelle => [$cible, $avant, $apres]) {
+
+// RH : une action epinglee peut publier sans passer par gh. Aucun nom hors
+// liste ne passe, meme sans le mot release, meme local ou Docker.
+$shaMutation = str_repeat('a', 40);
+foreach (['actions/github-script@' . $shaMutation . ' # v7', 'actions/github-script@v7',
+    'autre/action@' . $shaMutation . ' # v1', './.github/actions/script', 'docker://image:1'] as $usage) {
+    $detournees["uses hors liste : $usage"] = ['release.yml', $avantJoindre,
+        "      - uses: $usage\n        with:\n          script: github.rest.repos.updateRelease({ draft: false })\n\n" . $avantJoindre, 'actions'];
+}
+foreach (['$g', '"$g"', '${g}', '"${g}"'] as $commande) {
+    $detournees["gh par variable : $commande release"] = ['release.yml', $avantJoindre,
+        "      - run: |\n          g=gh\n          $commande release edit \"\$TAG\" --draft=false\n\n" . $avantJoindre, 'gh_variable'];
+}
+foreach (["'run'", '"run"'] as $cle) {
+    $detournees["expression dans $cle en ligne"] = ['release.yml', 'run: gh release upload "$TAG"',
+        $cle . ': gh release upload "${{ github.ref_name }}"', 'expression'];
+    $detournees["expression dans $cle en bloc"] = ['ci.yml', "        run: |\n          echec=0\n",
+        "        $cle: |\n          echec=0\n          # \${{ github.head_ref }}\n", 'expression'];
+}
+foreach (["'uses'", '"uses"'] as $cle) {
+    $detournees["action inconnue avec $cle"] = ['release.yml', $avantJoindre,
+        "      - $cle: actions/github-script@$shaMutation # v7\n        with:\n          script: github.rest.repos.updateRelease({ draft: false })\n\n" . $avantJoindre, 'actions'];
+}
+// Le meme contournement doit rougir sur chacun des trois declencheurs,
+// en bloc, scalaire, liste ou objet inline, y compris avec une cle on citee.
+$onOrg = "on:\n  workflow_dispatch:\n  push:\n    tags: ['v*']\n";
+$original = $reels['build-org.yml'] ?? '';
+verifier('RH : ancrages uniques pour les mutations des declencheurs', substr_count($original, $onOrg) === 1
+    && substr_count($original, 'uses: actions/checkout@') === 1);
+foreach (["on:\n  release:\n    types: [published]\n", "on: release\n", "on: [release]\n",
+    "\"on\":\n  workflow_run:\n    workflows: [build]\n    types: [completed]\n", "on: [workflow_run]\n",
+    "'on': {push: {tags: ['v*']}}\n"] as $declencheur) {
+    $mute = str_replace($onOrg, $declencheur, $original);
+    $mute = str_replace('uses: actions/checkout@', 'uses: actions/github-script@', $mute);
+    $detournees['action hors liste sur ' . trim(str_replace("\n", ' ', $declencheur))] = [
+        'build-org.yml', $original, $mute, 'actions',
+    ];
+}
+
+foreach ($detournees as $libelle => [$cible, $avant, $apres, $categorie]) {
     $copie = $reels;
     $texte = str_replace("\r\n", "\n", $copie[$cible] ?? '');
-    $applique = substr_count($texte, $avant) === 1;
+    $applique = $avant !== '' && substr_count($texte, $avant) === 1 && $avant !== $apres;
     $copie[$cible] = str_replace($avant, $apres, $texte);
-    $vus = array_filter(defauts_rc($copie));
-    verifier("RC : forme detournee rouge : $libelle", $applique && $vus !== [], $applique ? 'aucun defaut vu' : 'mutation non appliquee');
+    $vus = defauts_rc($copie);
+    verifier("RC/RH : forme detournee rouge [$categorie] : $libelle", $applique && ($vus[$categorie] ?? []) !== [],
+        $applique ? "categorie $categorie attendue, vues : " . implode(', ', array_keys(array_filter($vus))) : 'mutation non appliquee une seule fois');
+}
+
+// Controles positifs : la regle porte sur les commandes et evenements vises.
+verifier('RH : workflow manuel sans evenement sensible hors de la liste d\'actions',
+    actions_hors_liste("on: workflow_dispatch\njobs:\n  j:\n    steps:\n      - uses: actions/github-script@$shaMutation # v7\n") === []);
+verifier('RH : commentaires de declencheur et de uses ignores',
+    actions_hors_liste("on:\n  push:\n  # release:\njobs:\n  j:\n    steps:\n      # - uses: actions/github-script@$shaMutation # v7\n      - run: echo ok\n") === []);
+verifier('RH : variable en argument, commande gh directe et commentaire de script acceptes',
+    appels_release_variables("      - run: |\n          echo \"\$TAG\" release\n          gh release view \"\$TAG\"\n          # \"\$g\" release edit \"\$TAG\" --draft=false\n") === []);
+foreach (["'run'", '"run"'] as $cle) {
+    $copie = $reels;
+    $copie['garde-release.yml'] = str_replace('run: |', "$cle: |", $copie['garde-release.yml'] ?? '');
+    verifier("RH : garde avec cle $cle sans expression accepte", array_filter(defauts_rc($copie)) === []);
 }
 
 echo "\n" . ($total - $echecs) . "/$total controles verts\n";
