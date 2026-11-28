@@ -84,6 +84,8 @@ Create an account at connect.pratcom.net, choose your modules, then paste your A
 == Changelog ==
 
 = 2.3.0 =
+* Local consent registry (free banner): a consent is now recorded only when the browser sends your own site's address as its origin (same scheme, host and port as the Site Address or WordPress Address in Settings, General). Otherwise the record is refused and not stored; the visitor sees nothing and keeps browsing. Check your setup if one of these applies: the site answers on both www and the bare domain without redirecting one to the other; the site address is http while the site is served over https; the site uses one domain per language that is not declared through the pratcom_connect_registre_origines filter; a proxy or firewall removes the Origin header. The fix is to redirect to a single address, set the site address to https, or declare the extra domains through the filter.
+* Local consent registry: records older than 12 months are now deleted by a daily task, even on a site that was never connected to Pratcom Connect. On the first run after the update, records already older than 12 months are deleted for good: this cannot be undone. If you need to keep them, export the registry as CSV before updating.
 * Single source for the Pratcom Connect hosts: the connection response can provide them, with the previous addresses as defaults.
 * A suspended site no longer loads the Connect modules for visitors (loader and shortcodes), from the moment it connects; administrators see a short notice.
 * The Jobs module is recognized in the Dashboard and Modules tabs; the Dashboard shows module names instead of internal keys.

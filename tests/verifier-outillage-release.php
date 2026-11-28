@@ -28,7 +28,14 @@
  *     release.yml publie, ou release.yml ne suit pas le chemin : tag pousse,
  *     brouillon, zip joint, asset telecharge et empreinte reverifiee, puis
  *     publication ; ou le garde des releases publiees a la main manque
- *     (R1 du 27/11 : aucune release publique n'est jamais vue sans son zip).
+ *     (R1 du 27/11 : aucune release publique n'est jamais vue sans son zip) ;
+ *   - RC (28/11) : les valeurs sont lues, pas le texte. Toute valeur de
+ *     --draft (ou -d) est lue comme gh la lit : a la creation, toutes doivent
+ *     etre vraies ; a l'edition, toute valeur non vraie compte comme une
+ *     publication. Le garde n'a aucun if: (travail ni etape) et son script
+ *     suit la forme attendue ligne a ligne, chaque commande en tete de ligne.
+ *     Aucun ${{ dans un run:. Les permissions de chaque fichier et de chaque
+ *     travail sont egales a une liste exacte (PERMISSIONS_ATTENDUES).
  *
  * --racine : rejoue le banc sur une copie modifiee du depot (bancs de mutation).
  *
@@ -389,6 +396,53 @@ function appels_gh_release(string $yml): array
     return $appels;
 }
 
+/**
+ * RC : valeur booleenne d'un texte, comme strconv.ParseBool (pflag, donc gh).
+ * Rend true, false, ou null si la valeur n'est pas lisible (variable, autre).
+ */
+function booleen_gh(string $v): ?bool
+{
+    if (in_array($v, ['1', 't', 'T', 'TRUE', 'true', 'True'], true)) {
+        return true;
+    }
+    if (in_array($v, ['0', 'f', 'F', 'FALSE', 'false', 'False'], true)) {
+        return false;
+    }
+    return null;
+}
+
+/**
+ * RC : valeurs de --draft (et de -d, seul ou groupe, ex. -pd) d'un appel
+ * `gh release`, dans l'ordre. `--draft` seul vaut true ; `--draft=X` vaut
+ * booleen_gh(X) ; `--draft X` (X lisible comme booleen) est lu comme X, par
+ * prudence, meme si gh y verrait un argument de plus.
+ *
+ * @param array<int, string> $jetons
+ * @return array<int, ?bool>
+ */
+function valeurs_draft(array $jetons): array
+{
+    $valeurs = [];
+    $n = count($jetons);
+    for ($i = 0; $i < $n; $i++) {
+        $j = $jetons[$i];
+        if (preg_match('/^(?:--draft|-[a-zA-Z]*d)=(.*)$/s', $j, $m)) {
+            $valeurs[] = booleen_gh($m[1]);
+            continue;
+        }
+        if ($j === '--draft' || preg_match('/^-[a-zA-Z]*d[a-zA-Z]*$/', $j)) {
+            $suivant = $jetons[$i + 1] ?? null;
+            if ($suivant !== null && booleen_gh($suivant) !== null) {
+                $valeurs[] = booleen_gh($suivant);
+                $i++;
+                continue;
+            }
+            $valeurs[] = true;
+        }
+    }
+    return $valeurs;
+}
+
 /** Pas d'etape : chaque ligne qui commence par `- ` ouvre une etape. */
 function etapes(string $yml): array
 {
@@ -486,8 +540,15 @@ function creations_publiques(string $yml): array
 {
     $trouvees = [];
     foreach (appels_gh_release($yml) as [$verbe, $jetons]) {
-        if ($verbe === 'create' && !in_array('--draft', $jetons, true) && !in_array('--draft=true', $jetons, true)) {
-            $trouvees[] = 'gh release create sans --draft';
+        if ($verbe === 'create') {
+            // RC : chaque valeur de --draft est lue comme gh la lit ; toutes
+            // doivent etre vraies (chez gh, la derniere gagne).
+            $valeurs = valeurs_draft($jetons);
+            if ($valeurs === []) {
+                $trouvees[] = 'gh release create sans --draft';
+            } elseif (array_filter($valeurs, static fn(?bool $v): bool => $v !== true) !== []) {
+                $trouvees[] = 'gh release create avec une valeur de --draft autre que vraie';
+            }
         }
     }
     foreach (etapes($yml) as $etape) {
@@ -507,7 +568,9 @@ function publications(string $yml): int
 {
     $n = 0;
     foreach (appels_gh_release($yml) as [$verbe, $jetons]) {
-        if ($verbe === 'edit' && (in_array('--draft=false', $jetons, true) || preg_match('/(^| )--draft false( |$)/', implode(' ', $jetons)))) {
+        // RC : toute valeur de --draft qui n'est pas vraie (fausse, variable,
+        // illisible) compte comme une publication.
+        if ($verbe === 'edit' && array_filter(valeurs_draft($jetons), static fn(?bool $v): bool => $v !== true) !== []) {
             $n++;
         }
     }
@@ -600,6 +663,203 @@ verifier('auto-verification R1 : guillemets, tag ecarte, create sans --draft, ed
     && publications($guillemets) === 1, implode(', ', assets_joints($guillemets)) . ' / ' . implode(', ', creations_publiques($guillemets)));
 $brouillonAction = "on: push\njobs:\n  j:\n    steps:\n      - uses: softprops/action-gh-release@abc # v2\n        with:\n          draft: true\n          files: build/pratcom-connect-bridge.zip\n";
 verifier('auto-verification R1 : action de release en brouillon acceptee', creations_publiques($brouillonAction) === []);
+
+// ─── 9. Lire les valeurs, pas le texte (RC, relecture de la PR #81) ─────────
+//
+// Formes detournees qui passaient vertes au 28/11 : --draft=0, --draft="$D",
+// --draft puis --draft=false sur la meme creation, garde neutralise par un
+// if: ou par un `:` devant sa commande, garde limite a zero asset, ${{ }}
+// dans un run:, permission ajoutee a un travail. Chacune est rejouee plus bas
+// sur une copie en memoire des vrais workflows et doit rougir.
+
+echo "Valeurs lues, pas le texte (RC)\n";
+
+/** Scripts de chaque `run:` du texte brut (commentaires du script compris). */
+function blocs_run(string $yml): array
+{
+    $lignes = explode("\n", str_replace("\r\n", "\n", $yml));
+    $blocs = [];
+    $n = count($lignes);
+    for ($i = 0; $i < $n; $i++) {
+        if (!preg_match('/^([ \t]*(?:-[ \t]+)?)run:(.*)$/', $lignes[$i], $m)) {
+            continue;
+        }
+        $retrait = strlen($m[1]);
+        $bloc = [$m[2]];
+        while ($i + 1 < $n && (trim($lignes[$i + 1]) === '' || strspn($lignes[$i + 1], " \t") > $retrait)) {
+            $bloc[] = $lignes[++$i];
+        }
+        $blocs[] = implode("\n", $bloc);
+    }
+    return $blocs;
+}
+
+/** Permissions d'un bloc (`permissions:` au retrait donne), normalisees, ou null. */
+function permissions_bloc(string $texte, int $retrait): ?string
+{
+    $r = str_repeat(' ', $retrait);
+    if (!preg_match('/^' . $r . 'permissions:[ \t]*([^\n]*)\n((?:' . $r . '[ \t]+[^\n]*\n?)*)/m', $texte . "\n", $m)) {
+        return null;
+    }
+    $tete = trim($m[1]);
+    $paires = [];
+    if ($tete !== '' && $tete[0] !== '{') {
+        return $tete; // read-all, write-all
+    }
+    $corps = $tete !== '' ? trim($tete, '{} ') : $m[2];
+    foreach (preg_split('/[\n,]+/', $corps) ?: [] as $p) {
+        if (trim($p) === '') {
+            continue;
+        }
+        [$cle, $val] = array_map('trim', explode(':', $p, 2) + [1 => '']);
+        $paires[$cle] = $val;
+    }
+    ksort($paires);
+    $sortie = [];
+    foreach ($paires as $cle => $val) {
+        $sortie[] = "$cle=$val";
+    }
+    return $sortie === [] ? '{}' : implode(',', $sortie);
+}
+
+/** Travaux d'un workflow : nom => corps (sans commentaires). */
+function travaux(string $yml): array
+{
+    $sans = sans_commentaires($yml);
+    $jobs = preg_match('/^jobs:[ \t]*\n(.*)$/ms', $sans, $m) ? $m[1] : '';
+    $liste = [];
+    if (preg_match_all('/^  ([A-Za-z0-9_-]+):[ \t]*\n((?:(?!  \S|\S)[^\n]*\n?)*)/m', $jobs, $mm, PREG_SET_ORDER)) {
+        foreach ($mm as $t) {
+            $liste[$t[1]] = $t[2];
+        }
+    }
+    return $liste;
+}
+
+// Liste exacte : permissions du fichier, puis de chaque travail (null : le
+// travail n'en declare pas et prend celles du fichier).
+const PERMISSIONS_ATTENDUES = [
+    'build-org.yml' => ['<fichier>' => '{}', 'build-org' => 'contents=read'],
+    'ci.yml' => ['<fichier>' => 'contents=read', 'lint' => null],
+    'garde-release.yml' => ['<fichier>' => '{}', 'garde' => 'contents=write'],
+    'release.yml' => ['<fichier>' => '{}', 'build' => 'contents=read', 'publier' => 'contents=write'],
+];
+
+// Le garde, ligne a ligne : chaque commande ouvre sa ligne, rien ne la precede.
+const GARDE_SCRIPT = [
+    'set -euo pipefail',
+    'assets=$(gh release view "$TAG" --json assets --jq \'.assets | map(.name) | join(",")\')',
+    'echo "assets=$assets"',
+    'if [ "$assets" != "pratcom-connect-bridge.zip" ]; then',
+    'gh release edit "$TAG" --draft=true',
+];
+
+/**
+ * Defauts RC d'un jeu de workflows (nom => texte brut), par categorie.
+ *
+ * @param array<string, string> $textes
+ * @return array<string, array<int, string>>
+ */
+function defauts_rc(array $textes): array
+{
+    $d = ['creation' => [], 'publication' => [], 'garde' => [], 'expression' => [], 'permissions' => []];
+    $pub = [];
+    foreach ($textes as $nom => $texte) {
+        foreach (creations_publiques($texte) as $c) {
+            $d['creation'][] = "$nom : $c";
+        }
+        if (($p = publications($texte)) > 0) {
+            $pub[$nom] = $p;
+        }
+        foreach (blocs_run($texte) as $bloc) {
+            if (strpos($bloc, '${{') !== false) {
+                $d['expression'][] = "$nom : " . (preg_match('/^[^\n]*\$\{\{[^\n]*$/m', $bloc, $l) ? trim($l[0]) : '');
+            }
+        }
+        $avant = (string) strstr(sans_commentaires($texte), "\njobs:", true);
+        $vues = ['<fichier>' => permissions_bloc($avant . "\n", 0)];
+        foreach (travaux($texte) as $travail => $corps) {
+            $vues[$travail] = permissions_bloc($corps, 4);
+        }
+        $attendues = PERMISSIONS_ATTENDUES[$nom] ?? null;
+        if ($vues !== $attendues) {
+            $d['permissions'][] = "$nom : " . json_encode($vues) . ' au lieu de ' . json_encode($attendues);
+        }
+    }
+    foreach (array_diff(array_keys(PERMISSIONS_ATTENDUES), array_keys($textes)) as $absent) {
+        $d['permissions'][] = "$absent absent";
+    }
+    if ($pub !== ['release.yml' => 1]) {
+        $d['publication'][] = json_encode($pub);
+    }
+
+    $garde = travaux($textes['garde-release.yml'] ?? '')['garde'] ?? '';
+    if ($garde === '') {
+        $d['garde'][] = 'travail garde absent';
+    }
+    if (preg_match('/^[ \t]*(?:-[ \t]+)?(if|shell|continue-on-error):/m', $garde, $k)) {
+        $d['garde'][] = $k[1] . ': sur le travail du garde ou une de ses etapes';
+    }
+    if (!preg_match('/^      TAG: \$\{\{ github\.event\.release\.tag_name \}\}[ \t]*$/m', $garde)) {
+        $d['garde'][] = 'TAG ne vient pas de la release publiee';
+    }
+    $runs = blocs_run($garde);
+    $lignes = $runs === [] ? [] : array_values(array_filter(array_map('trim', explode("\n", $runs[0])), static fn(string $l): bool => $l !== '' && $l !== '|'));
+    if (count($runs) !== 1 || array_slice($lignes, 0, count(GARDE_SCRIPT)) !== GARDE_SCRIPT) {
+        $d['garde'][] = 'script du garde different de la forme attendue : ' . implode(' / ', array_slice($lignes, 0, 5));
+    } elseif (!str_starts_with($lignes[5] ?? '', 'echo "::error::') || ($lignes[6] ?? '') !== 'exit 1' || ($lignes[7] ?? '') !== 'fi') {
+        $d['garde'][] = 'le garde ne finit pas en echec apres la remise en brouillon';
+    }
+    return $d;
+}
+
+$reels = [];
+foreach ($workflows as $fichier) {
+    $reels[basename($fichier)] = lire($fichier) ?? '';
+}
+$defauts = defauts_rc($reels);
+verifier('RC : toute creation de release a toutes ses valeurs de --draft vraies', $defauts['creation'] === [], implode('; ', $defauts['creation']));
+verifier('RC : une seule publication (--draft lu comme booleen), dans release.yml', $defauts['publication'] === [], implode('; ', $defauts['publication']));
+verifier('RC : garde sans if:, commande en tete de ligne, sur tout asset autre que le seul zip', $defauts['garde'] === [], implode('; ', $defauts['garde']));
+verifier('RC : aucune expression ${{ dans un run: (tous workflows)', $defauts['expression'] === [], implode('; ', $defauts['expression']));
+verifier('RC : permissions de chaque fichier et de chaque travail egales a la liste exacte', $defauts['permissions'] === [], implode('; ', $defauts['permissions']));
+
+// Lecture des booleens, comme gh.
+verifier('RC : valeurs de --draft lues comme gh', valeurs_draft(['v1', '--draft']) === [true]
+    && valeurs_draft(['v1', '--draft=0']) === [false]
+    && valeurs_draft(['v1', '--draft=F']) === [false]
+    && valeurs_draft(['v1', '--draft=$D']) === [null]
+    && valeurs_draft(['v1', '--draft', 'false']) === [false]
+    && valeurs_draft(['v1', '-d', '--verify-tag']) === [true]
+    && valeurs_draft(['v1', '-pd=false']) === [false]
+    && valeurs_draft(['v1', '--draft', '--verify-tag', '--draft=false']) === [true, false]
+    && valeurs_draft(['v1', '--notes-file', 'x']) === []);
+
+// Les formes detournees de la relecture, rejouees sur les vrais workflows.
+$avantJoindre = "      - name: Joindre le zip au brouillon (seul asset)\n";
+$detournees = [
+    'edit --draft=0 avant la jonction' => ['release.yml', $avantJoindre, "      - name: x\n        run: gh release edit \"\$TAG\" --draft=0\n\n" . $avantJoindre],
+    'create --draft --verify-tag --draft=false' => ['release.yml', 'gh release create "$TAG" --draft --verify-tag', 'gh release create "$TAG" --draft --verify-tag --draft=false'],
+    'edit --draft="$D" (D=false) avant la jonction' => ['release.yml', $avantJoindre, "      - name: x\n        run: |\n          D=false\n          gh release edit \"\$TAG\" --draft=\"\$D\"\n\n" . $avantJoindre],
+    'create -d=false' => ['release.yml', 'gh release create "$TAG" --draft --verify-tag', 'gh release create "$TAG" -d=false --verify-tag'],
+    'garde neutralise par if: false sur son travail' => ['garde-release.yml', "  garde:\n    runs-on: ubuntu-latest\n", "  garde:\n    if: false\n    runs-on: ubuntu-latest\n"],
+    'garde limite a zero asset' => ['garde-release.yml', 'if [ "$assets" != "pratcom-connect-bridge.zip" ]; then', 'if [ -z "$assets" ]; then'],
+    'commande du garde precedee de :' => ['garde-release.yml', '            gh release edit "$TAG" --draft=true', '            : gh release edit "$TAG" --draft=true'],
+    'garde sur une etape avec if:' => ['garde-release.yml', "      - name: Remettre en brouillon", "      - if: false\n        name: Remettre en brouillon"],
+    '${{ github.ref_name }} dans un run:' => ['release.yml', 'run: gh release upload "$TAG"', 'run: gh release upload "${{ github.ref_name }}"'],
+    '${{ }} dans un commentaire de script' => ['ci.yml', "          echec=0\n", "          echec=0\n          # \${{ github.head_ref }}\n"],
+    'actions: write sur le travail du garde' => ['garde-release.yml', "    permissions:\n      contents: write\n", "    permissions:\n      contents: write\n      actions: write\n"],
+    'permissions: write-all sur publier' => ['release.yml', "    permissions:\n      contents: write\n", "    permissions: write-all\n"],
+    'travail de plus dans ci.yml' => ['ci.yml', "\njobs:\n", "\njobs:\n  autre:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo x\n"],
+];
+foreach ($detournees as $libelle => [$cible, $avant, $apres]) {
+    $copie = $reels;
+    $texte = str_replace("\r\n", "\n", $copie[$cible] ?? '');
+    $applique = substr_count($texte, $avant) === 1;
+    $copie[$cible] = str_replace($avant, $apres, $texte);
+    $vus = array_filter(defauts_rc($copie));
+    verifier("RC : forme detournee rouge : $libelle", $applique && $vus !== [], $applique ? 'aucun defaut vu' : 'mutation non appliquee');
+}
 
 echo "\n" . ($total - $echecs) . "/$total controles verts\n";
 exit($echecs === 0 ? 0 : 1);

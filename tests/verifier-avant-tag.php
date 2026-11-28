@@ -492,8 +492,15 @@ new LocalRegistry();
 verifier('mise a jour (site deja installe, tache absente) : programmee au chargement', isset($GLOBALS['banc_cron'][$crochet]));
 verifier('recurrence quotidienne', ($GLOBALS['banc_recurrence'][$crochet] ?? '') === 'daily', (string) ($GLOBALS['banc_recurrence'][$crochet] ?? ''));
 $premier = $GLOBALS['banc_cron'][$crochet] ?? null;
+// RD (relecture de la PR #81) : l'heure avance entre deux chargements. Sans
+// cela, "retirer puis reprogrammer a chaque chargement" rendait la meme
+// echeance et passait vert, alors qu'en vrai l'echeance reculerait a chaque
+// visite et la purge ne tournerait jamais sur un site visite chaque heure.
+$GLOBALS['banc_temps'] = banc_maintenant() + 600;
 new LocalRegistry();
-verifier('chargement suivant : rien de reprogramme (meme echeance)', ($GLOBALS['banc_cron'][$crochet] ?? null) === $premier);
+$GLOBALS['banc_temps'] = banc_maintenant() + 7200;
+new LocalRegistry();
+verifier('chargements suivants, 10 min puis 2 h plus tard : echeance inchangee (RD)', $premier !== null && ($GLOBALS['banc_cron'][$crochet] ?? null) === $premier, $premier . ' puis ' . ($GLOBALS['banc_cron'][$crochet] ?? 'rien'));
 $branche = false;
 foreach ($GLOBALS['banc_filtres'][$crochet] ?? [] as [$rappel, $n]) {
     $branche = $branche || ($rappel === [LocalRegistry::class, 'purger_passage'] && $n === 0);
@@ -514,7 +521,9 @@ verifier('deconnexion : purge toujours programmee', isset($GLOBALS['banc_cron'][
 verifier('deconnexion : passage horaire retire (inchange)', !isset($GLOBALS['banc_cron'][HealthCheck::CRON_HOOK]));
 connecter();
 
-$desactivation = 'deactivate_pratcom-connect-bridge/pratcom-connect-bridge.php';
+// RE : le nom vient de plugin_basename(), comme dans LocalRegistry : le banc
+// reste juste dans un dossier (worktree) nomme autrement que le depot.
+$desactivation = 'deactivate_' . plugin_basename(PRATCOM_CONNECT_BRIDGE_FILE);
 $retrait = null;
 foreach ($GLOBALS['banc_filtres'][$desactivation] ?? [] as [$rappel, $n]) {
     if ($rappel === [LocalRegistry::class, 'deprogrammer_purge'] && $n === 0) {
