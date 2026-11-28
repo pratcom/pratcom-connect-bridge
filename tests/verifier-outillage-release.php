@@ -40,6 +40,13 @@
  *     ACTIONS_AUTORISEES_RELEASE est refuse, meme epingle par SHA. Un appel
  *     de release par une variable shell est refuse. Les cles run citees
  *     sont lues comme run. Chaque mutation prouve sa categorie de defaut.
+ *   - Correction 1 de la PR #83 (28/11) : aucune etape ni aucun travail en
+ *     flux YAML ({uses: ...}, steps: [...]), aucune cle echappee, ancre,
+ *     alias ou etiquette YAML (categorie forme_yaml, tous workflows). La
+ *     liste d'actions vaut pour TOUS les workflows. Tout ${...}, $( ) ou
+ *     `...` en position de commande devant release est refuse, comme
+ *     gh alias ; gh et release cites sont lus comme gh release. L'API des
+ *     releases par GITHUB_API_URL compte comme un appel brut.
  *
  * --racine : rejoue le banc sur une copie modifiee du depot (bancs de mutation).
  *
@@ -374,16 +381,6 @@ function declenche_par_release(string $yml): bool
     return (bool) preg_match('/(?<![\w-])release(?![\w-])/', $m[1]);
 }
 
-/** Evenements sensibles : tags, release ou workflow_run dans le bloc on. */
-function declenche_release_sensible(string $yml): bool
-{
-    $sans = sans_commentaires($yml);
-    if (!preg_match('/^(?:on|"on"|\'on\'):(.*?)(?=^\S|\z)/ms', $sans, $m)) {
-        return false;
-    }
-    return (bool) preg_match('/(?<![\w-])(?:tags|release|workflow_run)(?![\w-])/', $m[1]);
-}
-
 /** Jetons d'une ligne de shell : guillemets respectes, guillemets retires. */
 function jetons_shell(string $ligne): array
 {
@@ -395,7 +392,9 @@ function jetons_shell(string $ligne): array
 function appels_gh_release(string $yml): array
 {
     $appels = [];
-    if (preg_match_all('/\bgh\s+release\s+(upload|create|edit)\b([^\n]*)/', sans_commentaires($yml), $mm, PREG_SET_ORDER)) {
+    // Correction 1 (R1) : un guillemet autour de gh, de release ou du verbe ne
+    // change rien pour le shell ("gh" release, gh 'release' edit).
+    if (preg_match_all('/\bgh["\']?\s+["\']?release["\']?\s+["\']?(upload|create|edit)\b["\']?([^\n]*)/', sans_commentaires($yml), $mm, PREG_SET_ORDER)) {
         foreach ($mm as $m) {
             $jetons = [];
             foreach (jetons_shell($m[2]) as $j) {
@@ -571,7 +570,9 @@ function creations_publiques(string $yml): array
             $trouvees[] = $action . ' sans draft: true';
         }
     }
-    if (preg_match('/\bgh\s+api\b[^\n]*\breleases\b|api\.github\.com[^\n]*\/releases\b/', sans_commentaires($yml))) {
+    // Correction 1 (R2) : l'adresse de l'API peut venir de GITHUB_API_URL
+    // (ou de github.api_url) sans que le texte api.github.com apparaisse.
+    if (preg_match('/\bgh\s+api\b[^\n]*\breleases\b|(?:api\.github\.com|GITHUB_API_URL|github\.api_url)[^\n]*\/releases\b/', sans_commentaires($yml))) {
         $trouvees[] = 'appel brut a l\'API des releases';
     }
     return $trouvees;
@@ -708,27 +709,26 @@ function blocs_run(string $yml): array
     return $blocs;
 }
 
-// Noms exacts des seules actions presentes dans les workflows de release.
+// Noms exacts des seules actions presentes dans les workflows. Correction 1
+// (R3, R4) : la liste vaut pour TOUS les workflows, quel que soit le
+// declencheur ; plus de lecture du bloc on: (on :, on: push, on: create...).
 // Le controle des SHA et commentaires de version reste independant (section 2).
 // Ni action de script arbitraire, ni action locale, Docker ou workflow reutilise.
-const ACTIONS_AUTORISEES_RELEASE = [
+const ACTIONS_AUTORISEES = [
     'actions/checkout',
     'shivammathur/setup-php',
     'actions/upload-artifact',
     'actions/download-artifact',
 ];
 
-/** Tous les uses: d'un workflow sensible, y compris les cles citees. */
+/** Tous les uses: d'un workflow, y compris les cles citees. */
 function actions_hors_liste(string $yml): array
 {
-    if (!declenche_release_sensible($yml)) {
-        return [];
-    }
     $refusees = [];
     preg_match_all('/^[ \t]*(?:-[ \t]+)?(?:uses|"uses"|\'uses\')[ \t]*:[ \t]*(\S+)/m', sans_commentaires($yml), $usages);
     foreach ($usages[1] as $usage) {
         $action = (string) preg_replace('/@.*$/', '', trim($usage, '"\''));
-        if (!in_array($action, ACTIONS_AUTORISEES_RELEASE, true)) {
+        if (!in_array($action, ACTIONS_AUTORISEES, true)) {
             $refusees[] = $action;
         }
     }
@@ -738,20 +738,99 @@ function actions_hors_liste(string $yml): array
 /**
  * Commande release appelee par une variable : l'executable echappe a la lecture
  * de gh. Refus conservateur, sans essayer de resoudre les affectations shell.
+ * Correction 1 : tout contenu entre accolades (${g:-gh}, ${G[0]}), toute
+ * substitution de commande ($(echo gh), `echo gh`) en position de commande,
+ * precedee ou non d'affectations (X=1 $g release) ; release cite compris.
+ * gh alias est refuse : un alias rend gh <alias> illisible comme gh release.
  */
 function appels_release_variables(string $yml): array
 {
     $appels = [];
-    $variable = '\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[A-Za-z_][A-Za-z0-9_]*\})';
-    $motif = '/(?:^|[;&|(`])[ \t]*(?:(?:if|then|do|elif|exec|command|!)[ \t]+)*'
-        . '(?:"' . $variable . '"|' . $variable . ')[ \t]+release\b/m';
+    $variable = '(?:\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[^}\n]*\}|\([^)\n]*\))|`[^`\n]*`)';
+    $affectations = '(?:[A-Za-z_][A-Za-z0-9_]*=\S*[ \t]+)*';
+    $motif = '/(?:^|[;&|(`{])[ \t]*' . $affectations
+        . '(?:(?:if|then|do|elif|else|exec|command|builtin|env|time|nohup|!)[ \t]+' . $affectations . ')*'
+        . '(?:"' . $variable . '"|' . $variable . ')[ \t]+["\']?release\b/m';
     foreach (blocs_run($yml) as $bloc) {
-        preg_match_all($motif, sans_commentaires($bloc), $m);
+        $script = sans_commentaires($bloc);
+        preg_match_all($motif, $script, $m);
         foreach ($m[0] as $appel) {
             $appels[] = trim($appel);
         }
+        preg_match_all('/\bgh["\']?[ \t]+["\']?alias\b[^\n]*/', $script, $a);
+        foreach ($a[0] as $alias) {
+            $appels[] = trim($alias);
+        }
     }
     return $appels;
+}
+
+/**
+ * Correction 1 : lignes d'un workflow hors commentaires et hors contenu des
+ * scalaires en bloc (| ou >), numerotees a partir de 1. Le script d'un run:
+ * (ex. [ "$x" = y ] en tete de ligne) n'est pas du YAML a lire.
+ *
+ * @return array<int, string>
+ */
+function lignes_yaml(string $yml): array
+{
+    $lignes = explode("\n", str_replace("\r\n", "\n", $yml));
+    $sortie = [];
+    $n = count($lignes);
+    for ($i = 0; $i < $n; $i++) {
+        if (preg_match('/^[ \t]*#/', $lignes[$i])) {
+            continue;
+        }
+        $sortie[$i + 1] = $lignes[$i];
+        if (!preg_match('/^([ \t]*(?:-[ \t]+)*)(?:[^\s#][^\n]*?:[ \t]+)?[|>][1-9+-]{0,2}[ \t]*(?:#[^\n]*)?$/', $lignes[$i], $m)) {
+            continue;
+        }
+        $colonne = strlen($m[1]);
+        while ($i + 1 < $n && (trim($lignes[$i + 1]) === '' || strspn($lignes[$i + 1], " \t") > $colonne)) {
+            $i++;
+        }
+    }
+    return $sortie;
+}
+
+/**
+ * Correction 1 (constat 1, R5) : formes YAML que la lecture ligne a ligne du
+ * banc ne voit pas, refusees dans tous les workflows (aucune n'y sert) :
+ *   - etape, travail, jobs: ou steps: ecrits en flux ({uses: ...}, [ ... ]) ;
+ *   - cle citee qui contient une barre oblique inverse ("\x72un" vaut run) ;
+ *   - cle complexe (?), fusion (<<), ancre (&), alias (*) ou etiquette (!).
+ * Les collections en flux en valeur d'une cle simple (tags: ['v*'],
+ * types: [published], permissions: {}) restent permises.
+ *
+ * @return array<int, string>
+ */
+function formes_yaml_refusees(string $yml): array
+{
+    $refusees = [];
+    $dansJobs = false;
+    foreach (lignes_yaml($yml) as $no => $l) {
+        if (preg_match('/^\S/', $l)) {
+            $dansJobs = (bool) preg_match('/^(?:jobs|"jobs"|\'jobs\')[ \t]*:/', $l);
+        }
+        $motif = null;
+        if (preg_match('/^[ \t]*-[ \t]*[{\[]/', $l)) {
+            $motif = 'element de liste en flux';
+        } elseif (preg_match('/^[ \t]*[{\[]/', $l)) {
+            $motif = 'collection en flux en tete de ligne';
+        } elseif (preg_match('/^[ \t]*(?:-[ \t]+)?(?:jobs|steps|"jobs"|\'jobs\'|"steps"|\'steps\')[ \t]*:[ \t]*[{\[]/', $l)) {
+            $motif = 'jobs ou steps en flux';
+        } elseif ($dansJobs && preg_match('/^  [^ \t#][^\n]*?:[ \t]*[{\[]/', $l)) {
+            $motif = 'travail en flux';
+        } elseif (preg_match('/^[ \t]*(?:-[ \t]+)?"[^"\n]*\\\\[^"\n]*"[ \t]*:/', $l)) {
+            $motif = 'cle echappee';
+        } elseif (preg_match('/^[ \t]*(?:-[ \t]+)?(?:\?|<<|[&*!])/', $l) || preg_match('/^[ \t]*(?:-[ \t]+)?[^\s#][^\n]*?:[ \t]+[&*!]/', $l)) {
+            $motif = 'cle complexe, fusion, ancre, alias ou etiquette';
+        }
+        if ($motif !== null) {
+            $refusees[] = "ligne $no, $motif : " . trim($l);
+        }
+    }
+    return $refusees;
 }
 
 /** Permissions d'un bloc (`permissions:` au retrait donne), normalisees, ou null. */
@@ -822,11 +901,14 @@ const GARDE_SCRIPT = [
  */
 function defauts_rc(array $textes): array
 {
-    $d = ['creation' => [], 'publication' => [], 'garde' => [], 'expression' => [], 'permissions' => [], 'actions' => [], 'gh_variable' => []];
+    $d = ['creation' => [], 'publication' => [], 'garde' => [], 'expression' => [], 'permissions' => [], 'actions' => [], 'gh_variable' => [], 'forme_yaml' => []];
     $pub = [];
     foreach ($textes as $nom => $texte) {
+        foreach (formes_yaml_refusees($texte) as $forme) {
+            $d['forme_yaml'][] = "$nom : $forme";
+        }
         foreach (actions_hors_liste($texte) as $action) {
-            $d['actions'][] = "$nom : $action hors ACTIONS_AUTORISEES_RELEASE";
+            $d['actions'][] = "$nom : $action hors ACTIONS_AUTORISEES";
         }
         foreach (appels_release_variables($texte) as $appel) {
             $d['gh_variable'][] = "$nom : $appel";
@@ -889,8 +971,9 @@ verifier('RC : une seule publication (--draft lu comme booleen), dans release.ym
 verifier('RC : garde sans if:, commande en tete de ligne, sur tout asset autre que le seul zip', $defauts['garde'] === [], implode('; ', $defauts['garde']));
 verifier('RC : aucune expression ${{ dans un run: (tous workflows)', $defauts['expression'] === [], implode('; ', $defauts['expression']));
 verifier('RC : permissions de chaque fichier et de chaque travail egales a la liste exacte', $defauts['permissions'] === [], implode('; ', $defauts['permissions']));
-verifier('RH : seuls les noms de ACTIONS_AUTORISEES_RELEASE sur tag, release ou workflow_run', $defauts['actions'] === [], implode('; ', $defauts['actions']));
-verifier('RH : aucun appel de release par une variable shell', $defauts['gh_variable'] === [], implode('; ', $defauts['gh_variable']));
+verifier('RH : seuls les noms de ACTIONS_AUTORISEES, dans tous les workflows (correction 1, R3)', $defauts['actions'] === [], implode('; ', $defauts['actions']));
+verifier('RH : aucun appel de release par une variable shell, une substitution ou gh alias', $defauts['gh_variable'] === [], implode('; ', $defauts['gh_variable']));
+verifier('Correction 1 : aucune etape ni travail en flux YAML, aucune cle echappee, ancre ou alias (tous workflows)', $defauts['forme_yaml'] === [], implode('; ', $defauts['forme_yaml']));
 
 // Lecture des booleens, comme gh.
 verifier('RC : valeurs de --draft lues comme gh', valeurs_draft(['v1', '--draft']) === [true]
@@ -930,7 +1013,9 @@ foreach (['actions/github-script@' . $shaMutation . ' # v7', 'actions/github-scr
     $detournees["uses hors liste : $usage"] = ['release.yml', $avantJoindre,
         "      - uses: $usage\n        with:\n          script: github.rest.repos.updateRelease({ draft: false })\n\n" . $avantJoindre, 'actions'];
 }
-foreach (['$g', '"$g"', '${g}', '"${g}"'] as $commande) {
+// Correction 1 (constat 2) : tout ${...}, $( ) ou `...` en position de
+// commande, avec ou sans affectation devant.
+foreach (['$g', '"$g"', '${g}', '"${g}"', '${g:-gh}', '"${g:=gh}"', '${G[0]}', '$(echo gh)', '`echo gh`', 'X=1 $g'] as $commande) {
     $detournees["gh par variable : $commande release"] = ['release.yml', $avantJoindre,
         "      - run: |\n          g=gh\n          $commande release edit \"\$TAG\" --draft=false\n\n" . $avantJoindre, 'gh_variable'];
 }
@@ -944,6 +1029,43 @@ foreach (["'uses'", '"uses"'] as $cle) {
     $detournees["action inconnue avec $cle"] = ['release.yml', $avantJoindre,
         "      - $cle: actions/github-script@$shaMutation # v7\n        with:\n          script: github.rest.repos.updateRelease({ draft: false })\n\n" . $avantJoindre, 'actions'];
 }
+// Correction 1 (R1) : gh et release cites, alias de gh.
+$detournees['gh par variable : $g "release"'] = ['release.yml', $avantJoindre,
+    "      - run: |\n          g=gh\n          \$g \"release\" edit \"\$TAG\" --draft=false\n\n" . $avantJoindre, 'gh_variable'];
+$detournees['gh alias set puis appel par alias'] = ['release.yml', $avantJoindre,
+    "      - run: |\n          gh alias set pub 'release edit'\n          gh pub \"\$TAG\" --draft=false\n\n" . $avantJoindre, 'gh_variable'];
+foreach (['"gh" release edit', 'gh "release" edit', "gh 'release' 'edit'"] as $commande) {
+    $detournees["publication par $commande"] = ['release.yml', $avantJoindre,
+        "      - run: |\n          $commande \"\$TAG\" --draft=false\n\n" . $avantJoindre, 'publication'];
+}
+// Correction 1 (R2) : API des releases par GITHUB_API_URL.
+$detournees['curl PATCH par $GITHUB_API_URL'] = ['release.yml', $avantJoindre,
+    "      - run: |\n          curl -X PATCH \"\$GITHUB_API_URL/repos/\$GH_REPO/releases/1\" -d '{\"draft\":false}'\n\n" . $avantJoindre, 'creation'];
+// Correction 1 (R3) : la liste d'actions vaut aussi sur pull_request et push.
+$detournees['action hors liste dans ci.yml'] = ['ci.yml', 'uses: shivammathur/setup-php@', 'uses: actions/github-script@', 'actions'];
+// Correction 1 (constat 1, R5) : etapes et travaux en flux YAML, cle
+// echappee, alias. Chaque forme rougit en forme_yaml, quel que soit le reste.
+$scriptPublier = "{script: 'github.rest.repos.updateRelease({draft: false})'}";
+$detournees['etape en flux, uses en tete, dans publier'] = ['release.yml', $avantJoindre,
+    "      - {uses: actions/github-script@$shaMutation, with: $scriptPublier}\n" . $avantJoindre, 'forme_yaml'];
+$detournees['etape en flux, name puis uses, dans publier'] = ['release.yml', $avantJoindre,
+    "      - {name: x, uses: actions/github-script@$shaMutation, with: $scriptPublier}\n" . $avantJoindre, 'forme_yaml'];
+$detournees['etape en flux, uses en tete, dans le garde'] = ['garde-release.yml', "    steps:\n",
+    "    steps:\n      - {uses: actions/github-script@$shaMutation, with: $scriptPublier}\n", 'forme_yaml'];
+$detournees['etape en flux, run avec ${{ }}, dans ci.yml'] = ['ci.yml', "    steps:\n",
+    "    steps:\n      - {name: x, run: 'echo \${{ github.head_ref }}'}\n", 'forme_yaml'];
+$detournees['etape en flux, run par variable, dans publier'] = ['release.yml', $avantJoindre,
+    "      - {name: x, run: 'g=gh; \"\$g\" release edit \"\$TAG\" --draft=false'}\n" . $avantJoindre, 'forme_yaml'];
+$detournees['etape en flux sur la ligne apres le tiret'] = ['release.yml', $avantJoindre,
+    "      -\n        {uses: actions/github-script@$shaMutation}\n" . $avantJoindre, 'forme_yaml'];
+$detournees['steps: en liste en flux'] = ['ci.yml', "\njobs:\n",
+    "\njobs:\n  autre:\n    runs-on: ubuntu-latest\n    steps: [{run: echo x}]\n", 'forme_yaml'];
+$detournees['travail entier en flux'] = ['ci.yml', "\njobs:\n",
+    "\njobs:\n  autre: {runs-on: ubuntu-latest, steps: [{uses: actions/github-script@$shaMutation}]}\n", 'forme_yaml'];
+$detournees['cle run echappee ("\\x72un") avec ${{ }}'] = ['release.yml', 'run: gh release upload "$TAG"',
+    '"\\x72un": gh release upload "${{ github.ref_name }}"', 'forme_yaml'];
+$detournees['uses par alias YAML'] = ['release.yml', $avantJoindre,
+    "      - name: x\n        uses: *action\n\n" . $avantJoindre, 'forme_yaml'];
 // Le meme contournement doit rougir sur chacun des trois declencheurs,
 // en bloc, scalaire, liste ou objet inline, y compris avec une cle on citee.
 $onOrg = "on:\n  workflow_dispatch:\n  push:\n    tags: ['v*']\n";
@@ -952,7 +1074,9 @@ verifier('RH : ancrages uniques pour les mutations des declencheurs', substr_cou
     && substr_count($original, 'uses: actions/checkout@') === 1);
 foreach (["on:\n  release:\n    types: [published]\n", "on: release\n", "on: [release]\n",
     "\"on\":\n  workflow_run:\n    workflows: [build]\n    types: [completed]\n", "on: [workflow_run]\n",
-    "'on': {push: {tags: ['v*']}}\n"] as $declencheur) {
+    "'on': {push: {tags: ['v*']}}\n",
+    // Correction 1 (R4) : declencheurs que l'ancienne lecture du bloc on: ne voyait pas.
+    "on :\n  workflow_dispatch:\n", "on: push\n", "on: create\n", "on:\n  push:\n    tags-ignore: ['x']\n"] as $declencheur) {
     $mute = str_replace($onOrg, $declencheur, $original);
     $mute = str_replace('uses: actions/checkout@', 'uses: actions/github-script@', $mute);
     $detournees['action hors liste sur ' . trim(str_replace("\n", ' ', $declencheur))] = [
@@ -971,16 +1095,24 @@ foreach ($detournees as $libelle => [$cible, $avant, $apres, $categorie]) {
 }
 
 // Controles positifs : la regle porte sur les commandes et evenements vises.
-verifier('RH : workflow manuel sans evenement sensible hors de la liste d\'actions',
-    actions_hors_liste("on: workflow_dispatch\njobs:\n  j:\n    steps:\n      - uses: actions/github-script@$shaMutation # v7\n") === []);
+verifier('Correction 1 (R3) : un workflow manuel est aussi soumis a la liste d\'actions',
+    actions_hors_liste("on: workflow_dispatch\njobs:\n  j:\n    steps:\n      - uses: actions/github-script@$shaMutation # v7\n") === ['actions/github-script']);
 verifier('RH : commentaires de declencheur et de uses ignores',
     actions_hors_liste("on:\n  push:\n  # release:\njobs:\n  j:\n    steps:\n      # - uses: actions/github-script@$shaMutation # v7\n      - run: echo ok\n") === []);
 verifier('RH : variable en argument, commande gh directe et commentaire de script acceptes',
     appels_release_variables("      - run: |\n          echo \"\$TAG\" release\n          gh release view \"\$TAG\"\n          # \"\$g\" release edit \"\$TAG\" --draft=false\n") === []);
+verifier('Correction 1 : expansion ou substitution en argument acceptee (echo "${TAG:-x}" release)',
+    appels_release_variables("      - run: |\n          echo \"\${TAG:-x}\" release\n          echo \$(date) release\n          x=\$(gh release view \"\$TAG\" --json isDraft)\n") === []);
+verifier('Correction 1 : collections en flux en valeur et scripts lus comme du shell acceptes',
+    formes_yaml_refusees("on:\n  push:\n    tags: ['v*']\n  release:\n    types: [published]\npermissions: {}\njobs:\n  j:\n    steps:\n      - name: a & b\n        with: {php-version: '8.1'}\n        run: |\n          [ \"\$x\" = y ] || exit 1\n          { echo a; } > f\n          - {pas: du yaml}\n      - run: >\n          [ x ]\n") === []);
 foreach (["'run'", '"run"'] as $cle) {
     $copie = $reels;
     $copie['garde-release.yml'] = str_replace('run: |', "$cle: |", $copie['garde-release.yml'] ?? '');
-    verifier("RH : garde avec cle $cle sans expression accepte", array_filter(defauts_rc($copie)) === []);
+    // Correction 1 (R6) : seules les categories visees sont lues, pour que
+    // le controle positif ne depende pas des autres defauts.
+    $vus = defauts_rc($copie);
+    verifier("RH : garde avec cle $cle sans expression accepte", $copie['garde-release.yml'] !== $reels['garde-release.yml']
+        && $vus['expression'] === [] && $vus['garde'] === [], implode('; ', array_merge($vus['expression'], $vus['garde'])));
 }
 
 echo "\n" . ($total - $echecs) . "/$total controles verts\n";
