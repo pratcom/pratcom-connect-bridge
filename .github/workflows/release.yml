@@ -16,15 +16,22 @@ name: Build premium & attach plugin zip (canal GitHub/PUC)
 #   ne depend donc plus du jour de la release.
 # - chaque action tierce est epinglee par SHA complet (version en commentaire) ;
 #   tests/verifier-outillage-release.php le controle en CI.
-# - l'empreinte SHA-256 du zip est publiee a cote (pratcom-connect-bridge.zip.sha256).
+# - l'empreinte SHA-256 du zip est calculee, reverifiee avant publication et
+#   ecrite dans les notes de la release (E-34 : plus comme asset, voir plus bas).
 # - deux travaux : "build" n'a que la lecture du depot (Composer y tourne),
 #   "publier" a seul le droit d'ecrire sur la release.
 #
-# Asset designe (E-28) : Updater.php appelle enableReleaseAssets() avec le
-# motif /^pratcom-connect-bridge\.zip$/ (REQUIRE) : PUC n'installe que ce
-# zip, jamais pratcom-connect-org.zip joint par build-org.yml a la meme
-# release, ni l'empreinte. Ne pas renommer le zip sans changer le motif.
-# Le zip reste joint avant l'empreinte (ordre garde par prudence).
+# Asset designe (E-28) : Updater.php de main appelle enableReleaseAssets()
+# avec le motif /^pratcom-connect-bridge\.zip$/ (REQUIRE). Ne pas renommer le
+# zip sans changer le motif.
+#
+# Un seul asset (E-34, 27/11) : la release qui suit 2.2.2 est choisie par le
+# Updater.php de 2.2.2, deja installe chez les clients, qui appelle
+# enableReleaseAssets() SANS motif : Plugin Update Checker y prend le premier
+# asset de la release, quel qu'il soit (zip .org, empreinte .sha256). La
+# release publique ne porte donc QUE pratcom-connect-bridge.zip : le zip .org
+# reste un artefact de build-org.yml, l'empreinte va dans les notes.
+# tests/verifier-outillage-release.php refuse tout autre asset.
 
 on:
   release:
@@ -136,7 +143,19 @@ jobs:
         with:
           files: build/pratcom-connect-bridge.zip
 
-      - name: Joindre l'empreinte SHA-256 (apres le zip, voir ATTENTION en tete)
+      - name: Lire l'empreinte pour les notes de la release
+        id: empreinte
+        run: |
+          cd build
+          ligne=$(cat pratcom-connect-bridge.zip.sha256)
+          echo "$ligne" | grep -Eq '^[0-9a-f]{64}  pratcom-connect-bridge\.zip$' || { echo "::error::empreinte illisible"; exit 1; }
+          echo "ligne=$ligne" >> "$GITHUB_OUTPUT"
+
+      # E-34 : aucun second asset. L'empreinte s'ajoute aux notes existantes.
+      - name: Ecrire l'empreinte SHA-256 dans les notes de la release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
-          files: build/pratcom-connect-bridge.zip.sha256
+          append_body: true
+          body: |
+
+            SHA-256 : `${{ steps.empreinte.outputs.ligne }}`

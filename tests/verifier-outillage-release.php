@@ -12,13 +12,17 @@
  *   - une action de .github/workflows/*.yml n'est pas epinglee par SHA complet
  *     (40 caracteres hexadecimaux) suivi d'un commentaire de version ;
  *   - release.yml n'echoue pas sur un verrou absent ou divergent, ne calcule
- *     pas l'empreinte SHA-256 du zip, ou ne la publie pas comme asset ;
+ *     pas l'empreinte SHA-256 du zip, ou ne l'ecrit pas dans les notes ;
  *   - release.yml donne l'ecriture du depot a tout le fichier au lieu d'un
  *     seul travail ;
  *   - Updater.php appelle enableReleaseAssets sans un motif qui ne prend que
  *     pratcom-connect-bridge.zip, ou les deux noms de zip se recoupent (E-28) ;
  *   - le zip premium garde CLAUDE.md, docs/, composer.json ou un .md, ou
- *     release.yml n'a pas les exclusions de build-org.yml (M-41).
+ *     release.yml n'a pas les exclusions de build-org.yml (M-41) ;
+ *   - un workflow declenche par `release` joint le zip .org a une release, ou
+ *     la release publique porte un autre asset que pratcom-connect-bridge.zip,
+ *     une seule fois (E-34 : Updater.php de v2.2.2, sans motif, prend le
+ *     premier asset quel qu'il soit).
  *
  * --racine : rejoue le banc sur une copie modifiee du depot (bancs de mutation).
  *
@@ -159,15 +163,15 @@ verifier('empreinte calculee (sha256sum > .zip.sha256)', (bool) preg_match(
     '/sha256sum\s+pratcom-connect-bridge\.zip\s*>\s*pratcom-connect-bridge\.zip\.sha256/',
     $release
 ));
-verifier('empreinte publiee comme asset', (bool) preg_match(
-    '/files:\s*build\/pratcom-connect-bridge\.zip\.sha256\s*$/m',
+verifier('empreinte reverifiee avant publication (sha256sum -c)', (bool) preg_match(
+    '/\n  publier:\n(?:(?!\n  \S).)*?sha256sum\s+-c\s+pratcom-connect-bridge\.zip\.sha256/s',
     $release
 ));
-
-// PUC prend le premier asset : le zip doit etre joint avant l'empreinte.
-$posZip = preg_match('/files:\s*build\/pratcom-connect-bridge\.zip\s*$/m', $release, $mz, PREG_OFFSET_CAPTURE) ? $mz[0][1] : -1;
-$posSha = preg_match('/files:\s*build\/pratcom-connect-bridge\.zip\.sha256\s*$/m', $release, $ms, PREG_OFFSET_CAPTURE) ? $ms[0][1] : -1;
-verifier('zip joint seul, avant l\'empreinte (PUC prend le premier asset)', $posZip >= 0 && $posSha > $posZip);
+// E-34 : l'empreinte va dans les notes de la release (ajout), plus comme asset.
+verifier('empreinte ecrite dans les notes (append_body, pas un asset)', (bool) preg_match('/append_body:\s*true/', $release)
+    && (bool) preg_match('/body:\s*\|(?:(?!\n      - ).)*?steps\.empreinte\.outputs\.ligne/s', $release)
+    && !preg_match('/files:\s*build\/pratcom-connect-bridge\.zip\.sha256/', $release));
+verifier('zip premium joint par release.yml', (bool) preg_match('/files:\s*build\/pratcom-connect-bridge\.zip\s*$/m', $release));
 
 // Permissions : rien au niveau du fichier, ecriture dans un seul travail.
 $avantJobs = (string) strstr($release, "\njobs:", true);
@@ -190,15 +194,17 @@ $org = (string) preg_replace('/^\s*#.*$/m', '', $org);
 $avantJobsOrg = (string) strstr($org, "\njobs:", true);
 verifier('build-org.yml : permissions: {} au niveau du fichier', (bool) preg_match('/^permissions:\s*\{\s*\}\s*$/m', $avantJobsOrg)
     && !preg_match('/contents:\s*write/', $avantJobsOrg));
-verifier('build-org.yml : ecriture accordee a un seul travail', preg_match_all('/contents:\s*write/', $org) === 1);
+// E-34 (27/11) : le zip .org n'est plus joint a la release, aucun travail
+// n'ecrit (le travail joindre-release, seul en ecriture le 12/11, est retire).
+verifier('build-org.yml : aucun travail en ecriture (E-34)', !preg_match('/:\s*write/', $org));
 verifier('build-org.yml : le travail qui lance wp-cli n\'a que la lecture', (bool) preg_match(
     '/\n  build-org:\n(?:(?!\n  \S).)*?contents:\s*read(?:(?!\n  \S).)*?php wp-cli\.phar/s',
     $org
 ));
-// Le travail en ecriture : ni extraction, ni action tierce, ni telechargement.
-$travailEcriture = preg_match('/\n  ([\w-]+):\n((?:(?!\n  \S).)*?contents:\s*write(?:(?!\n  \S).)*)/s', $org, $mw) ? $mw[2] : '';
-verifier('build-org.yml : le travail en ecriture ne lance ni action, ni checkout, ni curl, ni php', $travailEcriture !== ''
-    && !preg_match('/uses:|curl|wget|php\s/', $travailEcriture));
+verifier('build-org.yml : le zip .org part en artefact du workflow', (bool) preg_match(
+    '/uses:\s*actions\/upload-artifact@\S+[^\n]*\n\s+with:\n(?:\s+[\w-]+:[^\n]*\n)*?\s+path:\s*build\/pratcom-connect-org\.zip/',
+    $org
+));
 verifier('build-org.yml : wp-cli a version figee (pas de gh-pages)', !preg_match('/gh-pages/', $org)
     && (bool) preg_match('/WP_CLI_VERSION=\d+\.\d+\.\d+\s*$/m', $org));
 $posSha = preg_match('/sha256sum\s+-c/', $org, $m1, PREG_OFFSET_CAPTURE) ? $m1[0][1] : -1;
@@ -243,7 +249,7 @@ verifier('preference REQUIRE_RELEASE_ASSETS (pas de repli sur l\'archive source)
 $releaseBrut = lire($racine . '/.github/workflows/release.yml') ?? '';
 $orgBrut = lire($racine . '/.github/workflows/build-org.yml') ?? '';
 $zipPremium = preg_match('/zip\s+-r\s+(\S+\.zip)\s/', $releaseBrut, $z1) ? $z1[1] : '';
-$zipOrg = preg_match('/gh\s+release\s+upload\s+\S+\s+build\/(\S+\.zip)\s/', $orgBrut, $z2) ? $z2[1] : '';
+$zipOrg = preg_match('/zip\s+-r\w*\s+(\S+\.zip)\s/', $orgBrut, $z2) ? $z2[1] : '';
 verifier('nom du zip premium lu dans release.yml', $zipPremium === 'pratcom-connect-bridge.zip', $zipPremium);
 verifier('nom du zip .org lu dans build-org.yml', $zipOrg !== '', $zipOrg);
 verifier('les deux noms de zip different', $zipPremium !== '' && $zipOrg !== '' && $zipPremium !== $zipOrg);
@@ -311,6 +317,138 @@ foreach ($it as $f) {
     }
 }
 verifier('aucun fichier .md, docs/ ou composer.json du depot dans le zip premium', $fuites === [], implode(', ', array_slice($fuites, 0, 5)));
+
+// ─── 8. Release publique : un seul asset (E-34, 27/11) ──────────────────────
+//
+// La release qui suit 2.2.2 est choisie par le Updater.php de 2.2.2 deja
+// installe, qui appelle enableReleaseAssets() sans motif : PUC y prend le
+// premier asset, quel qu'il soit. Les workflows declenches par `release` ne
+// doivent donc joindre a la release que pratcom-connect-bridge.zip, une fois.
+
+echo "Release publique : un seul asset (E-34)\n";
+
+/** Le workflow est-il declenche par une release ? (bloc `on:` sans commentaires) */
+function declenche_par_release(string $yml): bool
+{
+    $sans = (string) preg_replace('/^\s*#.*$/m', '', str_replace("\r\n", "\n", $yml));
+    if (!preg_match('/^(?:on|"on"|\'on\'):(.*?)(?=^\S|\z)/ms', $sans, $m)) {
+        return false;
+    }
+    return (bool) preg_match('/(?<![\w-])release(?![\w-])/', $m[1]);
+}
+
+/**
+ * Fichiers joints a une release par un workflow : `gh release upload|create`,
+ * actions de publication (files, artifacts, file, asset_path), envoi brut vers
+ * uploads.github.com, action inconnue dont le nom parle de release.
+ *
+ * @return array<int, string> noms de fichier (basename), ou marqueur entre < >
+ */
+function assets_joints(string $yml): array
+{
+    $sans = (string) preg_replace('/^\s*#.*$/m', '', str_replace("\r\n", "\n", $yml));
+    $sans = (string) preg_replace('/\\\\\n\s*/', ' ', $sans); // lignes continuees par \
+    $assets = [];
+
+    if (preg_match_all('/\bgh\s+release\s+(upload|create)\b([^\n]*)/', $sans, $mm, PREG_SET_ORDER)) {
+        foreach ($mm as $m) {
+            $jetons = preg_split('/\s+/', trim($m[2])) ?: [];
+            if ($m[1] === 'upload') {
+                array_shift($jetons); // le tag
+            }
+            $sauter = false;
+            foreach ($jetons as $j) {
+                if ($sauter) {
+                    $sauter = false;
+                    continue;
+                }
+                if (preg_match('/^--?(repo|R|notes|n|notes-file|F|title|t|target|discussion-category)$/', $j)) {
+                    $sauter = true; // option suivie d'une valeur
+                    continue;
+                }
+                if ($j === '' || in_array($j[0], ['-', '|', ';', '&'], true)) {
+                    continue;
+                }
+                $j = trim((string) preg_replace('/#.*$/', '', $j), '"\'');
+                if ($j !== '') {
+                    $assets[] = basename($j);
+                }
+            }
+        }
+    }
+
+    $connues = ['softprops/action-gh-release', 'ncipollo/release-action', 'svenstaro/upload-release-action',
+        'actions/upload-release-asset', 'shogo82148/actions-upload-release-asset', 'abutler/upload-release-assets',
+        'xresloader/upload-to-github-release'];
+    // Une etape par morceau : chaque ligne qui commence par `- ` ouvre une etape.
+    foreach (preg_split('/\n(?=[ \t]*-[ \t])/', $sans) ?: [] as $etape) {
+        if (!preg_match('/^[ \t]*(?:-[ \t]+)?uses:[ \t]*(\S+)/m', $etape, $u)) {
+            continue;
+        }
+        $action = strtolower((string) preg_replace('/@.*$/', '', trim($u[1], '"\'')));
+        if (!in_array($action, $connues, true)) {
+            if (strpos($action, 'release') !== false) {
+                $assets[] = '<action de release inconnue : ' . $action . '>';
+            }
+            continue;
+        }
+        if (preg_match_all('/^([ \t]+)(files|artifacts|file|asset_path):[ \t]*([^\n]*)\n((?:\1[ \t]+[^\n]*\n?)*)/m', $etape . "\n", $cles, PREG_SET_ORDER)) {
+            foreach ($cles as $c) {
+                $tete = trim($c[3]);
+                $valeur = ($tete === '' || $tete[0] === '|' || $tete[0] === '>') ? $c[4] : $c[3];
+                foreach (preg_split('/[\n,]+/', $valeur) ?: [] as $v) {
+                    $v = trim($v, " \t\"'");
+                    if ($v !== '') {
+                        $assets[] = basename($v);
+                    }
+                }
+            }
+        }
+    }
+
+    if (strpos($sans, 'uploads.github.com') !== false) {
+        $assets[] = '<envoi brut vers uploads.github.com>';
+    }
+    return $assets;
+}
+
+$joints = [];
+$releaseWorkflows = 0;
+foreach ($workflows as $fichier) {
+    $nom = basename($fichier);
+    $texte = lire($fichier) ?? '';
+    if (!declenche_par_release($texte)) {
+        continue;
+    }
+    $releaseWorkflows++;
+    $a = assets_joints($texte);
+    $org = array_values(array_filter($a, static fn(string $x): bool => stripos($x, 'pratcom-connect-org') !== false));
+    verifier("$nom (declenche par release) : aucun zip .org joint a la release", $org === [], implode(', ', $org));
+    foreach ($a as $x) {
+        $joints[] = "$nom:$x";
+    }
+}
+verifier('workflows declenches par release trouves (release.yml, build-org.yml)', $releaseWorkflows >= 2, (string) $releaseWorkflows);
+$noms = array_map(static fn(string $x): string => substr($x, strpos($x, ':') + 1), $joints);
+verifier(
+    'release publique : un seul asset, pratcom-connect-bridge.zip',
+    $noms === ['pratcom-connect-bridge.zip'],
+    $joints === [] ? 'aucun asset' : implode(', ', $joints)
+);
+
+// Auto-verification : les formes refusees le sont, la forme voulue passe.
+$ancienOrg = "on:\n  workflow_dispatch:\n  release:\n    types: [published]\njobs:\n  joindre-release:\n    steps:\n      - name: x\n        run: |\n          gh release upload \"\$TAG\" build/pratcom-connect-org.zip --repo \"\$GITHUB_REPOSITORY\" --clobber\n";
+verifier('auto-verification : build-org.yml de main au 26/11 joint le zip .org', declenche_par_release($ancienOrg) && assets_joints($ancienOrg) === ['pratcom-connect-org.zip'], implode(', ', assets_joints($ancienOrg)));
+$ancienRelease = "on:\n  release:\n    types: [published]\njobs:\n  publier:\n    steps:\n      - name: a\n        uses: softprops/action-gh-release@abc # v2\n        with:\n          files: build/pratcom-connect-bridge.zip\n\n      - name: b\n        uses: softprops/action-gh-release@abc # v2\n        with:\n          files: build/pratcom-connect-bridge.zip.sha256\n";
+verifier('auto-verification : l\'empreinte en asset fait deux assets', assets_joints($ancienRelease) === ['pratcom-connect-bridge.zip', 'pratcom-connect-bridge.zip.sha256'], implode(', ', assets_joints($ancienRelease)));
+$bloc = "on: [release]\njobs:\n  p:\n    steps:\n      - uses: softprops/action-gh-release@abc # v2\n        with:\n          files: |\n            build/pratcom-connect-bridge.zip\n            build/pratcom-connect-org.zip\n";
+verifier('auto-verification : liste en bloc lue en entier', declenche_par_release($bloc) && assets_joints($bloc) === ['pratcom-connect-bridge.zip', 'pratcom-connect-org.zip'], implode(', ', assets_joints($bloc)));
+$autres = "on:\n  release:\njobs:\n  p:\n    steps:\n      - uses: ncipollo/release-action@abc # v1\n        with:\n          artifacts: \"build/*.zip\"\n      - run: gh release upload v1 \\\n          build/a.zip build/b.zip#etiquette --clobber\n      - run: curl -X POST https://uploads.github.com/repos/x/y/releases/1/assets\n      - uses: autre/publish-release@abc # v1\n";
+verifier('auto-verification : artifacts, gh sur deux lignes, curl brut, action inconnue', assets_joints($autres) === ['a.zip', 'b.zip', '*.zip', '<action de release inconnue : autre/publish-release>', '<envoi brut vers uploads.github.com>'], implode(', ', assets_joints($autres)));
+$manuel = "on:\n  workflow_dispatch:\njobs:\n  b:\n    steps:\n      - uses: actions/upload-artifact@abc # v4\n        with:\n          path: build/pratcom-connect-org.zip\n";
+verifier('auto-verification : artefact seul, hors release, accepte', !declenche_par_release($manuel) && assets_joints($manuel) === []);
+$commente = "on:\n  push:\n  # release:\njobs:\n  b:\n    steps:\n      # - run: gh release upload v1 build/pratcom-connect-org.zip\n      - run: echo ok\n";
+verifier('auto-verification : commentaires ignores', !declenche_par_release($commente) && assets_joints($commente) === []);
 
 echo "\n" . ($total - $echecs) . "/$total controles verts\n";
 exit($echecs === 0 ? 0 : 1);

@@ -91,6 +91,7 @@ function wp_schedule_single_event($ts, $hook) { $GLOBALS['banc_cron'][$hook] = $
 function wp_unschedule_event($ts, $hook) { unset($GLOBALS['banc_cron'][$hook]); return true; }
 function wp_schedule_event($ts, $r, $hook) { $GLOBALS['banc_cron'][$hook] = $ts; return true; }
 function home_url() { return 'https://site.exemple'; }
+function site_url() { return $GLOBALS['banc_site_url'] ?? 'https://site.exemple'; }
 function wp_parse_url($u, $c = -1) { return parse_url($u, $c); }
 function get_bloginfo($k) { return '6.8'; }
 function current_time($t, $gmt = 0) { return '2026-11-12 12:00:00'; }
@@ -110,17 +111,47 @@ class WP_REST_Response
     public function __construct($data = null, $status = 200) { $this->data = $data; $this->status = $status; }
 }
 
+// Par defaut, la requete vient d'une page du site (en-tete Origin du
+// navigateur) ; les bancs d'origine (E-24, 27/11) passent leurs en-tetes.
 class Banc_Requete
 {
     private array $p;
-    public function __construct(array $p) { $this->p = $p; }
+    private array $h;
+    public function __construct(array $p, ?array $h = null) { $this->p = $p; $this->h = $h ?? ['origin' => 'https://site.exemple']; }
     public function get_param($k) { return $this->p[$k] ?? null; }
+    public function get_header($k) { return $this->h[strtolower($k)] ?? null; }
 }
 
+// Table du registre en memoire pour la purge : prepare() comme WordPress
+// (%i, %s, %d), query() ne comprend que le DELETE borne de LocalRegistry.
 class Banc_Wpdb
 {
     public $prefix = 'wp_';
+    public array $requetes = [];
     public function insert($table, $ligne) { $GLOBALS['banc_insertions'][] = $ligne; return 1; }
+    public function prepare($sql, ...$args)
+    {
+        $i = 0;
+        return preg_replace_callback('/%([isd])/', static function ($m) use (&$i, $args) {
+            $v = $args[$i++] ?? '';
+            return $m[1] === 'i' ? '`' . $v . '`' : ($m[1] === 'd' ? (string) (int) $v : "'" . addslashes((string) $v) . "'");
+        }, $sql);
+    }
+    public function query($sql)
+    {
+        $this->requetes[] = $sql;
+        if (!preg_match("/^DELETE FROM `wp_pratcom_consents` WHERE created_at < '([^']+)' LIMIT (\d+)$/", $sql, $m)) {
+            return false;
+        }
+        $n = 0;
+        foreach ($GLOBALS['banc_table'] ?? [] as $k => $ligne) {
+            if ($n < (int) $m[2] && strcmp($ligne['created_at'], $m[1]) < 0) {
+                unset($GLOBALS['banc_table'][$k]);
+                $n++;
+            }
+        }
+        return $n;
+    }
 }
 $GLOBALS['wpdb'] = new Banc_Wpdb();
 
@@ -358,6 +389,103 @@ $_SERVER['REMOTE_ADDR'] = '10.9.9.3';
 verifier('a 11 h 00 un consentement est inscrit', $reg->handle_consent($req)->status === 201);
 unset($GLOBALS['banc_temps']);
 $GLOBALS['banc_transients'] = [];
+
+echo "E-24 (27/11). Registre : consentement refuse sans origine du site\n";
+// Mesure sur main au 27/11 : 0 nonce, 0 controle d'origine. Un nonce casse
+// les pages en cache : c'est l'en-tete Origin (envoye par le navigateur sur
+// tout POST de fetch) qui est exige.
+$GLOBALS['banc_transients'] = [];
+$GLOBALS['banc_insertions'] = [];
+$GLOBALS['banc_filtres']['pratcom_connect_registre_plafond_global'] = [];
+$reg = new LocalRegistry();
+$corps = ['action' => 'accept_all', 'choices' => ['marketing' => true], 'anonymousId' => 'a-1', 'sourceUrl' => 'https://site.exemple/'];
+$cas = [
+    'sans en-tete Origin' => [[], 403],
+    'Origin vide' => [['origin' => ''], 403],
+    'Origin null (iframe isolee, fichier local)' => [['origin' => 'null'], 403],
+    'Origin d\'un autre site' => [['origin' => 'https://autre.exemple'], 403],
+    'Origin qui commence par le site' => [['origin' => 'https://site.exemple.attaque.net'], 403],
+    'Origin du site en http' => [['origin' => 'http://site.exemple'], 403],
+    'Origin du site sur un autre port' => [['origin' => 'https://site.exemple:8443'], 403],
+    'Origin du site' => [['origin' => 'https://site.exemple'], 201],
+    'Origin du site, casse et port par defaut' => [['origin' => 'https://SITE.Exemple:443'], 201],
+];
+$i = 0;
+foreach ($cas as $libelle => [$entetes, $attendu]) {
+    $_SERVER['REMOTE_ADDR'] = '203.0.113.' . (100 + $i++);
+    $avant = count($GLOBALS['banc_insertions']);
+    $rep = $reg->handle_consent(new \Banc_Requete($corps, $entetes));
+    $inscrit = count($GLOBALS['banc_insertions']) > $avant;
+    verifier("$libelle : $attendu" . ($attendu === 201 ? ', inscrit' : ', rien inscrit'), $rep->status === $attendu && $inscrit === ($attendu === 201), (string) $rep->status);
+}
+verifier('refus : code invalid_origin', ($reg->handle_consent(new \Banc_Requete($corps, []))->data['error'] ?? '') === 'invalid_origin');
+$GLOBALS['banc_site_url'] = 'https://wp.site.exemple';
+$_SERVER['REMOTE_ADDR'] = '203.0.113.120';
+verifier('origine de site_url() (WordPress dans un autre hote) : 201', $reg->handle_consent(new \Banc_Requete($corps, ['origin' => 'https://wp.site.exemple']))->status === 201);
+unset($GLOBALS['banc_site_url']);
+add_filter('pratcom_connect_registre_origines', static fn() => ['https://en.site.exemple/une/page']);
+$_SERVER['REMOTE_ADDR'] = '203.0.113.121';
+verifier('origine ajoutee par le filtre (domaine par langue) : 201', $reg->handle_consent(new \Banc_Requete($corps, ['origin' => 'https://en.site.exemple']))->status === 201);
+$GLOBALS['banc_filtres']['pratcom_connect_registre_origines'] = [];
+$_SERVER['REMOTE_ADDR'] = '203.0.113.122';
+verifier('filtre retire : cette origine est refusee', $reg->handle_consent(new \Banc_Requete($corps, ['origin' => 'https://en.site.exemple']))->status === 403);
+
+// Les refus d'origine ne remplissent pas le plafond global.
+$GLOBALS['banc_transients'] = [];
+add_filter('pratcom_connect_registre_plafond_global', static fn() => 3);
+for ($i = 0; $i < 10; $i++) {
+    $_SERVER['REMOTE_ADDR'] = '198.18.2.' . $i;
+    $reg->handle_consent(new \Banc_Requete($corps, ['origin' => 'https://autre.exemple']));
+}
+$codes = [];
+for ($i = 0; $i < 4; $i++) {
+    $_SERVER['REMOTE_ADDR'] = '198.18.3.' . $i;
+    $codes[] = $reg->handle_consent(new \Banc_Requete($corps))->status;
+}
+verifier('10 requetes d\'un autre site ne comptent pas : 3 inscrits sur 3, puis 429', $codes === [201, 201, 201, 429], implode(',', $codes));
+$GLOBALS['banc_filtres']['pratcom_connect_registre_plafond_global'] = [];
+$GLOBALS['banc_transients'] = [];
+
+echo "E-24 (27/11). Registre : duree de garde de 12 mois, purge bornee\n";
+$aGarde = defined(LocalRegistry::class . '::DUREE_GARDE_MOIS');
+verifier('duree de garde nommee : DUREE_GARDE_MOIS = 12', $aGarde && LocalRegistry::DUREE_GARDE_MOIS === 12);
+$GLOBALS['banc_temps'] = gmmktime(12, 0, 0, 11, 27, 2026);
+$seuil = method_exists(LocalRegistry::class, 'seuil_garde') ? LocalRegistry::seuil_garde($GLOBALS['banc_temps']) : '';
+verifier('seuil au 27/11/2026 12 h UTC : 27/11/2025 12 h', $seuil === '2025-11-27 12:00:00', $seuil);
+$GLOBALS['banc_table'] = [
+    ['id' => 1, 'created_at' => '2024-05-01 08:00:00'],
+    ['id' => 2, 'created_at' => '2025-11-27 11:59:59'],
+    ['id' => 3, 'created_at' => '2025-11-27 12:00:00'],
+    ['id' => 4, 'created_at' => '2026-01-15 09:30:00'],
+    ['id' => 5, 'created_at' => '2026-11-27 11:00:00'],
+];
+$purgees = method_exists(LocalRegistry::class, 'purger') ? LocalRegistry::purger() : -1;
+$restantes = array_column($GLOBALS['banc_table'], 'id');
+sort($restantes);
+verifier('purge : 2 lignes plus vieilles que 12 mois supprimees', $purgees === 2, (string) $purgees);
+verifier('purge : la ligne d\'exactement 12 mois et les recentes restent', $restantes === [3, 4, 5], implode(',', $restantes));
+$sql = (string) end($GLOBALS['wpdb']->requetes);
+verifier('purge : DELETE borne (LIMIT ' . ($aGarde ? LocalRegistry::PURGE_LOT : '?') . ') sur created_at', $aGarde && strpos($sql, 'WHERE created_at < ') !== false && preg_match('/LIMIT ' . LocalRegistry::PURGE_LOT . '$/', $sql) === 1, $sql);
+$GLOBALS['banc_table'] = [];
+for ($i = 0; $i < 2500; $i++) {
+    $GLOBALS['banc_table'][] = ['id' => $i, 'created_at' => '2024-01-01 00:00:00'];
+}
+$GLOBALS['banc_table'][] = ['id' => 9999, 'created_at' => '2026-11-01 00:00:00'];
+$passages = [];
+for ($i = 0; $i < 4 && method_exists(LocalRegistry::class, 'purger'); $i++) {
+    $passages[] = LocalRegistry::purger();
+}
+verifier('2500 lignes vieilles : 1000, 1000, 500, 0 par passage horaire', $passages === [1000, 1000, 500, 0], implode(',', $passages));
+verifier('la ligne recente survit aux passages', array_column($GLOBALS['banc_table'], 'id') === [9999]);
+$branche = false;
+foreach ($GLOBALS['banc_filtres'][HealthCheck::CRON_HOOK] ?? [] as [$rappel, $n]) {
+    $branche = $branche || ($rappel === [LocalRegistry::class, 'purger'] && $n === 0);
+}
+verifier('purge branchee sur la tache planifiee horaire existante, sans argument', $branche);
+$code = (string) file_get_contents($GLOBALS['banc_src'] . '/Privacy/LocalRegistry.php');
+verifier('index created_at present dans la table (purge sans balayage)', (bool) preg_match('/KEY\s+created_at\s*\(created_at\)/', $code));
+$GLOBALS['banc_table'] = [];
+unset($GLOBALS['banc_temps']);
 
 echo "I-25. Un 5xx passager au handshake laisse regles et fiches en place\n";
 connecter();
